@@ -20,12 +20,16 @@ Or run it in a browser — identical app, and it sidesteps macOS's Gatekeeper
 entirely (handy on a Mac, where the downloaded Electron binary can get blocked):
 
 ```bash
-npm run web       # opens your browser to the app automatically
+npm run dev       # then open Google Chrome to http://127.0.0.1:5173
 ```
+
+Use **Chrome** (or Edge/Firefox), not Safari: Safari's "HTTPS-Only" setting
+refuses plain `http://` local pages. Chrome treats `http://127.0.0.1` as secure,
+so everything (including audio) works.
 
 > **macOS note:** if `npm run app` is blocked with a "malware" / "revoked"
 > message, that's macOS refusing the unsigned Electron binary, not real malware.
-> Either use `npm run web` above, or move this project out of your iCloud
+> Either use `npm run dev` above, or move this project out of your iCloud
 > Documents folder and re-sign Electron (`xattr -cr` + `codesign --force --deep
 > -s -` on `node_modules/electron/dist/Electron.app`).
 
