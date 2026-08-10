@@ -16,11 +16,18 @@ npm install
 npm run app       # launches the desktop app (Electron)
 ```
 
-Or run just the web UI in a browser (handy for quick iteration):
+Or run it in a browser — identical app, and it sidesteps macOS's Gatekeeper
+entirely (handy on a Mac, where the downloaded Electron binary can get blocked):
 
 ```bash
-npm run dev       # then open http://localhost:5173
+npm run web       # opens your browser to the app automatically
 ```
+
+> **macOS note:** if `npm run app` is blocked with a "malware" / "revoked"
+> message, that's macOS refusing the unsigned Electron binary, not real malware.
+> Either use `npm run web` above, or move this project out of your iCloud
+> Documents folder and re-sign Electron (`xattr -cr` + `codesign --force --deep
+> -s -` on `node_modules/electron/dist/Electron.app`).
 
 ## Other commands
 

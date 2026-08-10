@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "web": "vite --open",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "app": "concurrently -k -n vite,electron -c blue,green \"vite\" \"npm:electron:wait\"",
