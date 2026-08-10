@@ -3,6 +3,7 @@ import { useStore } from '../state/store';
 import type { Note, Track } from '../model/types';
 import { beatsPerBar } from '../model/time';
 import { snapBeat } from '../model/time';
+import { getVoice } from '../model/voices';
 import { PX_PER_BEAT, HEADER_W, beatToX, xToBeat } from './layout';
 import { Playhead } from './Playhead';
 import { VOICE_DRAG_TYPE } from './Library';
@@ -191,6 +192,7 @@ export function Timeline() {
                       title="Drag to move · click to remove"
                     >
                       <span className="vel" style={{ height: `${note.velocity * 100}%` }} />
+                      <span className="emoji">{getVoice(track.instrument.voiceId)?.emoji ?? '●'}</span>
                     </div>
                   );
                 })}
