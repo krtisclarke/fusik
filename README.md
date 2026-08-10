@@ -1,0 +1,43 @@
+# Beatbox Studio
+
+A music-creation studio for curious kids — drag sounds onto a timeline, build a
+beat, tweak it, and hear the result instantly. Built as a cross-platform desktop
+app (Windows and macOS) using web technology wrapped in Electron.
+
+> **Status:** Phase 1 complete — a working timeline, transport, synthesized drum
+> kit, save/load, and undo/redo. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
+> for the full picture and roadmap.
+
+## Run it (development)
+
+```bash
+npm install
+npm run app       # launches the desktop app (Electron)
+```
+
+Or run just the web UI in a browser (handy for quick iteration):
+
+```bash
+npm run dev       # then open http://localhost:5173
+```
+
+## Other commands
+
+```bash
+npm test          # run the automated tests
+npm run typecheck # TypeScript check, no build
+npm run build     # build the web bundle
+npm run package:win   # build a Windows installer (needs Windows or CI)
+npm run package:mac   # build a macOS app bundle
+```
+
+## What you can do right now
+
+- Click an empty spot in a track row to drop a beat; click a beat to remove it.
+- Drag a sound from the left onto the timeline, or click it to hear it.
+- Press **Space** to play/stop. The song loops by default.
+- Change the tempo, mute/solo/volume per track, and snap to a musical grid.
+- **Ctrl/Cmd+Z** to undo, **Ctrl/Cmd+S** to save, **Ctrl/Cmd+O** to open.
+
+Every sound is synthesized by the app itself, so there are no audio files to
+license and every sound is fully tweakable.
