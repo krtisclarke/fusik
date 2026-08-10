@@ -12,12 +12,14 @@ if (import.meta.env.DEV) {
     import('./state/store'),
     import('./audio/synth'),
     import('./model/voices'),
-  ]).then(([engineMod, storeMod, synthMod, voicesMod]) => {
+    import('./audio/master'),
+  ]).then(([engineMod, storeMod, synthMod, voicesMod, masterMod]) => {
     (window as unknown as Record<string, unknown>).beatbox = {
       engine: engineMod.engine,
       store: storeMod.useStore,
       getTrigger: synthMod.getTrigger,
       resolveParams: voicesMod.resolveParams,
+      createMasterChain: masterMod.createMasterChain,
     };
   });
 }

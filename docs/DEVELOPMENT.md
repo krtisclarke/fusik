@@ -91,20 +91,33 @@ note added, moved, muted, or a tempo change is heard on the next ~100 ms window
 
 ### Master output & ear safety
 
-Everything sums into `masterGain → limiter (DynamicsCompressor) → speakers`. The
-limiter is a brickwall safety net: no matter how many sounds stack up, the output
-can't produce a runaway peak that would hurt ears or speakers. Gain staging is
-conservative (voices peak around/below full scale individually; velocity and
-track volume scale them down further).
+Everything sums into a master chain (`audio/master.ts`):
+`input → [dry + subtle reverb] → gentle saturation → brickwall limiter → speakers`.
+
+- **Reverb** — a synthesized impulse (decaying noise, no audio files) adds a
+  little space so sounds aren't bone-dry. Kept subtle; easy to turn up.
+- **Saturation** — a mild `tanh` WaveShaper adds harmonic warmth/"glue".
+- **Limiter** — a `DynamicsCompressor` as a safety brickwall: no matter how many
+  sounds stack up, the output can't spike loud enough to hurt ears or speakers.
+
+Verified by rendering a full beat through the chain in an `OfflineAudioContext`:
+peaks at ~0.97 with zero clipped samples. Gain staging is conservative (velocity
+and track volume scale voices down further before the master).
 
 ### Synthesis
 
-All sounds are synthesized (`audio/synth.ts`) from three primitives:
+All sounds are synthesized (`audio/synth.ts`) from a few primitives:
 
-- **membrane** — a pitched sine with a fast pitch-drop envelope (kick, tom).
-- **noise burst** — filtered white noise with a shaped decay (snares, hats,
+- **membrane** — a pitched sine with a fast pitch-drop envelope (tom).
+- **noise burst** — filtered white noise with a shaped decay (snare body,
   cymbals, claps, shaker).
 - **blip** — a short tuned oscillator (cowbell, rim, percussion).
+
+The core drums are layered for a fuller, less "'90s" sound: the **kick** stacks
+a pitch-dropping body + a pure sub + a beater click; the **snare** combines two
+detuned tonal oscillators with a bright noise crack and a mid-body noise; the
+**hats** are a metallic cluster of inharmonic square oscillators (the classic
+drum-machine technique) rather than plain noise.
 
 Each drum voice in the catalog (`model/voices.ts`) is one of these configured by
 a small set of parameters (tune, decay, tone, drive, gain, …). Those same

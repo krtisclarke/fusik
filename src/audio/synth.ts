@@ -91,6 +91,7 @@ function membrane(
   if (drive > 0) {
     const shaper = ctx.createWaveShaper();
     shaper.curve = makeDistortionCurve(drive);
+    shaper.oversample = '2x';
     amp.connect(shaper);
     tail = shaper;
   }
@@ -226,10 +227,106 @@ function pitchedSynth(
   osc2.stop(stopAt);
 }
 
+/** A layered kick: a pitch-dropping body + a pure sub for weight + a beater
+ *  click for attack. Beefier and more modern than a single sine. */
+function kickVoice(
+  ctx: AudioContext,
+  dest: AudioNode,
+  time: number,
+  p: Record<string, number>,
+  vel: number,
+) {
+  const tune = p.tune ?? 50;
+  const pitchDrop = p.pitchDrop ?? 110;
+  const decay = Math.max(0.05, p.decay ?? 0.34);
+  const drive = p.drive ?? 0.15;
+  const gain = (p.gain ?? 1) * vel;
+
+  // Body: sine with a fast pitch drop, optionally saturated.
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(tune + pitchDrop, time);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(20, tune), time + Math.min(0.16, decay * 0.6));
+  const amp = ctx.createGain();
+  amp.gain.setValueAtTime(EPS, time);
+  amp.gain.exponentialRampToValueAtTime(Math.max(0.002, gain), time + 0.005);
+  amp.gain.exponentialRampToValueAtTime(EPS, time + decay);
+  osc.connect(amp);
+  let body: AudioNode = amp;
+  if (drive > 0) {
+    const shaper = ctx.createWaveShaper();
+    shaper.curve = makeDistortionCurve(drive);
+    shaper.oversample = '2x';
+    amp.connect(shaper);
+    body = shaper;
+  }
+  body.connect(dest);
+  osc.start(time);
+  osc.stop(time + decay + 0.05);
+
+  // Sub layer: a low, steady sine for weight under the body.
+  const sub = ctx.createOscillator();
+  sub.type = 'sine';
+  sub.frequency.value = Math.max(30, tune * 0.6);
+  const subAmp = ctx.createGain();
+  subAmp.gain.setValueAtTime(EPS, time);
+  subAmp.gain.exponentialRampToValueAtTime(Math.max(0.002, gain * 0.7), time + 0.01);
+  subAmp.gain.exponentialRampToValueAtTime(EPS, time + decay * 1.1);
+  sub.connect(subAmp);
+  subAmp.connect(dest);
+  sub.start(time);
+  sub.stop(time + decay * 1.1 + 0.05);
+
+  // Beater click for attack.
+  const click = p.click ?? 0.4;
+  if (click > 0) {
+    noiseBurst(ctx, dest, time, { type: 'highpass', freq: 2000, decay: 0.02, gain: click * 0.5 }, vel);
+  }
+}
+
+/** A metallic hi-hat: a cluster of inharmonic square oscillators through band-
+ *  and high-pass filters. The classic drum-machine hat — far richer than plain
+ *  filtered noise. */
+function metallicHat(
+  ctx: AudioContext,
+  dest: AudioNode,
+  time: number,
+  opts: { decay: number; tone: number; gain: number },
+  vel: number,
+) {
+  const ratios = [2, 3, 4.16, 5.43, 6.79, 8.21];
+  const base = 40;
+
+  const bandpass = ctx.createBiquadFilter();
+  bandpass.type = 'bandpass';
+  bandpass.frequency.value = opts.tone;
+  bandpass.Q.value = 0.7;
+
+  const highpass = ctx.createBiquadFilter();
+  highpass.type = 'highpass';
+  highpass.frequency.value = Math.max(4000, opts.tone * 0.8);
+
+  const amp = ctx.createGain();
+  amp.gain.setValueAtTime(Math.max(0.002, opts.gain * vel), time);
+  amp.gain.exponentialRampToValueAtTime(EPS, time + opts.decay);
+
+  for (const r of ratios) {
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = base * r;
+    osc.connect(bandpass);
+    osc.start(time);
+    osc.stop(time + opts.decay + 0.05);
+  }
+  bandpass.connect(highpass);
+  highpass.connect(amp);
+  amp.connect(dest);
+}
+
 // ---- the voices ----------------------------------------------------------
 
 export const VOICE_SYNTHS: Record<string, TriggerFn> = {
-  kick: (ctx, dest, time, p, vel) => membrane(ctx, dest, time, p, vel),
+  kick: (ctx, dest, time, p, vel) => kickVoice(ctx, dest, time, p, vel),
 
   tom: (ctx, dest, time, p, vel) => membrane(ctx, dest, time, p, vel),
 
@@ -239,28 +336,20 @@ export const VOICE_SYNTHS: Record<string, TriggerFn> = {
     const noiseMix = p.noise ?? 0.7;
     const tone = p.tone ?? 2200;
     const gain = p.gain ?? 0.9;
-    // Tonal body...
-    blip(ctx, dest, time, { freq: tune, type: 'triangle', decay: decay * 0.7, gain: gain * (1 - noiseMix) }, vel);
-    // ...plus a noisy snap.
-    noiseBurst(ctx, dest, time, { type: 'highpass', freq: tone, decay, gain: gain * noiseMix }, vel);
+    // Tonal body: two detuned triangles for a fuller ring.
+    blip(ctx, dest, time, { freq: tune, type: 'triangle', decay: decay * 0.6, gain: gain * (1 - noiseMix) }, vel);
+    blip(ctx, dest, time, { freq: tune * 1.5, type: 'triangle', decay: decay * 0.5, gain: gain * (1 - noiseMix) * 0.5 }, vel);
+    // Bright crack (short, high) plus body noise (longer, mid) = the "snares".
+    noiseBurst(ctx, dest, time, { type: 'highpass', freq: tone * 1.4, decay: decay * 0.5, gain: gain * noiseMix }, vel);
+    noiseBurst(ctx, dest, time, { type: 'bandpass', freq: tone * 0.8, Q: 0.8, decay, gain: gain * noiseMix * 0.7 }, vel);
   },
 
   hihat: (ctx, dest, time, p, vel) => {
-    noiseBurst(ctx, dest, time, {
-      type: 'highpass',
-      freq: p.tone ?? 8000,
-      decay: p.decay ?? 0.05,
-      gain: p.gain ?? 0.55,
-    }, vel);
+    metallicHat(ctx, dest, time, { decay: p.decay ?? 0.05, tone: p.tone ?? 8000, gain: p.gain ?? 0.55 }, vel);
   },
 
   openhat: (ctx, dest, time, p, vel) => {
-    noiseBurst(ctx, dest, time, {
-      type: 'highpass',
-      freq: p.tone ?? 8000,
-      decay: p.decay ?? 0.32,
-      gain: p.gain ?? 0.5,
-    }, vel);
+    metallicHat(ctx, dest, time, { decay: p.decay ?? 0.32, tone: p.tone ?? 8000, gain: p.gain ?? 0.5 }, vel);
   },
 
   crash: (ctx, dest, time, p, vel) => {

@@ -15,6 +15,7 @@ import type { Project, Track } from '../model/types';
 import { secondsToBeats, beatsToSeconds, totalBeats } from '../model/time';
 import { resolveParams } from '../model/voices';
 import { getTrigger } from './synth';
+import { createMasterChain } from './master';
 
 const LOOK_AHEAD_S = 0.1; // how far ahead we schedule
 const TICK_MS = 25; // how often the scheduler wakes up
@@ -51,24 +52,13 @@ export class AudioEngine {
     if (this.ctx) return this.ctx;
     const ctx = new AudioContext({ latencyHint: 'interactive' });
 
-    // Master chain: everything -> masterGain -> limiter -> speakers.
-    // The limiter is a safety brickwall so stacked sounds can never produce a
-    // runaway, speaker-or-ear-damaging peak.
-    const masterGain = ctx.createGain();
-    masterGain.gain.value = 0.9;
-
-    const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -6;
-    limiter.knee.value = 0;
-    limiter.ratio.value = 20;
-    limiter.attack.value = 0.003;
-    limiter.release.value = 0.15;
-
-    masterGain.connect(limiter);
-    limiter.connect(ctx.destination);
+    // Everything flows through the master chain (reverb + warmth + safety
+    // limiter) on its way to the speakers. See audio/master.ts.
+    const master = createMasterChain(ctx);
+    master.output.connect(ctx.destination);
 
     this.ctx = ctx;
-    this.masterGain = masterGain;
+    this.masterGain = master.input;
     if (this.project) this.syncTrackNodes(this.project);
     return ctx;
   }
