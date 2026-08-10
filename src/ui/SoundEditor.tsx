@@ -88,6 +88,10 @@ export function SoundEditor() {
         </button>
       </div>
 
+      <div className="se-hint">
+        Shapes the <strong>{track.name}</strong> sound — all {track.name} blocks share it.
+      </div>
+
       <div className="se-controls">
         {simpleKeys.map(renderControl)}
         {showAdvanced && advancedKeys.map(renderControl)}

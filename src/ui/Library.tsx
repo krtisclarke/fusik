@@ -26,7 +26,8 @@ export function Library() {
       <h2>Sounds</h2>
       <p className="lib-hint">
         Drag a sound onto the timeline, or click it to hear it. Drums drop beats; Piano, Synth and
-        Bass play notes you place on their grid. Click a note to remove it.
+        Bass play notes you place on their grid. Click a block to select it (then the ✕ removes it);
+        click a row's name to shape its sound.
       </p>
 
       {CATEGORY_ORDER.map((cat) => (

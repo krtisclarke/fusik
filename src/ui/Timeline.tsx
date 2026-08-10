@@ -117,9 +117,9 @@ export function Timeline() {
     if (!drag) return;
     if (drag.moved) {
       moveNote(drag.trackId, drag.noteId, drag.trackId, drag.previewBeat);
-    } else {
-      removeNote(drag.trackId, drag.noteId); // a click with no drag = remove
     }
+    // A click with no drag just selects (done on pointer-down). To remove, use
+    // the ✕ on the selected block or the Delete key — no more accidental deletes.
     setDrag(null);
   }
 
@@ -169,10 +169,23 @@ export function Timeline() {
         onPointerDown={(e) => onNotePointerDown(e, track, note)}
         onPointerMove={onNotePointerMove}
         onPointerUp={onNotePointerUp}
-        title="Drag to move · click to remove"
+        title="Click to select · drag to move"
       >
         <span className="vel" style={{ height: `${note.velocity * 100}%` }} />
         {(!pitched || width >= 22) && <span className="emoji">{label}</span>}
+        {selected && (
+          <button
+            className="note-x"
+            title="Remove this block (or press Delete)"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              removeNote(track.id, note.id);
+            }}
+          >
+            ✕
+          </button>
+        )}
       </div>
     );
   }
