@@ -21,6 +21,7 @@ import {
 import { newNoteId, newTrackId } from './ids';
 import type { Instrument, Note, Project, TimeSignature, Track, TrackType } from './types';
 import { PROJECT_FORMAT_VERSION } from './types';
+import { DEFAULT_SCALE_ID, DEFAULT_SCALE_ROOT } from './scales';
 
 export class ProjectLoadError extends Error {
   constructor(message: string) {
@@ -72,19 +73,22 @@ function parseInstrument(value: unknown): Instrument {
 
 function parseNote(value: unknown): Note {
   const v = isObject(value) ? value : {};
-  return {
+  const note: Note = {
     id: asString(v.id, newNoteId()),
     startBeat: Math.max(0, asNumber(v.startBeat, 0)),
     lengthBeats: Math.max(0.0625, asNumber(v.lengthBeats, 1)),
     velocity: clamp(asNumber(v.velocity, DEFAULT_NOTE_VELOCITY), 0, 1),
   };
+  if (typeof v.pitch === 'number' && Number.isFinite(v.pitch)) {
+    note.pitch = clamp(Math.round(v.pitch), 0, 127);
+  }
+  return note;
 }
 
 function parseTrack(value: unknown): Track {
   const v = isObject(value) ? value : {};
   const notes = Array.isArray(v.notes) ? v.notes.map(parseNote) : [];
-  // Only 'drum' exists today; keep the field for forward compatibility.
-  const type: TrackType = 'drum';
+  const type: TrackType = v.type === 'instrument' ? 'instrument' : 'drum';
   return {
     id: asString(v.id, newTrackId()),
     name: asString(v.name, 'Track'),
@@ -131,6 +135,8 @@ export function parseProject(text: string): Project {
     bpm: clamp(Math.round(asNumber(raw.bpm, DEFAULT_BPM)), MIN_BPM, MAX_BPM),
     timeSignature: parseTimeSignature(raw.timeSignature),
     lengthBars: clamp(Math.round(asNumber(raw.lengthBars, DEFAULT_BARS)), MIN_BARS, MAX_BARS),
+    scaleRoot: clamp(Math.round(asNumber(raw.scaleRoot, DEFAULT_SCALE_ROOT)), 0, 11),
+    scaleId: asString(raw.scaleId, DEFAULT_SCALE_ID),
     tracks: raw.tracks.map(parseTrack),
   };
 }

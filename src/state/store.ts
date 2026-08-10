@@ -12,7 +12,8 @@ import * as P from '../model/project';
 import type { Project } from '../model/types';
 import type { SnapId } from '../model/time';
 import { snapBeat } from '../model/time';
-import { getVoice } from '../model/voices';
+import { getVoice, isPitched } from '../model/voices';
+import { pitchLadder } from '../model/scales';
 import {
   canRedo,
   canUndo,
@@ -68,7 +69,7 @@ export interface StoreState {
   toggleMute: (trackId: string) => void;
   toggleSolo: (trackId: string) => void;
   dropVoiceAt: (voiceId: string, beat: number) => void;
-  addNoteAt: (trackId: string, beat: number, velocity?: number) => void;
+  addNoteAt: (trackId: string, beat: number, opts?: { pitch?: number; velocity?: number }) => void;
   removeNote: (trackId: string, noteId: string) => void;
   moveNote: (fromTrackId: string, noteId: string, toTrackId: string, beat: number) => void;
 
@@ -77,6 +78,15 @@ export interface StoreState {
   select: (trackId: string | null, noteId?: string | null) => void;
   audition: (voiceId: string) => void;
   setStatus: (status: string | null) => void;
+}
+
+/** A pleasant default pitch (middle of the instrument's range) for previews and
+ *  freshly-dropped instrument notes. Undefined for drums. */
+function middlePitch(voiceId: string, project: Project): number | undefined {
+  const voice = getVoice(voiceId);
+  if (!voice || !isPitched(voice)) return undefined;
+  const ladder = pitchLadder(voice.baseMidi ?? 60, voice.octaves ?? 2, project.scaleRoot, project.scaleId);
+  return ladder[Math.floor(ladder.length / 2)];
 }
 
 export const useStore = create<StoreState>((set, get) => {
@@ -213,7 +223,8 @@ export const useStore = create<StoreState>((set, get) => {
       const project = get().history.present;
       const snapped = snapBeat(beat, get().snap, project.timeSignature);
       const existing = P.findTrackByVoice(project, voiceId);
-      const note = P.createNote(snapped);
+      const pitch = middlePitch(voiceId, project);
+      const note = P.createNote(snapped, 1, P.DEFAULT_NOTE_VELOCITY, pitch);
       if (existing) {
         apply(P.addNote(project, existing.id, note));
       } else {
@@ -221,16 +232,18 @@ export const useStore = create<StoreState>((set, get) => {
         const withTrack = P.addTrack(project, track);
         apply(P.addNote(withTrack, track.id, note));
       }
-      void engine.audition(voiceId);
+      void engine.audition(voiceId, {}, 0.9, pitch);
     },
 
-    addNoteAt: (trackId, beat, velocity) => {
+    addNoteAt: (trackId, beat, opts) => {
       const project = get().history.present;
       const track = project.tracks.find((t) => t.id === trackId);
       const snapped = snapBeat(beat, get().snap, project.timeSignature);
-      const note = P.createNote(snapped, 1, velocity ?? P.DEFAULT_NOTE_VELOCITY);
+      const note = P.createNote(snapped, 1, opts?.velocity ?? P.DEFAULT_NOTE_VELOCITY, opts?.pitch);
       apply(P.addNote(project, trackId, note));
-      if (track) void engine.audition(track.instrument.voiceId, track.instrument.params, note.velocity);
+      if (track) {
+        void engine.audition(track.instrument.voiceId, track.instrument.params, note.velocity, note.pitch);
+      }
     },
 
     removeNote: (trackId, noteId) => apply(P.removeNote(get().history.present, trackId, noteId)),
@@ -246,7 +259,8 @@ export const useStore = create<StoreState>((set, get) => {
     select: (trackId, noteId = null) => set({ selection: { trackId, noteId } }),
     audition: (voiceId) => {
       const voice = getVoice(voiceId);
-      if (voice) void engine.audition(voiceId);
+      if (!voice) return;
+      void engine.audition(voiceId, {}, 0.9, middlePitch(voiceId, get().history.present));
     },
     setStatus: (status) => set({ status }),
   };

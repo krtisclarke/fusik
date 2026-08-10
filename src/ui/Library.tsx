@@ -1,12 +1,18 @@
 import { useStore } from '../state/store';
 import { VOICE_CATALOG, type VoiceCategory, type VoiceDef } from '../model/voices';
 
-const CATEGORY_ORDER: VoiceCategory[] = ['Drums', 'Cymbals', 'Percussion'];
+const CATEGORY_ORDER: VoiceCategory[] = ['Drums', 'Bass', 'Keys', 'Cymbals', 'Percussion'];
 
 export const VOICE_DRAG_TYPE = 'application/x-beatbox-voice';
 
 function groupByCategory(): Record<VoiceCategory, VoiceDef[]> {
-  const groups = { Drums: [], Cymbals: [], Percussion: [] } as Record<VoiceCategory, VoiceDef[]>;
+  const groups: Record<VoiceCategory, VoiceDef[]> = {
+    Drums: [],
+    Bass: [],
+    Keys: [],
+    Cymbals: [],
+    Percussion: [],
+  };
   for (const v of VOICE_CATALOG) groups[v.category].push(v);
   return groups;
 }
@@ -19,8 +25,8 @@ export function Library() {
     <div className="library">
       <h2>Sounds</h2>
       <p className="lib-hint">
-        Drag a sound onto the timeline to add it. Click a sound to hear it. Click an empty spot in a
-        row to place a hit; click a hit to remove it.
+        Drag a sound onto the timeline, or click it to hear it. Drums drop beats; Piano, Synth and
+        Bass play notes you place on their grid. Click a note to remove it.
       </p>
 
       {CATEGORY_ORDER.map((cat) => (

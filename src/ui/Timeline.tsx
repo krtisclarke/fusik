@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import type { Note, Track } from '../model/types';
-import { beatsPerBar } from '../model/time';
-import { snapBeat } from '../model/time';
+import { beatsPerBar, snapBeat } from '../model/time';
 import { getVoice } from '../model/voices';
-import { PX_PER_BEAT, HEADER_W, beatToX, xToBeat } from './layout';
+import { pitchLadder, midiToLetter } from '../model/scales';
+import { clamp } from '../model/project';
+import { PX_PER_BEAT, ROW_H, PITCH_ROW_H, HEADER_W, beatToX, xToBeat } from './layout';
 import { Playhead } from './Playhead';
 import { VOICE_DRAG_TYPE } from './Library';
 
@@ -15,6 +16,20 @@ interface DragState {
   startX: number;
   previewBeat: number;
   moved: boolean;
+}
+
+/** Index of the ladder pitch closest to `pitch` (for laying out loaded notes). */
+function nearestIndex(pitches: number[], pitch: number): number {
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < pitches.length; i++) {
+    const d = Math.abs(pitches[i] - pitch);
+    if (d < bestDist) {
+      bestDist = d;
+      best = i;
+    }
+  }
+  return best;
 }
 
 export function Timeline() {
@@ -42,17 +57,36 @@ export function Timeline() {
 
   const noteCount = project.tracks.reduce((n, t) => n + t.notes.length, 0);
 
-  const gridBackground = {
-    backgroundImage: `repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px ${PX_PER_BEAT}px), repeating-linear-gradient(90deg, var(--line-strong) 0 2px, transparent 2px ${barWidth}px)`,
-    width: gridWidth,
-  };
+  const verticalLines = `repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px ${PX_PER_BEAT}px), repeating-linear-gradient(90deg, var(--line-strong) 0 2px, transparent 2px ${barWidth}px)`;
+  const horizontalLines = `repeating-linear-gradient(0deg, var(--line) 0 1px, transparent 1px ${PITCH_ROW_H}px)`;
+
+  /** The scale pitches an instrument track offers, or null for drum tracks. */
+  function pitchesFor(track: Track): number[] | null {
+    if (track.type !== 'instrument') return null;
+    const voice = getVoice(track.instrument.voiceId);
+    return pitchLadder(voice?.baseMidi ?? 60, voice?.octaves ?? 2, project.scaleRoot, project.scaleId);
+  }
+
+  function laneHeight(track: Track): number {
+    const pitches = pitchesFor(track);
+    return pitches ? pitches.length * PITCH_ROW_H : ROW_H;
+  }
+
+  const totalHeight = project.tracks.reduce((h, t) => h + laneHeight(t), 0);
 
   // ---- placing / removing notes -----------------------------------------
 
   function onLanePointerDown(e: React.PointerEvent, track: Track) {
     if (e.target !== e.currentTarget) return; // ignore presses that land on a note
     const beat = xToBeat(e.nativeEvent.offsetX);
-    addNoteAt(track.id, beat);
+    const pitches = pitchesFor(track);
+    if (pitches) {
+      const rowFromTop = clamp(Math.floor(e.nativeEvent.offsetY / PITCH_ROW_H), 0, pitches.length - 1);
+      const pitch = pitches[pitches.length - 1 - rowFromTop];
+      addNoteAt(track.id, beat, { pitch });
+    } else {
+      addNoteAt(track.id, beat);
+    }
   }
 
   // ---- dragging a note in time ------------------------------------------
@@ -101,6 +135,48 @@ export function Timeline() {
     dropVoiceAt(voiceId, Math.max(0, xToBeat(gridX)));
   }
 
+  // ---- rendering a single note ------------------------------------------
+
+  function renderNote(track: Track, note: Note, pitches: number[] | null) {
+    const isDragging = drag?.noteId === note.id;
+    const beat = isDragging ? drag!.previewBeat : note.startBeat;
+    const selected = selection.noteId === note.id;
+    const width = Math.max(10, beatToX(note.lengthBeats) - 2);
+
+    const style: React.CSSProperties = {
+      left: beatToX(beat),
+      width,
+      background: track.color,
+      opacity: isDragging ? 0.8 : 1,
+    };
+
+    let label = getVoice(track.instrument.voiceId)?.emoji ?? '●';
+    let pitched = false;
+    if (pitches && note.pitch != null) {
+      pitched = true;
+      const idx = nearestIndex(pitches, note.pitch);
+      const rowFromTop = pitches.length - 1 - idx;
+      style.top = rowFromTop * PITCH_ROW_H + 1;
+      style.height = PITCH_ROW_H - 2;
+      label = midiToLetter(note.pitch);
+    }
+
+    return (
+      <div
+        key={note.id}
+        className={`note ${pitched ? 'pitched' : ''} ${selected ? 'sel' : ''}`}
+        style={style}
+        onPointerDown={(e) => onNotePointerDown(e, track, note)}
+        onPointerMove={onNotePointerMove}
+        onPointerUp={onNotePointerUp}
+        title="Drag to move · click to remove"
+      >
+        <span className="vel" style={{ height: `${note.velocity * 100}%` }} />
+        {(!pitched || width >= 22) && <span className="emoji">{label}</span>}
+      </div>
+    );
+  }
+
   return (
     <div className="timeline">
       <div className="timeline-scroll">
@@ -126,85 +202,83 @@ export function Timeline() {
           }}
           onDrop={onDrop}
         >
-          {project.tracks.map((track) => (
-            <div className="lane" key={track.id}>
-              <div className="lane-header">
-                <div className="top">
-                  <span className="swatch" style={{ background: track.color }} />
-                  <span className="tname">{track.name}</span>
-                  <button
-                    className="mini del"
-                    title="Delete track"
-                    onClick={() => removeTrack(track.id)}
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div className="controls">
-                  <button
-                    className={`mini ${track.muted ? 'on-m' : ''}`}
-                    title="Mute"
-                    onClick={() => toggleMute(track.id)}
-                  >
-                    M
-                  </button>
-                  <button
-                    className={`mini ${track.solo ? 'on-s' : ''}`}
-                    title="Solo"
-                    onClick={() => toggleSolo(track.id)}
-                  >
-                    S
-                  </button>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={track.gain}
-                    title="Volume"
-                    onChange={(e) => setTrackGain(track.id, Number(e.target.value))}
-                  />
-                </div>
-              </div>
-
-              <div
-                className="lane-grid"
-                style={gridBackground}
-                onPointerDown={(e) => onLanePointerDown(e, track)}
-              >
-                {track.notes.map((note) => {
-                  const isDragging = drag?.noteId === note.id;
-                  const beat = isDragging ? drag!.previewBeat : note.startBeat;
-                  const selected = selection.noteId === note.id;
-                  return (
-                    <div
-                      key={note.id}
-                      className={`note ${selected ? 'sel' : ''}`}
-                      style={{
-                        left: beatToX(beat),
-                        width: Math.max(10, beatToX(note.lengthBeats) - 2),
-                        background: track.color,
-                        opacity: isDragging ? 0.8 : 1,
-                      }}
-                      onPointerDown={(e) => onNotePointerDown(e, track, note)}
-                      onPointerMove={onNotePointerMove}
-                      onPointerUp={onNotePointerUp}
-                      title="Drag to move · click to remove"
+          {project.tracks.map((track) => {
+            const pitches = pitchesFor(track);
+            const laneH = laneHeight(track);
+            return (
+              <div className="lane" key={track.id} style={{ height: laneH }}>
+                <div className="lane-header">
+                  <div className="top">
+                    <span className="swatch" style={{ background: track.color }} />
+                    <span className="tname">{track.name}</span>
+                    <button className="mini del" title="Delete track" onClick={() => removeTrack(track.id)}>
+                      ✕
+                    </button>
+                  </div>
+                  <div className="controls">
+                    <button
+                      className={`mini ${track.muted ? 'on-m' : ''}`}
+                      title="Mute"
+                      onClick={() => toggleMute(track.id)}
                     >
-                      <span className="vel" style={{ height: `${note.velocity * 100}%` }} />
-                      <span className="emoji">{getVoice(track.instrument.voiceId)?.emoji ?? '●'}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+                      M
+                    </button>
+                    <button
+                      className={`mini ${track.solo ? 'on-s' : ''}`}
+                      title="Solo"
+                      onClick={() => toggleSolo(track.id)}
+                    >
+                      S
+                    </button>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={track.gain}
+                      title="Volume"
+                      onChange={(e) => setTrackGain(track.id, Number(e.target.value))}
+                    />
+                  </div>
+                </div>
 
-          <Playhead trackCount={project.tracks.length} />
+                <div
+                  className="lane-grid"
+                  style={{
+                    backgroundImage: pitches ? `${verticalLines}, ${horizontalLines}` : verticalLines,
+                    width: gridWidth,
+                  }}
+                  onPointerDown={(e) => onLanePointerDown(e, track)}
+                >
+                  {/* instrument pitch guides: highlight root rows, label every row */}
+                  {pitches?.map((p, i) => {
+                    const rowFromTop = pitches.length - 1 - i;
+                    const y = rowFromTop * PITCH_ROW_H;
+                    const isRoot = (((p % 12) + 12) % 12) === project.scaleRoot;
+                    return (
+                      <Fragment key={p}>
+                        {isRoot && <div className="rootrow" style={{ top: y, height: PITCH_ROW_H }} />}
+                        <div
+                          className="pitchlabel"
+                          style={{ top: y, height: PITCH_ROW_H, lineHeight: `${PITCH_ROW_H}px` }}
+                        >
+                          {midiToLetter(p)}
+                        </div>
+                      </Fragment>
+                    );
+                  })}
+
+                  {track.notes.map((note) => renderNote(track, note, pitches))}
+                </div>
+              </div>
+            );
+          })}
+
+          <Playhead height={totalHeight} />
 
           {noteCount === 0 && (
             <div className="empty-stage">
-              Drag a sound from the left onto a row — or click an empty spot in a row to drop a beat.
+              Drag a sound or instrument from the left onto a row — or click an empty spot in a row.
             </div>
           )}
         </div>

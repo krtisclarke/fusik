@@ -15,13 +15,13 @@ export interface TimeSignature {
   denominator: number;
 }
 
-/** For now every track is a synthesized drum voice. Instrument/audio come later. */
-export type TrackType = 'drum';
+/** Drum tracks trigger a fixed sound; instrument tracks play pitched notes. */
+export type TrackType = 'drum' | 'instrument';
 
 /**
- * A single hit on the timeline: "play this track's sound, here, this hard."
- * Pitch is intentionally absent until melodic instruments arrive (Phase 4);
- * drums don't need it, and adding unused fields now would be dishonest.
+ * A single note on the timeline: "play this track's sound, here, this long,
+ * this hard." `pitch` is a MIDI note number (60 = middle C); drum tracks ignore
+ * it, melodic instrument tracks use it.
  */
 export interface Note {
   id: string;
@@ -31,6 +31,8 @@ export interface Note {
   lengthBeats: number;
   /** How hard the note is hit, 0..1. Drives loudness and tone. */
   velocity: number;
+  /** MIDI note number for melodic tracks. Absent/ignored for drums. */
+  pitch?: number;
 }
 
 /**
@@ -67,5 +69,9 @@ export interface Project {
   timeSignature: TimeSignature;
   /** Length of the song (and the loop region) in bars. */
   lengthBars: number;
+  /** Root of the musical scale, as a pitch class 0..11 (0 = C). */
+  scaleRoot: number;
+  /** Which scale melodic notes snap to, e.g. 'majorPentatonic'. */
+  scaleId: string;
   tracks: Track[];
 }

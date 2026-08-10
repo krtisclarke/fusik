@@ -9,7 +9,8 @@
 import { newNoteId, newTrackId } from './ids';
 import type { Instrument, Note, Project, TimeSignature, Track } from './types';
 import { PROJECT_FORMAT_VERSION } from './types';
-import { getVoice } from './voices';
+import { getVoice, isPitched } from './voices';
+import { DEFAULT_SCALE_ID, DEFAULT_SCALE_ROOT } from './scales';
 
 export const MIN_BPM = 20;
 export const MAX_BPM = 300;
@@ -27,15 +28,16 @@ export function clamp(value: number, min: number, max: number): number {
 /** Build a fresh track wired to a given voice, with sensible presentation. */
 export function createTrackForVoice(voiceId: string): Track {
   const voice = getVoice(voiceId);
+  const pitched = isPitched(voice);
   const instrument: Instrument = { voiceId, params: {} };
   return {
     id: newTrackId(),
     name: voice?.label ?? voiceId,
-    type: 'drum',
+    type: pitched ? 'instrument' : 'drum',
     color: voice?.color ?? '#9aa0aa',
     instrument,
     notes: [],
-    gain: 0.85,
+    gain: pitched ? 0.7 : 0.85,
     muted: false,
     solo: false,
   };
@@ -53,17 +55,26 @@ export function createDefaultProject(name = 'My Song'): Project {
     bpm: DEFAULT_BPM,
     timeSignature: { ...DEFAULT_TIME_SIGNATURE },
     lengthBars: DEFAULT_BARS,
+    scaleRoot: DEFAULT_SCALE_ROOT,
+    scaleId: DEFAULT_SCALE_ID,
     tracks: [createTrackForVoice('kick'), createTrackForVoice('snare'), createTrackForVoice('hihat')],
   };
 }
 
-export function createNote(startBeat: number, lengthBeats = 1, velocity = DEFAULT_NOTE_VELOCITY): Note {
-  return {
+export function createNote(
+  startBeat: number,
+  lengthBeats = 1,
+  velocity = DEFAULT_NOTE_VELOCITY,
+  pitch?: number,
+): Note {
+  const note: Note = {
     id: newNoteId(),
     startBeat: Math.max(0, startBeat),
     lengthBeats: Math.max(0.0625, lengthBeats),
     velocity: clamp(velocity, 0, 1),
   };
+  if (pitch != null) note.pitch = Math.round(pitch);
+  return note;
 }
 
 // ---- Track-level edits ---------------------------------------------------

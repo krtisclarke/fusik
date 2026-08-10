@@ -8,7 +8,10 @@
 // Every sound here is synthesized from scratch, so there are zero sample
 // licensing concerns and every parameter is something a child can tweak.
 
-export type VoiceCategory = 'Drums' | 'Cymbals' | 'Percussion';
+export type VoiceCategory = 'Drums' | 'Bass' | 'Keys' | 'Cymbals' | 'Percussion';
+
+/** Drum voices play a fixed sound; pitched voices play melodic notes. */
+export type VoiceKind = 'drum' | 'pitched';
 
 export interface VoiceDef {
   id: string;
@@ -17,8 +20,18 @@ export interface VoiceDef {
   category: VoiceCategory;
   /** Tint for this voice's clips and library tile. */
   color: string;
+  /** 'drum' (default) or 'pitched'. */
+  kind?: VoiceKind;
+  /** For pitched voices: lowest octave (MIDI) the note-grid starts from. */
+  baseMidi?: number;
+  /** For pitched voices: how many octaves of the scale the note-grid spans. */
+  octaves?: number;
   /** Base parameters for the synth. Overridable per track. */
   defaults: Record<string, number>;
+}
+
+export function isPitched(voice: VoiceDef | undefined): boolean {
+  return voice?.kind === 'pitched';
 }
 
 export const VOICE_CATALOG: VoiceDef[] = [
@@ -117,6 +130,52 @@ export const VOICE_CATALOG: VoiceDef[] = [
     category: 'Percussion',
     color: '#c084fc',
     defaults: { tune: 420, decay: 0.22, gain: 0.6 },
+  },
+
+  // ---- Pitched instruments (wave: 0=sine 1=triangle 2=saw 3=square) ----
+  {
+    id: 'piano',
+    label: 'Piano',
+    emoji: '🎹',
+    category: 'Keys',
+    color: '#60a5fa',
+    kind: 'pitched',
+    baseMidi: 60,
+    octaves: 2,
+    defaults: { wave: 1, attack: 0.005, decay: 0.5, sustain: 0.0, release: 0.3, cutoff: 6000, detune: 5, gain: 0.5 },
+  },
+  {
+    id: 'synth',
+    label: 'Synth',
+    emoji: '🎚️',
+    category: 'Keys',
+    color: '#a855f7',
+    kind: 'pitched',
+    baseMidi: 60,
+    octaves: 2,
+    defaults: { wave: 2, attack: 0.02, decay: 0.25, sustain: 0.6, release: 0.25, cutoff: 3500, detune: 9, gain: 0.42 },
+  },
+  {
+    id: 'bells',
+    label: 'Bells',
+    emoji: '🛎️',
+    category: 'Keys',
+    color: '#f0abfc',
+    kind: 'pitched',
+    baseMidi: 72,
+    octaves: 2,
+    defaults: { wave: 0, attack: 0.002, decay: 0.9, sustain: 0.0, release: 0.5, cutoff: 9000, detune: 0, gain: 0.4 },
+  },
+  {
+    id: 'bass',
+    label: 'Bass',
+    emoji: '🎸',
+    category: 'Bass',
+    color: '#34d399',
+    kind: 'pitched',
+    baseMidi: 36,
+    octaves: 2,
+    defaults: { wave: 2, attack: 0.005, decay: 0.2, sustain: 0.5, release: 0.14, cutoff: 1500, detune: 4, gain: 0.55 },
   },
 ];
 

@@ -234,9 +234,13 @@ export class AudioEngine {
 
       for (const note of track.notes) {
         if (period !== Infinity && note.startBeat >= period) continue;
+        const durationSec = beatsToSeconds(note.lengthBeats, bpm);
         this.forEachOccurrence(lo, hi, note.startBeat, period, (absBeat) => {
           const when = this.timeAtBeat(absBeat, bpm);
-          trigger(ctx, node, Math.max(when, now), params, note.velocity);
+          trigger(ctx, node, Math.max(when, now), params, note.velocity, {
+            midi: note.pitch,
+            durationSec,
+          });
         });
       }
     }
@@ -267,13 +271,19 @@ export class AudioEngine {
 
   // ---- one-shot preview --------------------------------------------------
 
-  /** Play a voice immediately — used for click/drag "hear it now" feedback. */
-  async audition(voiceId: string, overrides: Record<string, number> = {}, velocity = 0.9): Promise<void> {
+  /** Play a voice immediately — used for click/drag "hear it now" feedback.
+   *  `midi` sets the pitch for melodic voices (ignored by drums). */
+  async audition(
+    voiceId: string,
+    overrides: Record<string, number> = {},
+    velocity = 0.9,
+    midi?: number,
+  ): Promise<void> {
     const ctx = await this.ensureRunning();
     if (!this.masterGain) return;
     const trigger = getTrigger(voiceId);
     const params = resolveParams(voiceId, overrides);
-    trigger(ctx, this.masterGain, ctx.currentTime + 0.02, params, velocity);
+    trigger(ctx, this.masterGain, ctx.currentTime + 0.02, params, velocity, { midi, durationSec: 0.5 });
   }
 
   dispose(): void {

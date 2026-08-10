@@ -4,9 +4,10 @@ A music-creation studio for curious kids — drag sounds onto a timeline, build 
 beat, tweak it, and hear the result instantly. Built as a cross-platform desktop
 app (Windows and macOS) using web technology wrapped in Electron.
 
-> **Status:** Phase 1 complete — a working timeline, transport, synthesized drum
-> kit, save/load, and undo/redo. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
-> for the full picture and roadmap.
+> **Status:** Working timeline, transport, a synthesized drum kit **and melodic
+> instruments** (piano, synth, bells, bass) with scale-snapped melodies, plus
+> save/load and undo/redo. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the
+> full picture and roadmap.
 
 ## Run it (development)
 
@@ -33,7 +34,10 @@ npm run package:mac   # build a macOS app bundle
 
 ## What you can do right now
 
-- Click an empty spot in a track row to drop a beat; click a beat to remove it.
+- **Drums:** click an empty spot in a track row to drop a beat; click a beat to remove it.
+- **Instruments:** drop a Piano, Synth, Bells or Bass in, then click its note-grid to
+  write a melody or bassline. The grid only offers notes from a musical scale, so
+  whatever you place sounds right together.
 - Drag a sound from the left onto the timeline, or click it to hear it.
 - Press **Space** to play/stop. The song loops by default.
 - Change the tempo, mute/solo/volume per track, and snap to a musical grid.

@@ -7,7 +7,15 @@
 // to a tiny epsilon instead. Attacks are near-instant (a few ms) to keep drums
 // punchy without the click of a truly instantaneous jump.
 
+import { midiToFreq } from '../model/scales';
+
 const EPS = 0.0001;
+
+/** Extra per-note info for pitched voices (drums ignore it). */
+export interface NotePlayback {
+  midi?: number;
+  durationSec?: number;
+}
 
 /** A voice trigger: schedule this sound at `time`, played `velocity` hard. */
 export type TriggerFn = (
@@ -16,7 +24,11 @@ export type TriggerFn = (
   time: number,
   params: Record<string, number>,
   velocity: number,
+  note?: NotePlayback,
 ) => void;
+
+/** Oscillator waveforms, indexed by the numeric `wave` parameter. */
+const WAVES: OscillatorType[] = ['sine', 'triangle', 'sawtooth', 'square'];
 
 // ---- shared white-noise buffer (one per context, reused) -----------------
 
@@ -149,6 +161,71 @@ function blip(
   osc.stop(time + opts.decay + 0.05);
 }
 
+/**
+ * A melodic voice: two detuned oscillators through a low-pass filter, shaped by
+ * a real ADSR envelope. Held notes sustain for their length then release; short
+ * notes pluck. This is the same shape a "real" subtractive synth uses, kept
+ * small. Parameters (all overridable): wave, attack, decay, sustain, release,
+ * cutoff, detune, gain.
+ */
+function pitchedSynth(
+  ctx: AudioContext,
+  dest: AudioNode,
+  time: number,
+  p: Record<string, number>,
+  vel: number,
+  note: NotePlayback | undefined,
+) {
+  const midi = note?.midi ?? 60;
+  const durationSec = Math.max(0.05, note?.durationSec ?? 0.4);
+  const freq = midiToFreq(midi);
+
+  const wave = WAVES[Math.round(p.wave ?? 1)] ?? 'triangle';
+  const attack = Math.max(0.001, p.attack ?? 0.01);
+  const decay = Math.max(0.01, p.decay ?? 0.2);
+  const sustain = Math.min(1, Math.max(0, p.sustain ?? 0.5));
+  const release = Math.max(0.02, p.release ?? 0.2);
+
+  const osc1 = ctx.createOscillator();
+  osc1.type = wave;
+  osc1.frequency.value = freq;
+  const osc2 = ctx.createOscillator();
+  osc2.type = wave;
+  osc2.frequency.value = freq;
+  osc2.detune.value = p.detune ?? 0;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = p.cutoff ?? 4000;
+  filter.Q.value = 0.7;
+
+  const amp = ctx.createGain();
+  const peak = Math.max(0.0002, (p.gain ?? 0.5) * vel);
+  const susLevel = Math.max(0.0002, peak * sustain);
+
+  // ADSR, with times kept strictly increasing so very short notes stay valid.
+  const attackEnd = time + attack;
+  const gateOff = Math.max(time + durationSec, attackEnd + 0.02);
+  const decayEnd = Math.min(attackEnd + decay, gateOff);
+
+  amp.gain.setValueAtTime(EPS, time);
+  amp.gain.linearRampToValueAtTime(peak, attackEnd);
+  amp.gain.exponentialRampToValueAtTime(susLevel, decayEnd);
+  amp.gain.setValueAtTime(susLevel, gateOff);
+  amp.gain.exponentialRampToValueAtTime(EPS, gateOff + release);
+
+  osc1.connect(filter);
+  osc2.connect(filter);
+  filter.connect(amp);
+  amp.connect(dest);
+
+  const stopAt = gateOff + release + 0.05;
+  osc1.start(time);
+  osc2.start(time);
+  osc1.stop(stopAt);
+  osc2.stop(stopAt);
+}
+
 // ---- the voices ----------------------------------------------------------
 
 export const VOICE_SYNTHS: Record<string, TriggerFn> = {
@@ -241,6 +318,13 @@ export const VOICE_SYNTHS: Record<string, TriggerFn> = {
   perc: (ctx, dest, time, p, vel) => {
     blip(ctx, dest, time, { freq: p.tune ?? 420, type: 'triangle', decay: p.decay ?? 0.22, gain: p.gain ?? 0.6 }, vel);
   },
+
+  // Pitched instruments all share the subtractive synth, differing only in
+  // their default parameters (waveform, envelope, filter) from the catalog.
+  piano: pitchedSynth,
+  synth: pitchedSynth,
+  bells: pitchedSynth,
+  bass: pitchedSynth,
 };
 
 /** Look up a voice's trigger, falling back to a plain blip for unknown ids. */

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { serializeProject, parseProject, ProjectLoadError } from './serialization';
-import { createDefaultProject, createNote, addNote } from './project';
+import { createDefaultProject, createNote, addNote, createTrackForVoice, addTrack } from './project';
 import { PROJECT_FORMAT_VERSION } from './types';
 
 describe('project serialization', () => {
@@ -17,6 +17,20 @@ describe('project serialization', () => {
     const json = serializeProject(createDefaultProject());
     expect(json).toContain('\n'); // pretty-printed
     expect(JSON.parse(json).formatVersion).toBe(PROJECT_FORMAT_VERSION);
+  });
+
+  it('round-trips a melodic instrument track with pitched notes', () => {
+    let project = createDefaultProject('Tune');
+    const piano = createTrackForVoice('piano');
+    project = addTrack(project, piano);
+    project = addNote(project, piano.id, createNote(0, 1, 0.8, 67));
+    project = addNote(project, piano.id, createNote(1, 2, 0.6, 72));
+
+    const restored = parseProject(serializeProject(project));
+    expect(restored).toEqual(project);
+    const restoredPiano = restored.tracks.find((t) => t.id === piano.id)!;
+    expect(restoredPiano.type).toBe('instrument');
+    expect(restoredPiano.notes.map((n) => n.pitch)).toEqual([67, 72]);
   });
 });
 

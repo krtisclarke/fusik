@@ -106,9 +106,23 @@ All sounds are synthesized (`audio/synth.ts`) from three primitives:
   cymbals, claps, shaker).
 - **blip** — a short tuned oscillator (cowbell, rim, percussion).
 
-Each of the 12 voices in the catalog (`model/voices.ts`) is one of these
-configured by a small set of parameters (tune, decay, tone, drive, gain, …).
-Those same parameters are what the Phase 3 sound editor will expose to the child.
+Each drum voice in the catalog (`model/voices.ts`) is one of these configured by
+a small set of parameters (tune, decay, tone, drive, gain, …). Those same
+parameters are what the Phase 3 sound editor will expose to the child.
+
+**Melodic instruments** (piano, synth, bells, bass) share one pitched voice
+(`pitchedSynth`): two detuned oscillators through a low-pass filter, shaped by a
+real ADSR envelope, so held notes sustain for their length and short notes
+pluck. They differ only by their default parameters (waveform, envelope, filter,
+octave range). A note's MIDI pitch becomes the oscillator frequency; its length
+becomes the envelope gate.
+
+**Scale-snapping (the kid-friendly bit).** A melodic track doesn't offer all 12
+chromatic notes — only the notes of the project's scale (`model/scales.ts`),
+default C major pentatonic. The note-grid's rows *are* the scale, so a child
+places notes freely and they always sound good together; "wrong" notes simply
+aren't on the grid. This is what lets an 8-year-old build real melodies without
+music theory getting in the way.
 
 Verified non-silent by rendering each voice through an `OfflineAudioContext` and
 measuring peak/RMS (all voices produce real signal; kick is fullest at ~1.0
@@ -127,16 +141,27 @@ Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v1):
   "bpm": 120,
   "timeSignature": { "numerator": 4, "denominator": 4 },
   "lengthBars": 4,
+  "scaleRoot": 0,              // 0 = C; the root of the melodic scale
+  "scaleId": "majorPentatonic",
   "tracks": [
     {
       "id": "trk_…", "name": "Kick", "type": "drum", "color": "#ef4444",
       "instrument": { "voiceId": "kick", "params": {} },
       "gain": 0.85, "muted": false, "solo": false,
       "notes": [ { "id": "note_…", "startBeat": 0, "lengthBeats": 1, "velocity": 0.8 } ]
+    },
+    {
+      "id": "trk_…", "name": "Piano", "type": "instrument", "color": "#60a5fa",
+      "instrument": { "voiceId": "piano", "params": {} },
+      "gain": 0.7, "muted": false, "solo": false,
+      "notes": [ { "id": "note_…", "startBeat": 0, "lengthBeats": 1, "velocity": 0.8, "pitch": 72 } ]
     }
   ]
 }
 ```
+
+- `type` is `"drum"` or `"instrument"`. Instrument notes carry a `pitch` (MIDI
+  number); drum notes omit it.
 
 - `instrument.params` holds **overrides only**; empty means "use the voice's
   built-in defaults". This is where per-track sound design will live.
@@ -205,7 +230,9 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Microphone recording | ⬜ | Button present but disabled (Phase 5). |
 | Step sequencer, humanize, per-note velocity | ⬜ | Phase 2. |
 | Sound editor (ADSR, filters, effects) | ⬜ | Phase 3. |
-| Melodic instruments, synth, keyboard, MIDI | ⬜ | Phase 4. |
+| Melodic instruments (piano, synth, bells, bass) | ✅ | Pitched subtractive synth: 2 oscillators, ADSR, low-pass filter. |
+| Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
+| Playable keyboard + MIDI input | ⬜ | Play live, not just place notes — the natural next step. |
 | Sections / arrangement / automation | ⬜ | Phase 6. |
 | WAV/MP3 export | ⬜ | Phase 7 (via OfflineAudioContext). |
 
@@ -231,9 +258,10 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 
 ## 9. Known limitations
 
-- Notes can currently be moved in **time** but not dragged between rows (change a
-  hit's drum by removing it and dropping a new one). Cross-lane drag is a planned
-  nicety.
+- Notes can be moved in **time** by dragging, but not yet dragged vertically to
+  change pitch, nor between tracks — to change a note's pitch, remove it and click
+  the row you want. Note length is fixed at one beat (no resize yet). Both are
+  planned niceties.
 - Packaging a signed Windows installer requires a Windows machine or CI; the app
   runs from source on macOS today.
 - The dev-only `window.beatbox` debug handle exists in development builds only
@@ -243,8 +271,10 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 
 ## 10. Roadmap
 
-Phases 2–7 follow the brief: step sequencer & humanize (2), sound editor with
-ADSR/filters/effects and waveform views (3), melodic instruments + synth +
-keyboard + MIDI (4), microphone recording with non-destructive editing (5),
-song sections & arrangement & automation (6), and polish — onboarding, more
-voices, accessibility, export, autosave (7).
+Melodic instruments (originally Phase 4) were brought forward and are now in.
+Remaining, roughly following the brief: a playable on-screen/MIDI keyboard so
+notes can be performed live, not just placed; step sequencer & humanize; the
+sound editor (ADSR/filters/effects with waveform views — the instrument
+parameters already exist, they just need UI); microphone recording; song
+sections, arrangement & automation; and polish — onboarding, more voices,
+accessibility, export, autosave.
