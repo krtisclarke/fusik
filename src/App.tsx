@@ -3,6 +3,7 @@ import { useStore } from './state/store';
 import { Transport } from './ui/Transport';
 import { Library } from './ui/Library';
 import { Timeline } from './ui/Timeline';
+import { SoundEditor } from './ui/SoundEditor';
 import { getDesktop } from './platform/files';
 
 function isTypingTarget(el: EventTarget | null): boolean {
@@ -96,6 +97,7 @@ export function App() {
       <div className="stage">
         <Timeline />
       </div>
+      <SoundEditor />
       {status && <div className="toast">{status}</div>}
     </div>
   );

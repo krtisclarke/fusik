@@ -10,6 +10,8 @@ import {
   setLengthBars,
   toggleTrackMuted,
   findTrackByVoice,
+  setTrackParam,
+  resetTrackParams,
 } from './project';
 
 describe('default project', () => {
@@ -83,5 +85,31 @@ describe('lookups', () => {
     const p = createDefaultProject();
     expect(findTrackByVoice(p, 'snare')?.instrument.voiceId).toBe('snare');
     expect(findTrackByVoice(p, 'nope')).toBeUndefined();
+  });
+});
+
+describe('sound parameter edits', () => {
+  it('sets an override without mutating the original', () => {
+    const p = createDefaultProject();
+    const id = p.tracks[0].id;
+    const p2 = setTrackParam(p, id, 'decay', 0.9);
+    expect(p.tracks[0].instrument.params).toEqual({}); // original untouched
+    expect(p2.tracks[0].instrument.params.decay).toBe(0.9);
+  });
+
+  it('keeps existing overrides when setting another', () => {
+    let p = createDefaultProject();
+    const id = p.tracks[0].id;
+    p = setTrackParam(p, id, 'decay', 0.9);
+    p = setTrackParam(p, id, 'gain', 0.5);
+    expect(p.tracks[0].instrument.params).toEqual({ decay: 0.9, gain: 0.5 });
+  });
+
+  it('resets all overrides back to defaults', () => {
+    let p = createDefaultProject();
+    const id = p.tracks[0].id;
+    p = setTrackParam(p, id, 'decay', 0.9);
+    p = resetTrackParams(p, id);
+    expect(p.tracks[0].instrument.params).toEqual({});
   });
 });

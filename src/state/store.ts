@@ -19,7 +19,9 @@ import {
   canUndo,
   commit,
   createHistory,
+  DEFAULT_HISTORY_LIMIT,
   redo,
+  replacePresent,
   undo,
   type History,
 } from './history';
@@ -68,6 +70,11 @@ export interface StoreState {
   setTrackGain: (trackId: string, gain: number) => void;
   toggleMute: (trackId: string) => void;
   toggleSolo: (trackId: string) => void;
+  /** Live-update one sound parameter while a slider is being dragged (no undo entry yet). */
+  previewTrackParam: (trackId: string, key: string, value: number) => void;
+  /** Finalize a slider drag into a single undo entry. */
+  commitTrackParamEdit: () => void;
+  resetTrackParams: (trackId: string) => void;
   dropVoiceAt: (voiceId: string, beat: number) => void;
   addNoteAt: (trackId: string, beat: number, opts?: { pitch?: number; velocity?: number }) => void;
   removeNote: (trackId: string, noteId: string) => void;
@@ -77,8 +84,15 @@ export interface StoreState {
   setSnap: (snap: SnapId) => void;
   select: (trackId: string | null, noteId?: string | null) => void;
   audition: (voiceId: string) => void;
+  /** Preview a track using its current tweaked sound (for the Sound Editor). */
+  auditionTrack: (trackId: string) => void;
   setStatus: (status: string | null) => void;
 }
+
+// The project state captured at the start of a slider drag, so the whole drag
+// collapses into one undo entry when the user lets go. Transient UI state, so it
+// lives outside the reactive store.
+let paramEditBaseline: Project | null = null;
 
 /** A pleasant default pitch (middle of the instrument's range) for previews and
  *  freshly-dropped instrument notes. Undefined for drums. */
@@ -116,6 +130,7 @@ export const useStore = create<StoreState>((set, get) => {
     // ---- lifecycle -------------------------------------------------------
     newProject: () => {
       engine.stop();
+      paramEditBaseline = null;
       const project = P.createDefaultProject();
       const history = createHistory(project);
       engine.setProject(project);
@@ -132,6 +147,7 @@ export const useStore = create<StoreState>((set, get) => {
 
     loadProject: (project) => {
       engine.stop();
+      paramEditBaseline = null;
       const history = createHistory(project);
       engine.setProject(project);
       set({
@@ -165,11 +181,13 @@ export const useStore = create<StoreState>((set, get) => {
 
     // ---- history ---------------------------------------------------------
     undo: () => {
+      paramEditBaseline = null;
       const history = undo(get().history);
       engine.setProject(history.present);
       set({ history, project: history.present, canUndo: canUndo(history), canRedo: canRedo(history) });
     },
     redo: () => {
+      paramEditBaseline = null;
       const history = redo(get().history);
       engine.setProject(history.present);
       set({ history, project: history.present, canUndo: canUndo(history), canRedo: canRedo(history) });
@@ -218,6 +236,30 @@ export const useStore = create<StoreState>((set, get) => {
     toggleMute: (trackId) => apply(P.toggleTrackMuted(get().history.present, trackId)),
     toggleSolo: (trackId) => apply(P.toggleTrackSolo(get().history.present, trackId)),
 
+    previewTrackParam: (trackId, key, value) => {
+      const s = get();
+      if (!paramEditBaseline) paramEditBaseline = s.history.present;
+      const next = P.setTrackParam(s.history.present, trackId, key, value);
+      const history = replacePresent(s.history, next);
+      engine.setProject(next); // heard live if the song is playing
+      set({ history, project: next });
+    },
+
+    commitTrackParamEdit: () => {
+      if (!paramEditBaseline) return;
+      const s = get();
+      const past = [...s.history.past, paramEditBaseline];
+      if (past.length > DEFAULT_HISTORY_LIMIT) past.shift();
+      const history = { past, present: s.history.present, future: [] };
+      paramEditBaseline = null;
+      set({ history, canUndo: canUndo(history), canRedo: canRedo(history) });
+    },
+
+    resetTrackParams: (trackId) => {
+      paramEditBaseline = null;
+      apply(P.resetTrackParams(get().history.present, trackId));
+    },
+
     /** Drop a library voice onto the song: reuse its track if present, else make one. */
     dropVoiceAt: (voiceId, beat) => {
       const project = get().history.present;
@@ -261,6 +303,17 @@ export const useStore = create<StoreState>((set, get) => {
       const voice = getVoice(voiceId);
       if (!voice) return;
       void engine.audition(voiceId, {}, 0.9, middlePitch(voiceId, get().history.present));
+    },
+    auditionTrack: (trackId) => {
+      const project = get().history.present;
+      const track = project.tracks.find((t) => t.id === trackId);
+      if (!track) return;
+      void engine.audition(
+        track.instrument.voiceId,
+        track.instrument.params,
+        0.9,
+        middlePitch(track.instrument.voiceId, project),
+      );
     },
     setStatus: (status) => set({ status }),
   };

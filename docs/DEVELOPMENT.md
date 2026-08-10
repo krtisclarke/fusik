@@ -242,7 +242,8 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Master limiter (ear safety) | ✅ | |
 | Microphone recording | ⬜ | Button present but disabled (Phase 5). |
 | Step sequencer, humanize, per-note velocity | ⬜ | Phase 2. |
-| Sound editor (ADSR, filters, effects) | ⬜ | Phase 3. |
+| Sound editor — shape a voice live | ✅ | Friendly sliders (volume, pitch, length, brightness, ADSR, drive…), simple/advanced split, hover hints, live preview, one-undo-per-drag, reset. |
+| Per-track effects rack (echo/delay/reverb sends) | ⬜ | Master reverb exists; per-sound effect chains are the next Phase-3 step. |
 | Melodic instruments (piano, synth, bells, bass) | ✅ | Pitched subtractive synth: 2 oscillators, ADSR, low-pass filter. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
 | Playable keyboard + MIDI input | ⬜ | Play live, not just place notes — the natural next step. |

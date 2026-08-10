@@ -57,11 +57,12 @@ button {
 
 .app {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   grid-template-columns: 232px 1fr;
   grid-template-areas:
     'transport transport'
-    'library   stage';
+    'library   stage'
+    'editor    editor';
   height: 100vh;
 }
 
@@ -390,6 +391,11 @@ select.snap {
   flex-direction: column;
   gap: 6px;
   justify-content: center;
+  cursor: pointer;
+}
+.lane-header.selected {
+  background: var(--bg-elev);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 .lane-header .top {
   display: flex;
@@ -556,6 +562,98 @@ select.snap {
     transform: translate(-50%, 8px);
     opacity: 0;
   }
+}
+
+/* ---- sound editor (bottom panel) -------------------------------------- */
+
+.sound-editor {
+  grid-area: editor;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+}
+.se-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.se-head .swatch {
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+}
+.se-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+.se-sub {
+  color: var(--text-faint);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+}
+.se-spacer {
+  flex: 1;
+}
+.se-btn {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  border-radius: 7px;
+  font-size: 12px;
+}
+.se-btn:hover {
+  background: #2f3448;
+}
+.se-controls {
+  display: flex;
+  gap: 16px;
+  padding: 14px;
+  overflow-x: auto;
+  align-items: flex-start;
+}
+.ctrl {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 108px;
+  flex: none;
+}
+.ctrl label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ctrl input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.ctrl .val {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.se-more {
+  align-self: center;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px dashed var(--line-strong);
+  background: transparent;
+  color: var(--text-dim);
+  border-radius: 7px;
+  font-size: 12px;
+  white-space: nowrap;
+  flex: none;
+}
+.se-more:hover {
+  color: var(--text);
+  border-color: var(--accent);
 }
 
 /* thin scrollbars that match the dark theme */

@@ -114,6 +114,28 @@ export function renameTrack(project: Project, trackId: string, name: string): Pr
   return mapTrack(project, trackId, (t) => ({ ...t, name }));
 }
 
+/** Override a single sound parameter on a track's instrument. */
+export function setTrackParam(
+  project: Project,
+  trackId: string,
+  key: string,
+  value: number,
+): Project {
+  const v = Number.isFinite(value) ? value : 0;
+  return mapTrack(project, trackId, (t) => ({
+    ...t,
+    instrument: { ...t.instrument, params: { ...t.instrument.params, [key]: v } },
+  }));
+}
+
+/** Clear all sound tweaks on a track, returning it to the voice's defaults. */
+export function resetTrackParams(project: Project, trackId: string): Project {
+  return mapTrack(project, trackId, (t) => ({
+    ...t,
+    instrument: { ...t.instrument, params: {} },
+  }));
+}
+
 // ---- Note-level edits ----------------------------------------------------
 
 export function addNote(project: Project, trackId: string, note: Note): Project {

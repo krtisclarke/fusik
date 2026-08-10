@@ -205,13 +205,25 @@ export function Timeline() {
           {project.tracks.map((track) => {
             const pitches = pitchesFor(track);
             const laneH = laneHeight(track);
+            const isSelectedTrack = selection.trackId === track.id;
             return (
               <div className="lane" key={track.id} style={{ height: laneH }}>
-                <div className="lane-header">
+                <div
+                  className={`lane-header ${isSelectedTrack ? 'selected' : ''}`}
+                  onClick={() => select(track.id, selection.noteId)}
+                  title="Click to edit this sound"
+                >
                   <div className="top">
                     <span className="swatch" style={{ background: track.color }} />
                     <span className="tname">{track.name}</span>
-                    <button className="mini del" title="Delete track" onClick={() => removeTrack(track.id)}>
+                    <button
+                      className="mini del"
+                      title="Delete track"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeTrack(track.id);
+                      }}
+                    >
                       ✕
                     </button>
                   </div>
