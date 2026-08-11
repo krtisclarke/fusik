@@ -33,6 +33,16 @@ export interface Note {
   velocity: number;
   /** MIDI note number for melodic tracks. Absent/ignored for drums. */
   pitch?: number;
+  /**
+   * This block's own sound settings — overrides on top of its voice's defaults.
+   * Empty means "sound like the plain voice". Every block is independent.
+   */
+  params: Record<string, number>;
+  /**
+   * Chain membership. Blocks sharing a groupId are linked: they always keep the
+   * same sound and the same length. Absent = not chained to anything.
+   */
+  groupId?: string;
 }
 
 /**

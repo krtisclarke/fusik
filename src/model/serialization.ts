@@ -60,15 +60,19 @@ function parseTimeSignature(value: unknown): TimeSignature {
   };
 }
 
-function parseInstrument(value: unknown): Instrument {
-  if (!isObject(value)) return { voiceId: 'kick', params: {} };
+function parseParams(value: unknown): Record<string, number> {
   const params: Record<string, number> = {};
-  if (isObject(value.params)) {
-    for (const [key, raw] of Object.entries(value.params)) {
+  if (isObject(value)) {
+    for (const [key, raw] of Object.entries(value)) {
       if (typeof raw === 'number' && Number.isFinite(raw)) params[key] = raw;
     }
   }
-  return { voiceId: asString(value.voiceId, 'kick'), params };
+  return params;
+}
+
+function parseInstrument(value: unknown): Instrument {
+  if (!isObject(value)) return { voiceId: 'kick', params: {} };
+  return { voiceId: asString(value.voiceId, 'kick'), params: parseParams(value.params) };
 }
 
 function parseNote(value: unknown): Note {
@@ -78,23 +82,33 @@ function parseNote(value: unknown): Note {
     startBeat: Math.max(0, asNumber(v.startBeat, 0)),
     lengthBeats: Math.max(0.0625, asNumber(v.lengthBeats, 1)),
     velocity: clamp(asNumber(v.velocity, DEFAULT_NOTE_VELOCITY), 0, 1),
+    params: parseParams(v.params),
   };
   if (typeof v.pitch === 'number' && Number.isFinite(v.pitch)) {
     note.pitch = clamp(Math.round(v.pitch), 0, 127);
   }
+  if (typeof v.groupId === 'string') note.groupId = v.groupId;
   return note;
 }
 
 function parseTrack(value: unknown): Track {
   const v = isObject(value) ? value : {};
-  const notes = Array.isArray(v.notes) ? v.notes.map(parseNote) : [];
   const type: TrackType = v.type === 'instrument' ? 'instrument' : 'drum';
+  const instrument = parseInstrument(v.instrument);
+  let notes = Array.isArray(v.notes) ? v.notes.map(parseNote) : [];
+  // Migration: older files stored the sound on the track. Move it onto each
+  // block that doesn't already carry its own sound, so old songs still sound right.
+  if (Object.keys(instrument.params).length > 0) {
+    notes = notes.map((n) =>
+      Object.keys(n.params).length === 0 ? { ...n, params: { ...instrument.params } } : n,
+    );
+  }
   return {
     id: asString(v.id, newTrackId()),
     name: asString(v.name, 'Track'),
     type,
     color: asString(v.color, '#9aa0aa'),
-    instrument: parseInstrument(v.instrument),
+    instrument,
     notes,
     gain: clamp(asNumber(v.gain, 0.85), 0, 1),
     muted: asBool(v.muted, false),

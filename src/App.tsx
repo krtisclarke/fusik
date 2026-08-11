@@ -57,10 +57,9 @@ export function App() {
         return;
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (s.selection.trackId && s.selection.noteId) {
+        if (s.selection.noteIds.length > 0) {
           e.preventDefault();
-          s.removeNote(s.selection.trackId, s.selection.noteId);
-          s.select(null);
+          s.removeSelected();
         }
       }
     }

@@ -17,7 +17,7 @@ export const PARAM_SPECS: Record<string, ParamSpec> = {
   gain: { label: 'Volume', min: 0, max: 1, step: 0.01, simple: true, hint: 'How loud this sound is.' },
   tune: { label: 'Pitch', min: 20, max: 2000, step: 1, simple: true, hint: 'How high or low the sound is.' },
   pitchDrop: { label: 'Pitch Drop', min: 0, max: 300, step: 1, simple: false, hint: 'How far the pitch dives at the start — this is what gives a kick its punch.' },
-  decay: { label: 'Length', min: 0.02, max: 2, step: 0.01, simple: true, hint: 'How long the sound rings out before it stops.' },
+  decay: { label: 'Decay', min: 0.02, max: 2, step: 0.01, simple: true, hint: 'How long the sound rings out before it fades. (A block’s width is its length on the timeline.)' },
   click: { label: 'Click', min: 0, max: 1, step: 0.01, simple: false, hint: 'The sharp tick right at the very start.' },
   drive: { label: 'Buzz', min: 0, max: 1, step: 0.01, simple: true, hint: 'Adds grit and distortion. A little goes a long way.' },
   noise: { label: 'Snappy', min: 0, max: 1, step: 0.01, simple: false, hint: 'How much hiss versus tone — turns a snare from a bongo into a snap.' },

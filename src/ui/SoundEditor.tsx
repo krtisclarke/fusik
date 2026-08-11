@@ -3,52 +3,69 @@ import { useStore } from '../state/store';
 import { getVoice, resolveParams } from '../model/voices';
 import { PARAM_SPECS, formatParamValue } from './soundParams';
 
-// The Sound Editor: pick a sound (by clicking its track), then shape it live
-// with friendly sliders. Changes are heard immediately — while the song loops
-// you hear them sweep; when stopped, each nudge plays a quick preview. Everyday
-// controls show first; "Show more" reveals the deeper ones.
+// The Sound Editor shapes the selected block(s). Each block has its own sound;
+// select several (Shift-click, or click a row's name for all of them) and edits
+// apply to all of them. "Link" chains the selected blocks so they permanently
+// keep the same sound and length; "Unlink" breaks the chain.
 
 export function SoundEditor() {
   const selection = useStore((s) => s.selection);
   const project = useStore((s) => s.project);
-  const previewTrackParam = useStore((s) => s.previewTrackParam);
-  const commitTrackParamEdit = useStore((s) => s.commitTrackParamEdit);
-  const resetTrackParams = useStore((s) => s.resetTrackParams);
-  const auditionTrack = useStore((s) => s.auditionTrack);
+  const previewParam = useStore((s) => s.previewParam);
+  const commitEdit = useStore((s) => s.commitEdit);
+  const resetSelected = useStore((s) => s.resetSelected);
+  const auditionSelected = useStore((s) => s.auditionSelected);
+  const chainSelected = useStore((s) => s.chainSelected);
+  const unchainSelected = useStore((s) => s.unchainSelected);
   const select = useStore((s) => s.select);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lastAudition = useRef(0);
 
-  const track = project.tracks.find((t) => t.id === selection.trackId) ?? null;
+  // The block whose values the sliders show (the first selected).
+  const { track, note } = useMemo(() => {
+    const id = selection.noteIds[0];
+    if (!id) return { track: null, note: null };
+    for (const t of project.tracks) {
+      const n = t.notes.find((x) => x.id === id);
+      if (n) return { track: t, note: n };
+    }
+    return { track: null, note: null };
+  }, [selection, project]);
 
   const { simpleKeys, advancedKeys, resolved } = useMemo(() => {
-    if (!track) return { simpleKeys: [], advancedKeys: [], resolved: {} as Record<string, number> };
+    if (!track || !note) return { simpleKeys: [], advancedKeys: [], resolved: {} as Record<string, number> };
     const voice = getVoice(track.instrument.voiceId);
     const keys = Object.keys(voice?.defaults ?? {}).filter((k) => PARAM_SPECS[k]);
     return {
       simpleKeys: keys.filter((k) => PARAM_SPECS[k].simple),
       advancedKeys: keys.filter((k) => !PARAM_SPECS[k].simple),
-      resolved: resolveParams(track.instrument.voiceId, track.instrument.params),
+      resolved: resolveParams(track.instrument.voiceId, note.params),
     };
-  }, [track]);
+  }, [track, note]);
 
-  if (!track) return null;
+  if (!track || !note) return null;
+
+  const count = selection.noteIds.length;
+  const selectedNotes = track.notes.filter((n) => selection.noteIds.includes(n.id));
+  const anyGrouped = selectedNotes.some((n) => !!n.groupId);
+  const groupIds = new Set(selectedNotes.map((n) => n.groupId).filter(Boolean));
+  const allOneGroup =
+    selectedNotes.length >= 2 && groupIds.size === 1 && selectedNotes.every((n) => n.groupId);
+  const canLink = count >= 2 && !allOneGroup;
 
   function onSlide(key: string, value: number) {
-    if (!track) return;
-    previewTrackParam(track.id, key, value);
+    previewParam(key, value);
     const now = performance.now();
     if (now - lastAudition.current > 130) {
       lastAudition.current = now;
-      auditionTrack(track.id);
+      auditionSelected();
     }
   }
 
   function onRelease() {
-    if (!track) return;
-    commitTrackParamEdit();
-    auditionTrack(track.id);
+    commitEdit();
+    auditionSelected();
   }
 
   function renderControl(key: string) {
@@ -78,9 +95,22 @@ export function SoundEditor() {
       <div className="se-head">
         <span className="swatch" style={{ background: track.color }} />
         <span className="se-title">{track.name}</span>
-        <span className="se-sub">sound</span>
+        <span className="se-sub">
+          {count === 1 ? 'block' : `${count} blocks`}
+          {anyGrouped ? ' · linked' : ''}
+        </span>
         <div className="se-spacer" />
-        <button className="se-btn" onClick={() => resetTrackParams(track.id)} title="Undo all tweaks to this sound">
+        {canLink && (
+          <button className="se-btn link" onClick={chainSelected} title="Link these blocks: same sound & length">
+            🔗 Link
+          </button>
+        )}
+        {anyGrouped && (
+          <button className="se-btn" onClick={unchainSelected} title="Break the chain">
+            Unlink
+          </button>
+        )}
+        <button className="se-btn" onClick={resetSelected} title="Undo all tweaks to the selected block(s)">
           Reset
         </button>
         <button className="se-btn" onClick={() => select(null)} title="Close">
@@ -89,7 +119,12 @@ export function SoundEditor() {
       </div>
 
       <div className="se-hint">
-        Shapes the <strong>{track.name}</strong> sound — all {track.name} blocks share it.
+        {count === 1 ? (
+          <>Shaping <strong>one {track.name} block</strong> — the others stay as they are.</>
+        ) : (
+          <>Shaping <strong>{count} {track.name} blocks</strong> together.</>
+        )}
+        {anyGrouped && ' They’re linked, so they keep the same sound and length.'}
       </div>
 
       <div className="se-controls">

@@ -161,13 +161,16 @@ Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v1):
       "id": "trk_…", "name": "Kick", "type": "drum", "color": "#ef4444",
       "instrument": { "voiceId": "kick", "params": {} },
       "gain": 0.85, "muted": false, "solo": false,
-      "notes": [ { "id": "note_…", "startBeat": 0, "lengthBeats": 1, "velocity": 0.8 } ]
+      "notes": [
+        { "id": "note_…", "startBeat": 0, "lengthBeats": 1, "velocity": 0.8, "params": { "decay": 0.6 } },
+        { "id": "note_…", "startBeat": 2, "lengthBeats": 1, "velocity": 0.8, "params": { "decay": 0.6 }, "groupId": "grp_…" }
+      ]
     },
     {
       "id": "trk_…", "name": "Piano", "type": "instrument", "color": "#60a5fa",
       "instrument": { "voiceId": "piano", "params": {} },
       "gain": 0.7, "muted": false, "solo": false,
-      "notes": [ { "id": "note_…", "startBeat": 0, "lengthBeats": 1, "velocity": 0.8, "pitch": 72 } ]
+      "notes": [ { "id": "note_…", "startBeat": 0, "lengthBeats": 1, "velocity": 0.8, "pitch": 72, "params": {} } ]
     }
   ]
 }
@@ -176,8 +179,12 @@ Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v1):
 - `type` is `"drum"` or `"instrument"`. Instrument notes carry a `pitch` (MIDI
   number); drum notes omit it.
 
-- `instrument.params` holds **overrides only**; empty means "use the voice's
-  built-in defaults". This is where per-track sound design will live.
+- Each **note** carries its own `params` (sound overrides on the voice's
+  defaults); empty means "the plain voice". Notes sharing a `groupId` are
+  **chained** — kept at the same sound and length. `instrument.voiceId` selects
+  the synth voice; `instrument.params` is retained for compatibility, but sound
+  now lives on the blocks. Older files that stored sound on the track are
+  migrated onto their notes on load.
 - **Loading is validated** (`model/serialization.ts`): bad JSON, non-project
   values, or a missing `tracks` array throw a clear `ProjectLoadError`; a file
   from a newer `formatVersion` is refused; imperfect-but-recoverable data is
@@ -242,7 +249,9 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Master limiter (ear safety) | ✅ | |
 | Microphone recording | ⬜ | Button present but disabled (Phase 5). |
 | Step sequencer, humanize, per-note velocity | ⬜ | Phase 2. |
-| Sound editor — shape a voice live | ✅ | Friendly sliders (volume, pitch, length, brightness, ADSR, drive…), simple/advanced split, hover hints, live preview, one-undo-per-drag, reset. |
+| Per-block sound editor | ✅ | Every block has its own sound. Select one or several and shape live (volume, pitch, decay, brightness, ADSR, drive…): simple/advanced split, hover hints, one-undo-per-drag, reset. |
+| Chaining (link blocks) | ✅ | Multi-select (Shift-click, or a row's name for all) and **Link** blocks into a group that shares sound **and** length; edit or resize any member and the whole chain follows. Unlink to break. |
+| Block length / resize | ✅ | Drag a selected block's right edge to change its length (snaps to grid). |
 | Per-track effects rack (echo/delay/reverb sends) | ⬜ | Master reverb exists; per-sound effect chains are the next Phase-3 step. |
 | Melodic instruments (piano, synth, bells, bass) | ✅ | Pitched subtractive synth: 2 oscillators, ADSR, low-pass filter. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
@@ -272,10 +281,11 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 
 ## 9. Known limitations
 
-- Notes can be moved in **time** by dragging, but not yet dragged vertically to
-  change pitch, nor between tracks — to change a note's pitch, remove it and click
-  the row you want. Note length is fixed at one beat (no resize yet). Both are
-  planned niceties.
+- Blocks can be moved in **time** and resized (right edge), but not yet dragged
+  vertically to change pitch, nor between tracks — to change a note's pitch,
+  remove it and click the row you want. A planned nicety.
+- Multi-select uses Shift/Cmd/Ctrl-click (or a row's name for all of a row).
+  A more touch/kid-friendly select (lasso, link-mode) is a candidate follow-up.
 - Packaging a signed Windows installer requires a Windows machine or CI; the app
   runs from source on macOS today.
 - The dev-only `window.beatbox` debug handle exists in development builds only

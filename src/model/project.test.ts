@@ -10,8 +10,12 @@ import {
   setLengthBars,
   toggleTrackMuted,
   findTrackByVoice,
-  setTrackParam,
-  resetTrackParams,
+  setNotesParam,
+  setNotesLength,
+  chainNotes,
+  unchainNotes,
+  expandChain,
+  removeNotes,
 } from './project';
 
 describe('default project', () => {
@@ -88,28 +92,62 @@ describe('lookups', () => {
   });
 });
 
-describe('sound parameter edits', () => {
-  it('sets an override without mutating the original', () => {
-    const p = createDefaultProject();
-    const id = p.tracks[0].id;
-    const p2 = setTrackParam(p, id, 'decay', 0.9);
-    expect(p.tracks[0].instrument.params).toEqual({}); // original untouched
-    expect(p2.tracks[0].instrument.params.decay).toBe(0.9);
+describe('per-block sound & chaining', () => {
+  function twoKicks() {
+    let p = createDefaultProject();
+    const trk = p.tracks[0].id;
+    const a = createNote(0);
+    const b = createNote(1);
+    p = addNote(p, trk, a);
+    p = addNote(p, trk, b);
+    const notes = () => p.tracks[0].notes;
+    return { p, trk, aId: a.id, bId: b.id, notes };
+  }
+  const noteById = (p: ReturnType<typeof createDefaultProject>, id: string) =>
+    p.tracks.flatMap((t) => t.notes).find((n) => n.id === id)!;
+
+  it('sets a sound param on the given blocks only', () => {
+    const t = twoKicks();
+    const p = setNotesParam(t.p, new Set([t.aId]), 'decay', 0.9);
+    expect(noteById(p, t.aId).params.decay).toBe(0.9);
+    expect(noteById(p, t.bId).params.decay).toBeUndefined();
   });
 
-  it('keeps existing overrides when setting another', () => {
-    let p = createDefaultProject();
-    const id = p.tracks[0].id;
-    p = setTrackParam(p, id, 'decay', 0.9);
-    p = setTrackParam(p, id, 'gain', 0.5);
-    expect(p.tracks[0].instrument.params).toEqual({ decay: 0.9, gain: 0.5 });
+  it('chains blocks so they share the first block’s sound and length', () => {
+    let p = twoKicks().p;
+    const [a, b] = p.tracks[0].notes.map((n) => n.id);
+    p = setNotesParam(p, new Set([a]), 'decay', 0.9);
+    p = setNotesLength(p, new Set([a]), 2);
+    p = chainNotes(p, [a, b]);
+    const na = noteById(p, a);
+    const nb = noteById(p, b);
+    expect(na.groupId).toBeTruthy();
+    expect(nb.groupId).toBe(na.groupId);
+    expect(nb.params.decay).toBe(0.9); // took a's sound
+    expect(nb.lengthBeats).toBe(2); // took a's length
   });
 
-  it('resets all overrides back to defaults', () => {
-    let p = createDefaultProject();
-    const id = p.tracks[0].id;
-    p = setTrackParam(p, id, 'decay', 0.9);
-    p = resetTrackParams(p, id);
-    expect(p.tracks[0].instrument.params).toEqual({});
+  it('expands a selection to its chained partners, so editing one edits all', () => {
+    let p = twoKicks().p;
+    const [a, b] = p.tracks[0].notes.map((n) => n.id);
+    p = chainNotes(p, [a, b]);
+    const ids = expandChain(p, [a]);
+    expect(ids.has(b)).toBe(true);
+    p = setNotesParam(p, ids, 'gain', 0.4);
+    expect(noteById(p, b).params.gain).toBe(0.4);
+  });
+
+  it('unchains blocks', () => {
+    let p = twoKicks().p;
+    const [a, b] = p.tracks[0].notes.map((n) => n.id);
+    p = chainNotes(p, [a, b]);
+    p = unchainNotes(p, [a]);
+    expect(noteById(p, a).groupId).toBeUndefined();
+  });
+
+  it('removes multiple blocks by id', () => {
+    const t = twoKicks();
+    const p = removeNotes(t.p, new Set([t.aId, t.bId]));
+    expect(p.tracks[0].notes).toHaveLength(0);
   });
 });

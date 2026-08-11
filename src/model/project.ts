@@ -6,7 +6,7 @@
 // stash and restore. Projects are small, so targeted cloning is cheap and far
 // clearer than deep-cloning everything.
 
-import { newNoteId, newTrackId } from './ids';
+import { newGroupId, newNoteId, newTrackId } from './ids';
 import type { Instrument, Note, Project, TimeSignature, Track } from './types';
 import { PROJECT_FORMAT_VERSION } from './types';
 import { getVoice, isPitched } from './voices';
@@ -72,6 +72,7 @@ export function createNote(
     startBeat: Math.max(0, startBeat),
     lengthBeats: Math.max(0.0625, lengthBeats),
     velocity: clamp(velocity, 0, 1),
+    params: {},
   };
   if (pitch != null) note.pitch = Math.round(pitch);
   return note;
@@ -114,26 +115,96 @@ export function renameTrack(project: Project, trackId: string, name: string): Pr
   return mapTrack(project, trackId, (t) => ({ ...t, name }));
 }
 
-/** Override a single sound parameter on a track's instrument. */
-export function setTrackParam(
-  project: Project,
-  trackId: string,
-  key: string,
-  value: number,
-): Project {
+// ---- Per-block sound & chaining ------------------------------------------
+//
+// Each block (note) carries its own `params`. Blocks sharing a `groupId` are
+// "chained": they always keep the same sound and length. Edits are applied to a
+// set of note ids; the store expands a selection to include chained partners
+// (see expandChain) so linked blocks move together.
+
+/** Apply `fn` to every note whose id is in `ids`, across all tracks. */
+function mapNotes(project: Project, ids: Set<string>, fn: (n: Note) => Note): Project {
+  if (ids.size === 0) return project;
+  return {
+    ...project,
+    tracks: project.tracks.map((t) =>
+      t.notes.some((n) => ids.has(n.id))
+        ? { ...t, notes: t.notes.map((n) => (ids.has(n.id) ? fn(n) : n)) }
+        : t,
+    ),
+  };
+}
+
+function findNote(project: Project, noteId: string): Note | undefined {
+  for (const t of project.tracks) {
+    const n = t.notes.find((x) => x.id === noteId);
+    if (n) return n;
+  }
+  return undefined;
+}
+
+/** All note ids chained with `noteId` (itself included). */
+export function chainedIds(project: Project, noteId: string): string[] {
+  const note = findNote(project, noteId);
+  if (!note?.groupId) return note ? [noteId] : [];
+  const ids: string[] = [];
+  for (const t of project.tracks) for (const n of t.notes) if (n.groupId === note.groupId) ids.push(n.id);
+  return ids;
+}
+
+/** Expand a selection to include every chained partner of every selected note. */
+export function expandChain(project: Project, noteIds: string[]): Set<string> {
+  const out = new Set<string>();
+  for (const id of noteIds) for (const m of chainedIds(project, id)) out.add(m);
+  return out;
+}
+
+export function setNotesParam(project: Project, ids: Set<string>, key: string, value: number): Project {
   const v = Number.isFinite(value) ? value : 0;
-  return mapTrack(project, trackId, (t) => ({
-    ...t,
-    instrument: { ...t.instrument, params: { ...t.instrument.params, [key]: v } },
+  return mapNotes(project, ids, (n) => ({ ...n, params: { ...n.params, [key]: v } }));
+}
+
+export function resetNotesParams(project: Project, ids: Set<string>): Project {
+  return mapNotes(project, ids, (n) => ({ ...n, params: {} }));
+}
+
+export function setNotesLength(project: Project, ids: Set<string>, lengthBeats: number): Project {
+  const len = Math.max(0.0625, lengthBeats);
+  return mapNotes(project, ids, (n) => ({ ...n, lengthBeats: len }));
+}
+
+/** Link blocks into one chain: they take the first block's sound + length. */
+export function chainNotes(project: Project, noteIds: string[]): Project {
+  if (noteIds.length < 2) return project;
+  const primary = findNote(project, noteIds[0]);
+  if (!primary) return project;
+  const groupId = newGroupId();
+  const params = { ...primary.params };
+  const lengthBeats = primary.lengthBeats;
+  return mapNotes(project, new Set(noteIds), (n) => ({
+    ...n,
+    groupId,
+    params: { ...params },
+    lengthBeats,
   }));
 }
 
-/** Clear all sound tweaks on a track, returning it to the voice's defaults. */
-export function resetTrackParams(project: Project, trackId: string): Project {
-  return mapTrack(project, trackId, (t) => ({
-    ...t,
-    instrument: { ...t.instrument, params: {} },
-  }));
+/** Break the chain on the given blocks (they keep their current sound/length). */
+export function unchainNotes(project: Project, noteIds: string[]): Project {
+  return mapNotes(project, new Set(noteIds), (n) => {
+    const next = { ...n };
+    delete next.groupId;
+    return next;
+  });
+}
+
+/** Remove every note whose id is in `ids`, across all tracks. */
+export function removeNotes(project: Project, ids: Set<string>): Project {
+  if (ids.size === 0) return project;
+  return {
+    ...project,
+    tracks: project.tracks.map((t) => ({ ...t, notes: t.notes.filter((n) => !ids.has(n.id)) })),
+  };
 }
 
 // ---- Note-level edits ----------------------------------------------------

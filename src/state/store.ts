@@ -28,8 +28,10 @@ import {
 import { openProjectFromFile, saveProjectToFile } from '../platform/files';
 
 export interface Selection {
+  /** The track the selected blocks belong to (selection stays within one track). */
   trackId: string | null;
-  noteId: string | null;
+  /** The selected block ids (multi-select). */
+  noteIds: string[];
 }
 
 export interface StoreState {
@@ -70,29 +72,37 @@ export interface StoreState {
   setTrackGain: (trackId: string, gain: number) => void;
   toggleMute: (trackId: string) => void;
   toggleSolo: (trackId: string) => void;
-  /** Live-update one sound parameter while a slider is being dragged (no undo entry yet). */
-  previewTrackParam: (trackId: string, key: string, value: number) => void;
-  /** Finalize a slider drag into a single undo entry. */
-  commitTrackParamEdit: () => void;
-  resetTrackParams: (trackId: string) => void;
   dropVoiceAt: (voiceId: string, beat: number) => void;
   addNoteAt: (trackId: string, beat: number, opts?: { pitch?: number; velocity?: number }) => void;
   removeNote: (trackId: string, noteId: string) => void;
   moveNote: (fromTrackId: string, noteId: string, toTrackId: string, beat: number) => void;
 
-  // ui
+  // per-block sound + chaining (act on the current selection, plus any chained partners)
+  /** Live-update a sound parameter on the selected block(s) while dragging a slider. */
+  previewParam: (key: string, value: number) => void;
+  /** Live-update the length of the selected block(s) while resizing. */
+  previewLength: (lengthBeats: number) => void;
+  /** Finalize a live drag (sound or length) into a single undo entry. */
+  commitEdit: () => void;
+  resetSelected: () => void;
+  chainSelected: () => void;
+  unchainSelected: () => void;
+  removeSelected: () => void;
+  auditionSelected: () => void;
+
+  // ui / selection
   setSnap: (snap: SnapId) => void;
   select: (trackId: string | null, noteId?: string | null) => void;
+  toggleNoteSelection: (trackId: string, noteId: string) => void;
+  selectTrackNotes: (trackId: string) => void;
   audition: (voiceId: string) => void;
-  /** Preview a track using its current tweaked sound (for the Sound Editor). */
-  auditionTrack: (trackId: string) => void;
   setStatus: (status: string | null) => void;
 }
 
-// The project state captured at the start of a slider drag, so the whole drag
-// collapses into one undo entry when the user lets go. Transient UI state, so it
-// lives outside the reactive store.
-let paramEditBaseline: Project | null = null;
+// The project state captured at the start of a live drag (slider or resize), so
+// the whole drag collapses into one undo entry when the user lets go. Transient
+// UI state, so it lives outside the reactive store.
+let editBaseline: Project | null = null;
 
 /** A pleasant default pitch (middle of the instrument's range) for previews and
  *  freshly-dropped instrument notes. Undefined for drums. */
@@ -124,13 +134,13 @@ export const useStore = create<StoreState>((set, get) => {
     isPlaying: false,
     isLooping: engine.isLoopingOn(),
     snap: 'sixteenth',
-    selection: { trackId: null, noteId: null },
+    selection: { trackId: null, noteIds: [] },
     status: null,
 
     // ---- lifecycle -------------------------------------------------------
     newProject: () => {
       engine.stop();
-      paramEditBaseline = null;
+      editBaseline = null;
       const project = P.createDefaultProject();
       const history = createHistory(project);
       engine.setProject(project);
@@ -140,14 +150,14 @@ export const useStore = create<StoreState>((set, get) => {
         canUndo: false,
         canRedo: false,
         isPlaying: false,
-        selection: { trackId: null, noteId: null },
+        selection: { trackId: null, noteIds: [] },
         status: 'New song',
       });
     },
 
     loadProject: (project) => {
       engine.stop();
-      paramEditBaseline = null;
+      editBaseline = null;
       const history = createHistory(project);
       engine.setProject(project);
       set({
@@ -156,7 +166,7 @@ export const useStore = create<StoreState>((set, get) => {
         canUndo: false,
         canRedo: false,
         isPlaying: false,
-        selection: { trackId: null, noteId: null },
+        selection: { trackId: null, noteIds: [] },
         status: `Opened "${project.name}"`,
       });
     },
@@ -181,13 +191,13 @@ export const useStore = create<StoreState>((set, get) => {
 
     // ---- history ---------------------------------------------------------
     undo: () => {
-      paramEditBaseline = null;
+      editBaseline = null;
       const history = undo(get().history);
       engine.setProject(history.present);
       set({ history, project: history.present, canUndo: canUndo(history), canRedo: canRedo(history) });
     },
     redo: () => {
-      paramEditBaseline = null;
+      editBaseline = null;
       const history = redo(get().history);
       engine.setProject(history.present);
       set({ history, project: history.present, canUndo: canUndo(history), canRedo: canRedo(history) });
@@ -236,28 +246,74 @@ export const useStore = create<StoreState>((set, get) => {
     toggleMute: (trackId) => apply(P.toggleTrackMuted(get().history.present, trackId)),
     toggleSolo: (trackId) => apply(P.toggleTrackSolo(get().history.present, trackId)),
 
-    previewTrackParam: (trackId, key, value) => {
+    previewParam: (key, value) => {
       const s = get();
-      if (!paramEditBaseline) paramEditBaseline = s.history.present;
-      const next = P.setTrackParam(s.history.present, trackId, key, value);
-      const history = replacePresent(s.history, next);
+      if (s.selection.noteIds.length === 0) return;
+      if (!editBaseline) editBaseline = s.history.present;
+      const ids = P.expandChain(s.history.present, s.selection.noteIds);
+      const next = P.setNotesParam(s.history.present, ids, key, value);
       engine.setProject(next); // heard live if the song is playing
-      set({ history, project: next });
+      set({ history: replacePresent(s.history, next), project: next });
     },
 
-    commitTrackParamEdit: () => {
-      if (!paramEditBaseline) return;
+    previewLength: (lengthBeats) => {
       const s = get();
-      const past = [...s.history.past, paramEditBaseline];
+      if (s.selection.noteIds.length === 0) return;
+      if (!editBaseline) editBaseline = s.history.present;
+      const ids = P.expandChain(s.history.present, s.selection.noteIds);
+      const next = P.setNotesLength(s.history.present, ids, lengthBeats);
+      engine.setProject(next);
+      set({ history: replacePresent(s.history, next), project: next });
+    },
+
+    commitEdit: () => {
+      if (!editBaseline) return;
+      const s = get();
+      const past = [...s.history.past, editBaseline];
       if (past.length > DEFAULT_HISTORY_LIMIT) past.shift();
       const history = { past, present: s.history.present, future: [] };
-      paramEditBaseline = null;
+      editBaseline = null;
       set({ history, canUndo: canUndo(history), canRedo: canRedo(history) });
     },
 
-    resetTrackParams: (trackId) => {
-      paramEditBaseline = null;
-      apply(P.resetTrackParams(get().history.present, trackId));
+    resetSelected: () => {
+      editBaseline = null;
+      const s = get();
+      const ids = P.expandChain(s.history.present, s.selection.noteIds);
+      if (ids.size > 0) apply(P.resetNotesParams(s.history.present, ids));
+    },
+
+    chainSelected: () => {
+      const s = get();
+      if (s.selection.noteIds.length < 2) return;
+      apply(P.chainNotes(s.history.present, s.selection.noteIds));
+    },
+
+    unchainSelected: () => {
+      const s = get();
+      const ids = [...P.expandChain(s.history.present, s.selection.noteIds)];
+      if (ids.length > 0) apply(P.unchainNotes(s.history.present, ids));
+    },
+
+    removeSelected: () => {
+      const s = get();
+      if (s.selection.noteIds.length === 0) return;
+      apply(P.removeNotes(s.history.present, new Set(s.selection.noteIds)));
+      set({ selection: { trackId: s.selection.trackId, noteIds: [] } });
+    },
+
+    auditionSelected: () => {
+      const s = get();
+      const primaryId = s.selection.noteIds[0];
+      if (!primaryId) return;
+      const project = s.history.present;
+      for (const t of project.tracks) {
+        const n = t.notes.find((x) => x.id === primaryId);
+        if (n) {
+          void engine.audition(t.instrument.voiceId, n.params, Math.max(0.7, n.velocity), n.pitch);
+          return;
+        }
+      }
     },
 
     /** Drop a library voice onto the song: reuse its track if present, else make one. */
@@ -284,7 +340,7 @@ export const useStore = create<StoreState>((set, get) => {
       const note = P.createNote(snapped, 1, opts?.velocity ?? P.DEFAULT_NOTE_VELOCITY, opts?.pitch);
       apply(P.addNote(project, trackId, note));
       if (track) {
-        void engine.audition(track.instrument.voiceId, track.instrument.params, note.velocity, note.pitch);
+        void engine.audition(track.instrument.voiceId, note.params, note.velocity, note.pitch);
       }
     },
 
@@ -296,24 +352,27 @@ export const useStore = create<StoreState>((set, get) => {
       apply(P.moveNote(project, fromTrackId, noteId, toTrackId, snapped));
     },
 
-    // ---- ui --------------------------------------------------------------
+    // ---- ui / selection --------------------------------------------------
     setSnap: (snap) => set({ snap }),
-    select: (trackId, noteId = null) => set({ selection: { trackId, noteId } }),
+    select: (trackId, noteId = null) =>
+      set({ selection: { trackId, noteIds: noteId ? [noteId] : [] } }),
+    toggleNoteSelection: (trackId, noteId) => {
+      const s = get();
+      // Multi-select stays within one track, so a chain shares a single voice.
+      const current = s.selection.trackId === trackId ? s.selection.noteIds : [];
+      const noteIds = current.includes(noteId)
+        ? current.filter((id) => id !== noteId)
+        : [...current, noteId];
+      set({ selection: { trackId, noteIds } });
+    },
+    selectTrackNotes: (trackId) => {
+      const track = get().history.present.tracks.find((t) => t.id === trackId);
+      set({ selection: { trackId, noteIds: track ? track.notes.map((n) => n.id) : [] } });
+    },
     audition: (voiceId) => {
       const voice = getVoice(voiceId);
       if (!voice) return;
       void engine.audition(voiceId, {}, 0.9, middlePitch(voiceId, get().history.present));
-    },
-    auditionTrack: (trackId) => {
-      const project = get().history.present;
-      const track = project.tracks.find((t) => t.id === trackId);
-      if (!track) return;
-      void engine.audition(
-        track.instrument.voiceId,
-        track.instrument.params,
-        0.9,
-        middlePitch(track.instrument.voiceId, project),
-      );
     },
     setStatus: (status) => set({ status }),
   };

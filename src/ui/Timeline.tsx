@@ -1,7 +1,7 @@
 import { Fragment, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import type { Note, Track } from '../model/types';
-import { beatsPerBar, snapBeat } from '../model/time';
+import { beatsPerBar, snapBeat, snapStepInBeats } from '../model/time';
 import { getVoice } from '../model/voices';
 import { pitchLadder, midiToLetter } from '../model/scales';
 import { clamp } from '../model/project';
@@ -41,6 +41,10 @@ export function Timeline() {
   const moveNote = useStore((s) => s.moveNote);
   const dropVoiceAt = useStore((s) => s.dropVoiceAt);
   const select = useStore((s) => s.select);
+  const toggleNoteSelection = useStore((s) => s.toggleNoteSelection);
+  const selectTrackNotes = useStore((s) => s.selectTrackNotes);
+  const previewLength = useStore((s) => s.previewLength);
+  const commitEdit = useStore((s) => s.commitEdit);
   const setTrackGain = useStore((s) => s.setTrackGain);
   const toggleMute = useStore((s) => s.toggleMute);
   const toggleSolo = useStore((s) => s.toggleSolo);
@@ -48,6 +52,7 @@ export function Timeline() {
 
   const lanesRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
+  const [resize, setResize] = useState<{ startX: number; origLength: number } | null>(null);
 
   const ts = project.timeSignature;
   const perBar = beatsPerBar(ts);
@@ -74,7 +79,7 @@ export function Timeline() {
 
   const totalHeight = project.tracks.reduce((h, t) => h + laneHeight(t), 0);
 
-  // ---- placing / removing notes -----------------------------------------
+  // ---- placing notes ----------------------------------------------------
 
   function onLanePointerDown(e: React.PointerEvent, track: Track) {
     if (e.target !== e.currentTarget) return; // ignore presses that land on a note
@@ -89,10 +94,15 @@ export function Timeline() {
     }
   }
 
-  // ---- dragging a note in time ------------------------------------------
+  // ---- selecting + moving a block ---------------------------------------
 
   function onNotePointerDown(e: React.PointerEvent, track: Track, note: Note) {
     e.stopPropagation();
+    // Shift / Cmd / Ctrl-click adds or removes from a multi-selection.
+    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+      toggleNoteSelection(track.id, note.id);
+      return;
+    }
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     select(track.id, note.id);
     setDrag({
@@ -115,12 +125,34 @@ export function Timeline() {
 
   function onNotePointerUp() {
     if (!drag) return;
-    if (drag.moved) {
-      moveNote(drag.trackId, drag.noteId, drag.trackId, drag.previewBeat);
-    }
-    // A click with no drag just selects (done on pointer-down). To remove, use
-    // the ✕ on the selected block or the Delete key — no more accidental deletes.
+    if (drag.moved) moveNote(drag.trackId, drag.noteId, drag.trackId, drag.previewBeat);
+    // A click with no drag just selects (done on pointer-down). Remove via the ✕
+    // on the block or the Delete key — no accidental deletes.
     setDrag(null);
+  }
+
+  // ---- resizing a block's length (chained blocks resize together) -------
+
+  function onResizePointerDown(e: React.PointerEvent, track: Track, note: Note) {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    select(track.id, note.id);
+    setResize({ startX: e.clientX, origLength: note.lengthBeats });
+  }
+
+  function onResizePointerMove(e: React.PointerEvent) {
+    if (!resize) return;
+    const dx = e.clientX - resize.startX;
+    const step = snap === 'off' ? 0.0625 : snapStepInBeats(snap, ts);
+    const raw = resize.origLength + xToBeat(dx);
+    const snapped = snap === 'off' ? raw : snapBeat(raw, snap, ts);
+    previewLength(Math.max(step, snapped));
+  }
+
+  function onResizePointerUp() {
+    if (!resize) return;
+    commitEdit();
+    setResize(null);
   }
 
   // ---- dropping a sound from the library --------------------------------
@@ -135,12 +167,12 @@ export function Timeline() {
     dropVoiceAt(voiceId, Math.max(0, xToBeat(gridX)));
   }
 
-  // ---- rendering a single note ------------------------------------------
+  // ---- rendering a single block -----------------------------------------
 
   function renderNote(track: Track, note: Note, pitches: number[] | null) {
     const isDragging = drag?.noteId === note.id;
     const beat = isDragging ? drag!.previewBeat : note.startBeat;
-    const selected = selection.noteId === note.id;
+    const selected = selection.noteIds.includes(note.id);
     const width = Math.max(10, beatToX(note.lengthBeats) - 2);
 
     const style: React.CSSProperties = {
@@ -169,10 +201,15 @@ export function Timeline() {
         onPointerDown={(e) => onNotePointerDown(e, track, note)}
         onPointerMove={onNotePointerMove}
         onPointerUp={onNotePointerUp}
-        title="Click to select · drag to move"
+        title="Click to select · Shift-click to add · drag to move"
       >
         <span className="vel" style={{ height: `${note.velocity * 100}%` }} />
         {(!pitched || width >= 22) && <span className="emoji">{label}</span>}
+        {note.groupId && (
+          <span className="note-link" title="Linked — shares sound & length with its chain">
+            🔗
+          </span>
+        )}
         {selected && (
           <button
             className="note-x"
@@ -185,6 +222,15 @@ export function Timeline() {
           >
             ✕
           </button>
+        )}
+        {selected && (
+          <span
+            className="note-resize"
+            title="Drag to change length"
+            onPointerDown={(e) => onResizePointerDown(e, track, note)}
+            onPointerMove={onResizePointerMove}
+            onPointerUp={onResizePointerUp}
+          />
         )}
       </div>
     );
@@ -223,8 +269,8 @@ export function Timeline() {
               <div className="lane" key={track.id} style={{ height: laneH }}>
                 <div
                   className={`lane-header ${isSelectedTrack ? 'selected' : ''}`}
-                  onClick={() => select(track.id, selection.noteId)}
-                  title="Click to edit this sound"
+                  onClick={() => selectTrackNotes(track.id)}
+                  title="Click to select all of this row's blocks and shape them"
                 >
                   <div className="top">
                     <span className="swatch" style={{ background: track.color }} />
@@ -244,14 +290,20 @@ export function Timeline() {
                     <button
                       className={`mini ${track.muted ? 'on-m' : ''}`}
                       title="Mute"
-                      onClick={() => toggleMute(track.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleMute(track.id);
+                      }}
                     >
                       M
                     </button>
                     <button
                       className={`mini ${track.solo ? 'on-s' : ''}`}
                       title="Solo"
-                      onClick={() => toggleSolo(track.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSolo(track.id);
+                      }}
                     >
                       S
                     </button>
@@ -262,6 +314,7 @@ export function Timeline() {
                       step={0.01}
                       value={track.gain}
                       title="Volume"
+                      onClick={(e) => e.stopPropagation()}
                       onChange={(e) => setTrackGain(track.id, Number(e.target.value))}
                     />
                   </div>

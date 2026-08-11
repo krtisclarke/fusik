@@ -220,10 +220,10 @@ export class AudioEngine {
       if (this.effectiveGain(track, project.tracks) <= 0) continue;
 
       const trigger = getTrigger(track.instrument.voiceId);
-      const params = resolveParams(track.instrument.voiceId, track.instrument.params);
 
       for (const note of track.notes) {
         if (period !== Infinity && note.startBeat >= period) continue;
+        const params = resolveParams(track.instrument.voiceId, note.params); // each block its own sound
         const durationSec = beatsToSeconds(note.lengthBeats, bpm);
         this.forEachOccurrence(lo, hi, note.startBeat, period, (absBeat) => {
           const when = this.timeAtBeat(absBeat, bpm);
