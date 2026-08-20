@@ -7,7 +7,13 @@ import {
   updateNote,
   moveNote,
   setBpm,
-  setLengthBars,
+  setSectionLength,
+  addSection,
+  duplicateSection,
+  repeatSection,
+  moveArrangementEntry,
+  removeArrangementEntry,
+  renameSection,
   toggleTrackMuted,
   findTrackByVoice,
   setNotesParam,
@@ -18,6 +24,9 @@ import {
   removeNotes,
 } from './project';
 
+/** The default project's one starting section id. */
+const sec = (p: ReturnType<typeof createDefaultProject>) => p.sections[0].id;
+
 describe('default project', () => {
   it('comes with kick, snare and hi-hat ready to go', () => {
     const p = createDefaultProject();
@@ -25,13 +34,21 @@ describe('default project', () => {
     expect(p.tracks.map((t) => t.instrument.voiceId)).toEqual(['kick', 'snare', 'hihat']);
     expect(p.tracks.every((t) => t.notes.length === 0)).toBe(true);
   });
+
+  it('starts as one part, arranged once', () => {
+    const p = createDefaultProject();
+    expect(p.sections).toHaveLength(1);
+    expect(p.arrangement).toHaveLength(1);
+    expect(p.arrangement[0].sectionId).toBe(p.sections[0].id);
+    expect(p.sections[0].name).toBe('A');
+  });
 });
 
 describe('note edits are immutable', () => {
   it('adds a note without mutating the original project', () => {
     const p = createDefaultProject();
     const trackId = p.tracks[0].id;
-    const p2 = addNote(p, trackId, createNote(0));
+    const p2 = addNote(p, trackId, createNote(sec(p), 0));
     expect(p.tracks[0].notes).toHaveLength(0); // original untouched
     expect(p2.tracks[0].notes).toHaveLength(1);
   });
@@ -39,7 +56,7 @@ describe('note edits are immutable', () => {
   it('removes a note', () => {
     let p = createDefaultProject();
     const trackId = p.tracks[0].id;
-    const note = createNote(1);
+    const note = createNote(sec(p), 1);
     p = addNote(p, trackId, note);
     p = removeNote(p, trackId, note.id);
     expect(p.tracks[0].notes).toHaveLength(0);
@@ -48,7 +65,7 @@ describe('note edits are immutable', () => {
   it('updates and clamps a note', () => {
     let p = createDefaultProject();
     const trackId = p.tracks[0].id;
-    const note = createNote(1);
+    const note = createNote(sec(p), 1);
     p = addNote(p, trackId, note);
     p = updateNote(p, trackId, note.id, { velocity: 9, startBeat: -2 });
     expect(p.tracks[0].notes[0].velocity).toBe(1);
@@ -59,7 +76,7 @@ describe('note edits are immutable', () => {
     let p = createDefaultProject();
     const from = p.tracks[0].id;
     const to = p.tracks[1].id;
-    const note = createNote(0);
+    const note = createNote(sec(p), 0);
     p = addNote(p, from, note);
     p = moveNote(p, from, note.id, to, 3);
     expect(p.tracks[0].notes).toHaveLength(0);
@@ -73,14 +90,87 @@ describe('song settings', () => {
     expect(setBpm(createDefaultProject(), 9000).bpm).toBe(300);
   });
 
-  it('clamps song length', () => {
-    expect(setLengthBars(createDefaultProject(), 0).lengthBars).toBe(1);
+  it('clamps a part’s length', () => {
+    const p = createDefaultProject();
+    expect(setSectionLength(p, sec(p), 0).sections[0].lengthBars).toBe(1);
+    expect(setSectionLength(p, sec(p), 999).sections[0].lengthBars).toBe(64);
   });
 
   it('toggles mute', () => {
     const p = createDefaultProject();
     const id = p.tracks[0].id;
     expect(toggleTrackMuted(p, id).tracks[0].muted).toBe(true);
+  });
+});
+
+describe('sections & arrangement', () => {
+  it('adds a new empty part to the end of the song', () => {
+    const p = addSection(createDefaultProject());
+    expect(p.sections).toHaveLength(2);
+    expect(p.sections[1].name).toBe('B');
+    expect(p.arrangement.map((e) => e.sectionId)).toEqual([p.sections[0].id, p.sections[1].id]);
+  });
+
+  it('repeats a part: same section, another slot', () => {
+    let p = createDefaultProject();
+    p = repeatSection(p, sec(p));
+    expect(p.sections).toHaveLength(1);
+    expect(p.arrangement).toHaveLength(2);
+    expect(p.arrangement[0].sectionId).toBe(p.arrangement[1].sectionId);
+    expect(p.arrangement[0].id).not.toBe(p.arrangement[1].id);
+  });
+
+  it('copies a part with independent copies of its notes', () => {
+    let p = createDefaultProject();
+    const trk = p.tracks[0].id;
+    const a = createNote(sec(p), 0);
+    const b = createNote(sec(p), 1);
+    p = addNote(p, trk, a);
+    p = addNote(p, trk, b);
+    p = chainNotes(p, [a.id, b.id]);
+
+    p = duplicateSection(p, sec(p));
+    const copyId = p.sections[1].id;
+    const originals = p.tracks[0].notes.filter((n) => n.sectionId === sec(p));
+    const copies = p.tracks[0].notes.filter((n) => n.sectionId === copyId);
+    expect(copies).toHaveLength(2);
+    expect(copies.map((n) => n.startBeat)).toEqual([0, 1]);
+    // fresh ids, and the chain is re-linked among the copies only
+    expect(copies.every((c) => !originals.some((o) => o.id === c.id))).toBe(true);
+    expect(copies[0].groupId).toBe(copies[1].groupId);
+    expect(copies[0].groupId).not.toBe(originals[0].groupId);
+  });
+
+  it('reorders the song', () => {
+    let p = addSection(createDefaultProject()); // A B
+    p = moveArrangementEntry(p, 1, 0); // B A
+    expect(p.arrangement.map((e) => e.sectionId)).toEqual([p.sections[1].id, p.sections[0].id]);
+  });
+
+  it('removing a repeated slot keeps the part; removing its last slot deletes it and its notes', () => {
+    let p = createDefaultProject();
+    const aId = sec(p);
+    p = addNote(p, p.tracks[0].id, createNote(aId, 0));
+    p = repeatSection(p, aId); // A A
+    p = addSection(p); // A A B
+
+    p = removeArrangementEntry(p, p.arrangement[1].id); // A B — section A survives
+    expect(p.sections).toHaveLength(2);
+    expect(p.tracks[0].notes).toHaveLength(1);
+
+    p = removeArrangementEntry(p, p.arrangement[0].id); // B — A gone, notes gone
+    expect(p.sections.map((s) => s.name)).toEqual(['B']);
+    expect(p.tracks[0].notes).toHaveLength(0);
+  });
+
+  it('never removes the last remaining slot', () => {
+    const p = createDefaultProject();
+    expect(removeArrangementEntry(p, p.arrangement[0].id)).toBe(p);
+  });
+
+  it('renames a part', () => {
+    const p = createDefaultProject();
+    expect(renameSection(p, sec(p), 'Chorus').sections[0].name).toBe('Chorus');
   });
 });
 
@@ -96,8 +186,8 @@ describe('per-block sound & chaining', () => {
   function twoKicks() {
     let p = createDefaultProject();
     const trk = p.tracks[0].id;
-    const a = createNote(0);
-    const b = createNote(1);
+    const a = createNote(sec(p), 0);
+    const b = createNote(sec(p), 1);
     p = addNote(p, trk, a);
     p = addNote(p, trk, b);
     const notes = () => p.tracks[0].notes;
@@ -149,5 +239,33 @@ describe('per-block sound & chaining', () => {
     const t = twoKicks();
     const p = removeNotes(t.p, new Set([t.aId, t.bId]));
     expect(p.tracks[0].notes).toHaveLength(0);
+  });
+});
+
+describe('edits that change nothing', () => {
+  // The store commits whatever these return, so a fresh-but-identical project
+  // would spend an undo step doing nothing — and clear the redo stack with it.
+  it('returns the same project when a part is already that length', () => {
+    const p = createDefaultProject();
+    expect(setSectionLength(p, sec(p), p.sections[0].lengthBars)).toBe(p);
+    expect(setSectionLength(p, sec(p), 0)).not.toBe(p); // 4 -> clamped 1: a real change
+
+    // Pressing − again once the part is down to one bar: nothing left to do.
+    const atMinimum = setSectionLength(p, sec(p), 1);
+    expect(setSectionLength(atMinimum, sec(p), 0)).toBe(atMinimum);
+  });
+
+  it('returns the same project when a part is renamed to its own name', () => {
+    const p = createDefaultProject();
+    expect(renameSection(p, sec(p), 'A')).toBe(p);
+    expect(renameSection(p, sec(p), 'Verse')).not.toBe(p);
+  });
+
+  it('returns the same project when the tempo is already there', () => {
+    const p = createDefaultProject();
+    expect(setBpm(p, 120)).toBe(p);
+
+    const atMaximum = setBpm(p, 300);
+    expect(setBpm(atMaximum, 9000)).toBe(atMaximum); // pinned at the top
   });
 });

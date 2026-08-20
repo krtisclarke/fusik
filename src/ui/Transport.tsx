@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { engine } from '../audio/AudioEngine';
 import { formatPosition } from '../model/time';
 import type { SnapId } from '../model/time';
-import { MAX_BPM, MIN_BPM } from '../model/project';
+import { MAX_BARS, MAX_BPM, MIN_BARS, MIN_BPM } from '../model/project';
 
 const SNAP_OPTIONS: { id: SnapId; label: string }[] = [
   { id: 'bar', label: 'Bar' },
@@ -14,6 +14,49 @@ const SNAP_OPTIONS: { id: SnapId; label: string }[] = [
   { id: 'sixteenth', label: '1/16' },
   { id: 'off', label: 'Off' },
 ];
+
+/**
+ * A number box that only reports a value when the child has finished typing one
+ * (Enter, or clicking away). Typing straight through to the store would commit
+ * an undo step per keystroke, and an empty box — mid-edit, on the way to "12" —
+ * reads as 0 and would snap the part to its minimum under the child's fingers.
+ */
+function NumberField({
+  value,
+  min,
+  max,
+  onCommit,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  onCommit: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+
+  function commit() {
+    const text = draft;
+    setDraft(null);
+    if (text == null || text.trim() === '') return; // left empty: keep what it was
+    const parsed = Number(text);
+    if (Number.isFinite(parsed)) onCommit(parsed);
+  }
+
+  return (
+    <input
+      type="number"
+      value={draft ?? String(value)}
+      min={min}
+      max={max}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') commit();
+        if (e.key === 'Escape') setDraft(null);
+      }}
+    />
+  );
+}
 
 /** Live "bar.beat" readout, driven by the audio clock via requestAnimationFrame
  *  so it stays perfectly in step with what's playing without re-rendering React. */
@@ -40,12 +83,17 @@ export function Transport() {
   const canUndo = useStore((s) => s.canUndo);
   const canRedo = useStore((s) => s.canRedo);
   const bpm = useStore((s) => s.project.bpm);
-  const lengthBars = useStore((s) => s.project.lengthBars);
+  const playMode = useStore((s) => s.playMode);
+  const currentSection = useStore(
+    (s) => s.project.sections.find((x) => x.id === s.currentSectionId) ?? s.project.sections[0],
+  );
   const snap = useStore((s) => s.snap);
 
   const togglePlay = useStore((s) => s.togglePlay);
   const stop = useStore((s) => s.stop);
   const toggleLoop = useStore((s) => s.toggleLoop);
+  const setPlayMode = useStore((s) => s.setPlayMode);
+  const setPartBars = useStore((s) => s.setPartBars);
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
   const setBpm = useStore((s) => s.setBpm);
@@ -84,6 +132,23 @@ export function Transport() {
         </button>
         <button className="tbtn rec" disabled title="Microphone recording arrives in a later update">
           ⏺
+        </button>
+      </div>
+
+      <div className="tgroup seg">
+        <button
+          className={`tbtn ${playMode === 'song' ? 'on' : ''}`}
+          onClick={() => setPlayMode('song')}
+          title="Play the whole song — every part in order"
+        >
+          Song
+        </button>
+        <button
+          className={`tbtn ${playMode === 'section' ? 'on' : ''}`}
+          onClick={() => setPlayMode('section')}
+          title="Play just the part you're editing"
+        >
+          Part
         </button>
       </div>
 
@@ -139,9 +204,26 @@ export function Transport() {
         </select>
       </div>
 
-      <div className="readout">
-        <span className="big">{lengthBars}</span>
-        <span className="lbl">bars long</span>
+      <div className="field">
+        <span className="lbl">Part {currentSection.name}</span>
+        <div className="stepper">
+          <button
+            onClick={() => setPartBars(currentSection.lengthBars - 1)}
+            aria-label="Shorter"
+          >
+            −
+          </button>
+          <NumberField
+            value={currentSection.lengthBars}
+            min={MIN_BARS}
+            max={MAX_BARS}
+            onCommit={setPartBars}
+          />
+          <button onClick={() => setPartBars(currentSection.lengthBars + 1)} aria-label="Longer">
+            +
+          </button>
+        </div>
+        <span className="lbl">bars</span>
       </div>
 
       <div className="spacer" />

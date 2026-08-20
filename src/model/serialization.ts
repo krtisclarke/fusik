@@ -18,8 +18,18 @@ import {
   MIN_BARS,
   MIN_BPM,
 } from './project';
-import { newNoteId, newTrackId } from './ids';
-import type { Instrument, Note, Project, TimeSignature, Track, TrackType } from './types';
+import { createSection } from './project';
+import { newEntryId, newNoteId, newSectionId, newTrackId } from './ids';
+import type {
+  ArrangementEntry,
+  Instrument,
+  Note,
+  Project,
+  Section,
+  TimeSignature,
+  Track,
+  TrackType,
+} from './types';
 import { PROJECT_FORMAT_VERSION } from './types';
 import { DEFAULT_SCALE_ID, DEFAULT_SCALE_ROOT } from './scales';
 
@@ -79,6 +89,7 @@ function parseNote(value: unknown): Note {
   const v = isObject(value) ? value : {};
   const note: Note = {
     id: asString(v.id, newNoteId()),
+    sectionId: asString(v.sectionId, ''),
     startBeat: Math.max(0, asNumber(v.startBeat, 0)),
     lengthBeats: Math.max(0.0625, asNumber(v.lengthBeats, 1)),
     velocity: clamp(asNumber(v.velocity, DEFAULT_NOTE_VELOCITY), 0, 1),
@@ -91,14 +102,17 @@ function parseNote(value: unknown): Note {
   return note;
 }
 
-function parseTrack(value: unknown): Track {
+function parseTrack(value: unknown, version: number): Track {
   const v = isObject(value) ? value : {};
   const type: TrackType = v.type === 'instrument' ? 'instrument' : 'drum';
   const instrument = parseInstrument(v.instrument);
   let notes = Array.isArray(v.notes) ? v.notes.map(parseNote) : [];
-  // Migration: older files stored the sound on the track. Move it onto each
-  // block that doesn't already carry its own sound, so old songs still sound right.
-  if (Object.keys(instrument.params).length > 0) {
+  // Migration: format-1 files stored the sound on the track. Move it onto each
+  // block that doesn't already carry its own sound, so old songs still sound
+  // right. Only for format 1 — from format 2 on, sound lives on the blocks and a
+  // block with no params deliberately means "the plain voice", so re-stamping it
+  // would resurrect a sound the child had reset.
+  if (version < 2 && Object.keys(instrument.params).length > 0) {
     notes = notes.map((n) =>
       Object.keys(n.params).length === 0 ? { ...n, params: { ...instrument.params } } : n,
     );
@@ -113,6 +127,16 @@ function parseTrack(value: unknown): Track {
     gain: clamp(asNumber(v.gain, 0.85), 0, 1),
     muted: asBool(v.muted, false),
     solo: asBool(v.solo, false),
+  };
+}
+
+function parseSection(value: unknown): Section {
+  const v = isObject(value) ? value : {};
+  return {
+    id: asString(v.id, newSectionId()),
+    name: asString(v.name, 'A'),
+    lengthBars: clamp(Math.round(asNumber(v.lengthBars, DEFAULT_BARS)), MIN_BARS, MAX_BARS),
+    color: asString(v.color, '#f59e0b'),
   };
 }
 
@@ -143,14 +167,78 @@ export function parseProject(text: string): Project {
     );
   }
 
+  const tracks = raw.tracks.map((t) => parseTrack(t, version));
+
+  // Sections + arrangement. Format 1 files predate sections entirely: the whole
+  // song becomes one part ("A") of the old song length, and every note joins it.
+  // For format 2 files, imperfect data is repaired rather than refused. The
+  // repairs below re-establish every invariant the rest of the app relies on:
+  // ids are unique, at least one part, at least one slot, every slot points at a
+  // real part, every part is reachable in the arrangement, and every note lives
+  // in a real part. A hand-edited or half-written file can violate any of these.
+  let sections: Section[] = Array.isArray(raw.sections) ? raw.sections.map(parseSection) : [];
+  if (sections.length === 0) {
+    const bars = clamp(Math.round(asNumber(raw.lengthBars, DEFAULT_BARS)), MIN_BARS, MAX_BARS);
+    sections = [{ ...createSection([], bars), name: 'A' }];
+  }
+  // Duplicate ids would make two parts indistinguishable; re-id the later ones.
+  const sectionIds = new Set<string>();
+  sections = sections.map((s) => {
+    const section = sectionIds.has(s.id) ? { ...s, id: newSectionId() } : s;
+    sectionIds.add(section.id);
+    return section;
+  });
+
+  // Slots need unique ids too: removing a slot matches by id, so duplicates
+  // would take every twin out of the song at once.
+  const entryIds = new Set<string>();
+  let arrangement: ArrangementEntry[] = Array.isArray(raw.arrangement)
+    ? raw.arrangement
+        .map((e): ArrangementEntry => {
+          const v = isObject(e) ? e : {};
+          return { id: asString(v.id, newEntryId()), sectionId: asString(v.sectionId, '') };
+        })
+        .filter((e) => sectionIds.has(e.sectionId))
+        .map((e) => {
+          const entry = entryIds.has(e.id) ? { ...e, id: newEntryId() } : e;
+          entryIds.add(entry.id);
+          return entry;
+        })
+    : [];
+  if (arrangement.length === 0) {
+    arrangement = sections.map((s) => ({ id: newEntryId(), sectionId: s.id }));
+  } else {
+    // A part that appears nowhere in the arrangement would be unreachable — it
+    // could never be heard, edited or deleted. Give it a slot at the end.
+    const used = new Set(arrangement.map((e) => e.sectionId));
+    for (const s of sections) {
+      if (!used.has(s.id)) arrangement.push({ id: newEntryId(), sectionId: s.id });
+    }
+  }
+
+  // Every note must point at a real section (strays go to the first part) and
+  // carry an id unique across the whole song — selection and per-block sound
+  // edits address blocks by id alone, across tracks.
+  const fallbackSectionId = sections[0].id;
+  const noteIds = new Set<string>();
+  for (const track of tracks) {
+    track.notes = track.notes.map((n) => {
+      let note = sectionIds.has(n.sectionId) ? n : { ...n, sectionId: fallbackSectionId };
+      if (noteIds.has(note.id)) note = { ...note, id: newNoteId() };
+      noteIds.add(note.id);
+      return note;
+    });
+  }
+
   return {
     formatVersion: PROJECT_FORMAT_VERSION,
     name: asString(raw.name, 'Untitled Song'),
     bpm: clamp(Math.round(asNumber(raw.bpm, DEFAULT_BPM)), MIN_BPM, MAX_BPM),
     timeSignature: parseTimeSignature(raw.timeSignature),
-    lengthBars: clamp(Math.round(asNumber(raw.lengthBars, DEFAULT_BARS)), MIN_BARS, MAX_BARS),
     scaleRoot: clamp(Math.round(asNumber(raw.scaleRoot, DEFAULT_SCALE_ROOT)), 0, 11),
     scaleId: asString(raw.scaleId, DEFAULT_SCALE_ID),
-    tracks: raw.tracks.map(parseTrack),
+    sections,
+    arrangement,
+    tracks,
   };
 }

@@ -7,7 +7,7 @@
 // the audio engine so what you hear always matches what you see.
 
 import { create } from 'zustand';
-import { engine } from '../audio/AudioEngine';
+import { engine, type PlayMode } from '../audio/AudioEngine';
 import * as P from '../model/project';
 import type { Project } from '../model/types';
 import type { SnapId } from '../model/time';
@@ -44,6 +44,10 @@ export interface StoreState {
 
   isPlaying: boolean;
   isLooping: boolean;
+  /** 'song' = play the whole arrangement; 'section' = loop just the edited part. */
+  playMode: PlayMode;
+  /** Which part the timeline is showing/editing. Always a real section id. */
+  currentSectionId: string;
   snap: SnapId;
   selection: Selection;
   status: string | null;
@@ -67,10 +71,21 @@ export interface StoreState {
   pause: () => void;
   stop: () => void;
   toggleLoop: () => void;
+  setPlayMode: (mode: PlayMode) => void;
+
+  // sections (parts) & arrangement
+  setCurrentSection: (sectionId: string) => void;
+  addPart: () => void;
+  copyPart: (sectionId: string) => void;
+  repeatPart: (sectionId: string) => void;
+  removeEntry: (entryId: string) => void;
+  moveEntry: (fromIndex: number, toIndex: number) => void;
+  renamePart: (sectionId: string, name: string) => void;
+  /** Change the length (in bars) of the part being edited. */
+  setPartBars: (bars: number) => void;
 
   // editing
   setBpm: (bpm: number) => void;
-  setLengthBars: (bars: number) => void;
   addTrackForVoice: (voiceId: string) => string;
   removeTrack: (trackId: string) => void;
   setTrackGain: (trackId: string, gain: number) => void;
@@ -117,16 +132,68 @@ function middlePitch(voiceId: string, project: Project): number | undefined {
   return ladder[Math.floor(ladder.length / 2)];
 }
 
+/** The given section id if it still exists, else the song's first part. */
+function fixSectionId(project: Project, sectionId: string | null): string {
+  if (sectionId && project.sections.some((s) => s.id === sectionId)) return sectionId;
+  return project.arrangement[0]?.sectionId ?? project.sections[0]?.id ?? '';
+}
+
+/**
+ * Drop anything selected that isn't a block of the part now on screen. The
+ * timeline only draws the current part, so a selection reaching into another one
+ * would let the Sound Editor and the Delete key change blocks the child can't
+ * see. Undo/redo make this easy to hit: they restore a project where a
+ * previously-deleted block exists again.
+ */
+function pruneSelection(project: Project, sectionId: string, selection: Selection): Selection {
+  if (selection.noteIds.length === 0) return selection;
+  const visible = new Set<string>();
+  for (const t of project.tracks) {
+    for (const n of t.notes) if (n.sectionId === sectionId) visible.add(n.id);
+  }
+  const noteIds = selection.noteIds.filter((id) => visible.has(id));
+  if (noteIds.length === selection.noteIds.length) return selection; // unchanged
+  return { trackId: selection.trackId, noteIds };
+}
+
 export const useStore = create<StoreState>((set, get) => {
-  /** Commit a new project to history + engine, keeping mirrors in sync. */
+  /** Commit a new project to history + engine, keeping mirrors in sync.
+   *  Also re-checks the edited part, in case this edit removed it. */
   function apply(next: Project): void {
-    const history = commit(get().history, next);
+    const s = get();
+    // Model helpers hand back the same project when an edit changes nothing
+    // (a stepper at its limit). Committing that would spend an undo step and
+    // throw away the redo stack for no reason.
+    if (next === s.history.present) return;
+    // A discrete edit lands in the middle of a slider or resize drag only when
+    // something interrupted it (Delete, a menu command). The drag's starting
+    // snapshot is stale from here on — keeping it would let commitEdit push an
+    // out-of-order state into the undo history.
+    editBaseline = null;
+    const history = commit(s.history, next);
+    const currentSectionId = fixSectionId(next, s.currentSectionId);
     engine.setProject(next);
-    set({ history, project: next, canUndo: canUndo(history), canRedo: canRedo(history) });
+    engine.setEditSection(currentSectionId);
+    set({
+      history,
+      project: next,
+      currentSectionId,
+      selection: pruneSelection(next, currentSectionId, s.selection),
+      canUndo: canUndo(history),
+      canRedo: canRedo(history),
+    });
+  }
+
+  /** Point the timeline (and 'section' play mode) at a part. */
+  function focusSection(sectionId: string): void {
+    engine.setEditSection(sectionId);
+    set({ currentSectionId: sectionId, selection: { trackId: null, noteIds: [] } });
   }
 
   const initialProject = P.createDefaultProject();
   engine.setProject(initialProject);
+  const initialSectionId = fixSectionId(initialProject, null);
+  engine.setEditSection(initialSectionId);
   const startHistory = createHistory(initialProject);
 
   return {
@@ -137,6 +204,8 @@ export const useStore = create<StoreState>((set, get) => {
 
     isPlaying: false,
     isLooping: engine.isLoopingOn(),
+    playMode: engine.getPlayMode(),
+    currentSectionId: initialSectionId,
     snap: 'sixteenth',
     selection: { trackId: null, noteIds: [] },
     status: null,
@@ -147,10 +216,13 @@ export const useStore = create<StoreState>((set, get) => {
       editBaseline = null;
       const project = P.createDefaultProject();
       const history = createHistory(project);
+      const currentSectionId = fixSectionId(project, null);
       engine.setProject(project);
+      engine.setEditSection(currentSectionId);
       set({
         history,
         project,
+        currentSectionId,
         canUndo: false,
         canRedo: false,
         isPlaying: false,
@@ -163,10 +235,13 @@ export const useStore = create<StoreState>((set, get) => {
       engine.stop();
       editBaseline = null;
       const history = createHistory(project);
+      const currentSectionId = fixSectionId(project, null);
       engine.setProject(project);
+      engine.setEditSection(currentSectionId);
       set({
         history,
         project,
+        currentSectionId,
         canUndo: false,
         canRedo: false,
         isPlaying: false,
@@ -211,15 +286,35 @@ export const useStore = create<StoreState>((set, get) => {
     // ---- history ---------------------------------------------------------
     undo: () => {
       editBaseline = null;
-      const history = undo(get().history);
+      const s = get();
+      const history = undo(s.history);
+      const currentSectionId = fixSectionId(history.present, s.currentSectionId);
       engine.setProject(history.present);
-      set({ history, project: history.present, canUndo: canUndo(history), canRedo: canRedo(history) });
+      engine.setEditSection(currentSectionId);
+      set({
+        history,
+        project: history.present,
+        currentSectionId,
+        selection: pruneSelection(history.present, currentSectionId, s.selection),
+        canUndo: canUndo(history),
+        canRedo: canRedo(history),
+      });
     },
     redo: () => {
       editBaseline = null;
-      const history = redo(get().history);
+      const s = get();
+      const history = redo(s.history);
+      const currentSectionId = fixSectionId(history.present, s.currentSectionId);
       engine.setProject(history.present);
-      set({ history, project: history.present, canUndo: canUndo(history), canRedo: canRedo(history) });
+      engine.setEditSection(currentSectionId);
+      set({
+        history,
+        project: history.present,
+        currentSectionId,
+        selection: pruneSelection(history.present, currentSectionId, s.selection),
+        canUndo: canUndo(history),
+        canRedo: canRedo(history),
+      });
     },
 
     syncTransport: () => {
@@ -249,10 +344,51 @@ export const useStore = create<StoreState>((set, get) => {
       engine.setLooping(next);
       set({ isLooping: next });
     },
+    setPlayMode: (mode) => {
+      if (mode === get().playMode) return; // pressing the mode you're already in
+      engine.setPlayMode(mode); // switching resets the transport
+      set({ playMode: mode, isPlaying: false });
+    },
+
+    // ---- sections (parts) & arrangement ----------------------------------
+    setCurrentSection: (sectionId) => {
+      const project = get().history.present;
+      if (!project.sections.some((s) => s.id === sectionId)) return;
+      focusSection(sectionId);
+    },
+
+    addPart: () => {
+      const next = P.addSection(get().history.present);
+      apply(next);
+      focusSection(next.sections[next.sections.length - 1].id);
+    },
+
+    copyPart: (sectionId) => {
+      const before = get().history.present;
+      const next = P.duplicateSection(before, sectionId);
+      if (next === before) return;
+      apply(next);
+      focusSection(next.sections[next.sections.length - 1].id);
+    },
+
+    repeatPart: (sectionId) => apply(P.repeatSection(get().history.present, sectionId)),
+
+    removeEntry: (entryId) => apply(P.removeArrangementEntry(get().history.present, entryId)),
+
+    moveEntry: (fromIndex, toIndex) =>
+      apply(P.moveArrangementEntry(get().history.present, fromIndex, toIndex)),
+
+    renamePart: (sectionId, name) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      apply(P.renameSection(get().history.present, sectionId, trimmed.slice(0, 24)));
+    },
+
+    setPartBars: (bars) =>
+      apply(P.setSectionLength(get().history.present, get().currentSectionId, bars)),
 
     // ---- editing ---------------------------------------------------------
     setBpm: (bpm) => apply(P.setBpm(get().history.present, bpm)),
-    setLengthBars: (bars) => apply(P.setLengthBars(get().history.present, bars)),
 
     addTrackForVoice: (voiceId) => {
       const track = P.createTrackForVoice(voiceId);
@@ -341,7 +477,7 @@ export const useStore = create<StoreState>((set, get) => {
       const snapped = snapBeat(beat, get().snap, project.timeSignature);
       const existing = P.findTrackByVoice(project, voiceId);
       const pitch = middlePitch(voiceId, project);
-      const note = P.createNote(snapped, 1, P.DEFAULT_NOTE_VELOCITY, pitch);
+      const note = P.createNote(get().currentSectionId, snapped, 1, P.DEFAULT_NOTE_VELOCITY, pitch);
       if (existing) {
         apply(P.addNote(project, existing.id, note));
       } else {
@@ -356,7 +492,13 @@ export const useStore = create<StoreState>((set, get) => {
       const project = get().history.present;
       const track = project.tracks.find((t) => t.id === trackId);
       const snapped = snapBeat(beat, get().snap, project.timeSignature);
-      const note = P.createNote(snapped, 1, opts?.velocity ?? P.DEFAULT_NOTE_VELOCITY, opts?.pitch);
+      const note = P.createNote(
+        get().currentSectionId,
+        snapped,
+        1,
+        opts?.velocity ?? P.DEFAULT_NOTE_VELOCITY,
+        opts?.pitch,
+      );
       apply(P.addNote(project, trackId, note));
       if (track) {
         void engine.audition(track.instrument.voiceId, note.params, note.velocity, note.pitch);
@@ -386,7 +528,12 @@ export const useStore = create<StoreState>((set, get) => {
     },
     selectTrackNotes: (trackId) => {
       const track = get().history.present.tracks.find((t) => t.id === trackId);
-      set({ selection: { trackId, noteIds: track ? track.notes.map((n) => n.id) : [] } });
+      // Only the blocks visible right now — the ones in the part being edited.
+      const sectionId = get().currentSectionId;
+      const noteIds = track
+        ? track.notes.filter((n) => n.sectionId === sectionId).map((n) => n.id)
+        : [];
+      set({ selection: { trackId, noteIds } });
     },
     audition: (voiceId) => {
       const voice = getVoice(voiceId);

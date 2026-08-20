@@ -83,7 +83,30 @@ engine never plays a note *when a timer fires*. Instead
 
 This is the standard "A Tale of Two Clocks" approach. Result: rock-solid timing
 with no drift. Looping is handled by projecting each note's beat forward by the
-loop length and scheduling the occurrences that land in the window.
+loop length and scheduling the occurrences that land in the window
+(`beatOccurrencesInWindow` in `model/time.ts` — pure, and tested).
+
+**The window is `(lo, hi]`** — open at the bottom, closed at the top — so that
+back-to-back windows tile the timeline exactly once and no note is ever
+scheduled twice. The cost of that choice: the very first window has to open a
+hair *below* the beat playback starts from, or a note sitting exactly on it (the
+downbeat, every single time you press Play) falls outside every window and is
+never heard. `START_EPSILON_BEATS` is that nudge.
+
+**When the loop length changes mid-play** — a part stretched, a part added, the
+song reordered, all normal things to do while it's running — the transport
+re-anchors (`reanchorForPeriodChange`). It counts absolute beats and wraps them
+by the loop length, so without re-anchoring the wrapped position would jump
+somewhere unrelated and take a stretch of silence with it. Re-anchoring keeps
+both the wrapped position and the already-scheduled horizon, so nothing is heard
+twice.
+
+**Two play modes.** In `'song'` mode the engine plays the arrangement: each
+slot's section is laid end to end (`model/arrange.ts` resolves slots to absolute
+beats), a note is scheduled once per slot its section occupies, and looping
+wraps the whole song. In `'section'` mode only the part being edited plays,
+looping at that part's length — the editing workflow. Switching modes resets the
+transport.
 
 **Live editing:** the scheduler re-reads the current project every wake, so a
 note added, moved, muted, or a tempo change is heard on the next ~100 ms window
@@ -145,32 +168,40 @@ pre-limiter, cymbals/percussion sit lower).
 
 ## 4. Project file format (`.beatbox`)
 
-Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v1):
+Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v2):
 
 ```jsonc
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
   "name": "My Song",
   "bpm": 120,
   "timeSignature": { "numerator": 4, "denominator": 4 },
-  "lengthBars": 4,
   "scaleRoot": 0,              // 0 = C; the root of the melodic scale
   "scaleId": "majorPentatonic",
+  "sections": [                // the song's parts, each its own mini-loop
+    { "id": "sec_…", "name": "A", "lengthBars": 4, "color": "#f59e0b" },
+    { "id": "sec_…", "name": "B", "lengthBars": 2, "color": "#60a5fa" }
+  ],
+  "arrangement": [             // the song = parts in this order (repeats allowed)
+    { "id": "arr_…", "sectionId": "sec_A…" },
+    { "id": "arr_…", "sectionId": "sec_A…" },
+    { "id": "arr_…", "sectionId": "sec_B…" }
+  ],
   "tracks": [
     {
       "id": "trk_…", "name": "Kick", "type": "drum", "color": "#ef4444",
       "instrument": { "voiceId": "kick", "params": {} },
       "gain": 0.85, "muted": false, "solo": false,
       "notes": [
-        { "id": "note_…", "startBeat": 0, "lengthBeats": 1, "velocity": 0.8, "params": { "decay": 0.6 } },
-        { "id": "note_…", "startBeat": 2, "lengthBeats": 1, "velocity": 0.8, "params": { "decay": 0.6 }, "groupId": "grp_…" }
+        { "id": "note_…", "sectionId": "sec_…", "startBeat": 0, "lengthBeats": 1, "velocity": 0.8, "params": { "decay": 0.6 } },
+        { "id": "note_…", "sectionId": "sec_…", "startBeat": 2, "lengthBeats": 1, "velocity": 0.8, "params": { "decay": 0.6 }, "groupId": "grp_…" }
       ]
     },
     {
       "id": "trk_…", "name": "Piano", "type": "instrument", "color": "#60a5fa",
       "instrument": { "voiceId": "piano", "params": {} },
       "gain": 0.7, "muted": false, "solo": false,
-      "notes": [ { "id": "note_…", "startBeat": 0, "lengthBeats": 1, "velocity": 0.8, "pitch": 72, "params": {} } ]
+      "notes": [ { "id": "note_…", "sectionId": "sec_…", "startBeat": 0, "lengthBeats": 1, "velocity": 0.8, "pitch": 72, "params": {} } ]
     }
   ]
 }
@@ -178,6 +209,25 @@ Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v1):
 
 - `type` is `"drum"` or `"instrument"`. Instrument notes carry a `pitch` (MIDI
   number); drum notes omit it.
+
+- **Sections & arrangement (v2).** A section ("part" in the UI) is a mini-loop
+  with its own length; the arrangement is the song's running order, and the same
+  section may appear in several slots (A A B A). Slots have their own ids so
+  repeats can be reordered/removed individually. Every note carries the
+  `sectionId` of the part it lives in; `startBeat` is measured from the start of
+  that part. Tracks (instrument, volume, mute/solo) span the whole song.
+  Invariants, re-established on every load: ids are unique (sections, slots and
+  notes alike — duplicates get re-minted, since all three are addressed by id
+  and twins would be edited or deleted together), at least one section, at least
+  one arrangement slot, every slot points at a real section, every section
+  appears in the arrangement (an unreferenced one would be unreachable — never
+  heard, edited or deleted, so it gets a slot at the end), and every note lives
+  in a real section. Removing a section's last slot deletes the section and its
+  notes. Format-1 files are migrated on load: the whole song becomes one part
+  "A" of the old `lengthBars`, and every note joins it — including the old
+  track-level sound, which is copied onto the blocks. That copy is gated on
+  format 1: doing it to a format-2 file would resurrect a sound the child had
+  deliberately Reset, every time the song was reopened.
 
 - Each **note** carries its own `params` (sound overrides on the voice's
   defaults); empty means "the plain voice". Notes sharing a `groupId` are
@@ -220,9 +270,16 @@ npm run package:mac # macOS app bundle
 
 ### Testing approach
 
-- **Automated (30 tests):** timing/beat math, snapping, project serialization
-  (round-trip, invalid input, repair), undo/redo history, and the pure project
-  edit operations. Run headlessly with Vitest.
+- **Automated (82 tests):** timing/beat math, snapping, scheduling windows,
+  project serialization (round-trip, invalid input, repair, format-1
+  migration), arrangement math, undo/redo history, and the pure project edit
+  operations. Run headlessly with Vitest.
+- **The scheduler** (`AudioEngine.test.ts`) is driven for real — the engine
+  against a stubbed AudioContext and a fake clock, recording every note it hands
+  to Web Audio. Pure-function tests can't catch the bugs that live here, which
+  are about how each window is *set up*: the downbeat playing on the first pass,
+  a note never scheduled twice, a part appearing once per slot it occupies, and
+  the playhead surviving a length change mid-play.
 - **Audio:** verified by offline-rendering each voice and asserting non-silent
   output (done interactively via the dev console; see the debug handle exposed
   on `window.beatbox` in development builds).
@@ -256,7 +313,8 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Melodic instruments (piano, synth, bells, bass) | ✅ | Pitched subtractive synth: 2 oscillators, ADSR, low-pass filter. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
 | Playable keyboard + MIDI input | ⬜ | Play live, not just place notes — the natural next step. |
-| Sections / arrangement / automation | ⬜ | Phase 6. |
+| Song sections & arrangement | ✅ | Parts (A/B/…) with their own notes and lengths; a strip of chips shows the running order — click to edit, drag to rearrange, repeat/copy/rename/remove. Song vs. Part play modes. |
+| Automation | ⬜ | Phase 6. |
 | WAV export | ✅ | Renders the whole song offline through the master chain to a 16-bit stereo `.wav` (native Save dialog on desktop, download in browser). Verified: valid RIFF header, non-silent, no clipping. |
 | MP3 export | ⬜ | WAV is in; MP3 would need a bundled encoder + a licensing look. |
 
@@ -277,6 +335,15 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Save a song, start a new one, reopen the saved file — it returns identical.
 - [ ] Change snap resolution; placement follows it.
 - [ ] Loop toggle; song wraps at the end of the last bar.
+- [ ] Add a part, put a different beat in it, and switch between parts — each
+      shows only its own blocks.
+- [ ] "Play again" a part, then edit it: the change is heard everywhere it plays.
+      "Copy" a part, then edit the copy: the original is untouched.
+- [ ] Drag chips to reorder the song; the slot lands where you dropped it.
+- [ ] Rename a part that plays twice (double-click either chip) — one box opens,
+      and both chips take the new name.
+- [ ] Song vs. Part play modes; the playhead only shows on the part being heard.
+- [ ] Stretch the part you're editing *while it plays* — no jump, no silence.
 
 ---
 
@@ -296,10 +363,9 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 
 ## 10. Roadmap
 
-Melodic instruments (originally Phase 4) were brought forward and are now in.
-Remaining, roughly following the brief: a playable on-screen/MIDI keyboard so
-notes can be performed live, not just placed; step sequencer & humanize; the
-sound editor (ADSR/filters/effects with waveform views — the instrument
-parameters already exist, they just need UI); microphone recording; song
-sections, arrangement & automation; and polish — onboarding, more voices,
-accessibility, export, autosave.
+Melodic instruments (originally Phase 4) were brought forward and are now in,
+as are song sections & arrangement. Remaining, roughly following the brief: a
+playable on-screen/MIDI keyboard so notes can be performed live, not just
+placed; step sequencer & humanize; per-track effect sends; microphone
+recording; automation; and polish — onboarding, more voices, accessibility,
+export, autosave.

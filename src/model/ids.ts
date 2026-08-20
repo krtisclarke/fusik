@@ -13,3 +13,5 @@ function randomId(prefix: string): string {
 export const newTrackId = () => randomId('trk');
 export const newNoteId = () => randomId('note');
 export const newGroupId = () => randomId('grp');
+export const newSectionId = () => randomId('sec');
+export const newEntryId = () => randomId('arr');

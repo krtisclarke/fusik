@@ -34,6 +34,7 @@ function nearestIndex(pitches: number[], pitch: number): number {
 
 export function Timeline() {
   const project = useStore((s) => s.project);
+  const currentSectionId = useStore((s) => s.currentSectionId);
   const selection = useStore((s) => s.selection);
   const snap = useStore((s) => s.snap);
   const addNoteAt = useStore((s) => s.addNoteAt);
@@ -54,13 +55,19 @@ export function Timeline() {
   const [drag, setDrag] = useState<DragState | null>(null);
   const [resize, setResize] = useState<{ startX: number; origLength: number } | null>(null);
 
+  // The timeline shows one part of the song at a time (pick parts in the strip
+  // above). Only the current part's blocks are drawn and edited here.
+  const section =
+    project.sections.find((s) => s.id === currentSectionId) ?? project.sections[0];
+  const sectionNotes = (t: Track) => t.notes.filter((n) => n.sectionId === section.id);
+
   const ts = project.timeSignature;
   const perBar = beatsPerBar(ts);
-  const total = project.lengthBars * perBar;
+  const total = section.lengthBars * perBar;
   const gridWidth = total * PX_PER_BEAT;
   const barWidth = perBar * PX_PER_BEAT;
 
-  const noteCount = project.tracks.reduce((n, t) => n + t.notes.length, 0);
+  const noteCount = project.tracks.reduce((n, t) => n + sectionNotes(t).length, 0);
 
   const verticalLines = `repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px ${PX_PER_BEAT}px), repeating-linear-gradient(90deg, var(--line-strong) 0 2px, transparent 2px ${barWidth}px)`;
   const horizontalLines = `repeating-linear-gradient(0deg, var(--line) 0 1px, transparent 1px ${PITCH_ROW_H}px)`;
@@ -119,7 +126,11 @@ export function Timeline() {
     if (!drag) return;
     const dx = e.clientX - drag.startX;
     const raw = Math.max(0, drag.origBeat + xToBeat(dx));
-    const previewBeat = snapBeat(raw, snap, ts);
+    // Keep the block inside its part. A block dragged past the end would still
+    // exist but never play, which just looks like the app ate it.
+    const step = snap === 'off' ? 0.0625 : snapStepInBeats(snap, ts);
+    const lastStart = Math.max(0, total - step);
+    const previewBeat = Math.min(snapBeat(raw, snap, ts), lastStart);
     setDrag({ ...drag, previewBeat, moved: drag.moved || Math.abs(dx) > 4 });
   }
 
@@ -241,9 +252,9 @@ export function Timeline() {
       <div className="timeline-scroll">
         {/* ruler */}
         <div className="ruler">
-          <div className="corner">Timeline</div>
+          <div className="corner">Part {section.name}</div>
           <div className="bars" style={{ width: gridWidth }}>
-            {Array.from({ length: project.lengthBars }, (_, i) => (
+            {Array.from({ length: section.lengthBars }, (_, i) => (
               <div key={i} className="bar-mark" style={{ left: i * barWidth }}>
                 {i + 1}
               </div>
@@ -346,7 +357,7 @@ export function Timeline() {
                     );
                   })}
 
-                  {track.notes.map((note) => renderNote(track, note, pitches))}
+                  {sectionNotes(track).map((note) => renderNote(track, note, pitches))}
                 </div>
               </div>
             );

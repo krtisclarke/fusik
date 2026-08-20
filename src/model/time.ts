@@ -81,3 +81,36 @@ export function snapBeat(beat: number, snap: SnapId, ts: TimeSignature): number 
   if (step <= 0) return Math.max(0, beat);
   return Math.max(0, Math.round(beat / step) * step);
 }
+
+/**
+ * Every beat at which `base` falls inside the window `(lo, hi]`, repeating every
+ * `period` beats (`Infinity` = plays once, no repeat).
+ *
+ * This is the scheduler's core question, asked ~40 times a second: "of the notes
+ * in this song, which ones land in the slice of time I'm about to hand to Web
+ * Audio?" The window is open at the bottom and closed at the top so that
+ * consecutive windows — (a, b], (b, c] — cover the timeline exactly once, and no
+ * note is ever scheduled twice. The caller is responsible for starting its very
+ * first window just below the beat it starts from, or a note sitting exactly
+ * there is missed.
+ */
+export function beatOccurrencesInWindow(
+  lo: number,
+  hi: number,
+  base: number,
+  period: number,
+): number[] {
+  const out: number[] = [];
+  if (period === Infinity) {
+    if (base > lo && base <= hi) out.push(base);
+    return out;
+  }
+  if (period <= 0) return out;
+  const first = Math.max(0, Math.ceil((lo - base) / period));
+  for (let k = first; ; k++) {
+    const beat = base + k * period;
+    if (beat > hi) break;
+    if (beat > lo) out.push(beat);
+  }
+  return out;
+}

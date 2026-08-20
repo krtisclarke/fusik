@@ -5,9 +5,10 @@ beat, tweak it, and hear the result instantly. Built as a cross-platform desktop
 app (Windows and macOS) using web technology wrapped in Electron.
 
 > **Status:** Working timeline, transport, a synthesized drum kit **and melodic
-> instruments** (piano, synth, bells, bass) with scale-snapped melodies, plus
-> save/load and undo/redo. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the
-> full picture and roadmap.
+> instruments** (piano, synth, bells, bass) with scale-snapped melodies, **song
+> parts you can arrange** (verse/chorus-style, A A B A), per-block sound
+> editing, WAV export, plus save/load and undo/redo. See
+> [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the full picture and roadmap.
 
 ## Run it (development)
 
@@ -50,6 +51,10 @@ npm run package:mac   # build a macOS app bundle
   write a melody or bassline. The grid only offers notes from a musical scale, so
   whatever you place sounds right together.
 - Drag a sound from the left onto the timeline, or click it to hear it.
+- **Parts:** the strip above the timeline is your song's running order. Add a
+  new part, play a part again (A A B A!), copy one to tweak, drag chips to
+  rearrange, double-click to rename. Play the whole **Song** or loop just the
+  **Part** you're working on.
 - Press **Space** to play/stop. The song loops by default.
 - Change the tempo, mute/solo/volume per track, and snap to a musical grid.
 - **Ctrl/Cmd+Z** to undo, **Ctrl/Cmd+S** to save, **Ctrl/Cmd+O** to open.

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useStore } from './state/store';
 import { Transport } from './ui/Transport';
 import { Library } from './ui/Library';
+import { SectionStrip } from './ui/SectionStrip';
 import { Timeline } from './ui/Timeline';
 import { SoundEditor } from './ui/SoundEditor';
 import { getDesktop } from './platform/files';
@@ -94,6 +95,7 @@ export function App() {
       <Transport />
       <Library />
       <div className="stage">
+        <SectionStrip />
         <Timeline />
       </div>
       <SoundEditor />

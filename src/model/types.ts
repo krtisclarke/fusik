@@ -6,7 +6,7 @@
 // React, or the DOM — that separation is deliberate and load-bearing.
 
 /** Bumped whenever the on-disk shape changes in a non-backwards-compatible way. */
-export const PROJECT_FORMAT_VERSION = 1;
+export const PROJECT_FORMAT_VERSION = 2;
 
 export interface TimeSignature {
   /** Beats per bar (the top number). */
@@ -19,13 +19,40 @@ export interface TimeSignature {
 export type TrackType = 'drum' | 'instrument';
 
 /**
+ * A section ("part") of the song: its own mini-loop with its own notes and its
+ * own length. The song is sections played in arrangement order — the same
+ * section may appear several times (verse, chorus, verse…).
+ */
+export interface Section {
+  id: string;
+  /** Kid-facing name: "A", "B", … (renameable). */
+  name: string;
+  /** This part's length in bars. */
+  lengthBars: number;
+  /** Chip colour in the arrangement strip. */
+  color: string;
+}
+
+/**
+ * One slot in the song's running order, pointing at a section. Slots have their
+ * own ids so the same section can appear twice (A A B A) and still be
+ * reordered/removed individually.
+ */
+export interface ArrangementEntry {
+  id: string;
+  sectionId: string;
+}
+
+/**
  * A single note on the timeline: "play this track's sound, here, this long,
  * this hard." `pitch` is a MIDI note number (60 = middle C); drum tracks ignore
  * it, melodic instrument tracks use it.
  */
 export interface Note {
   id: string;
-  /** Position from the start of the song, measured in beats. */
+  /** Which section (part) of the song this note belongs to. */
+  sectionId: string;
+  /** Position from the start of its section, measured in beats. */
   startBeat: number;
   /** How long the note occupies on the grid, in beats. Always > 0. */
   lengthBeats: number;
@@ -77,11 +104,13 @@ export interface Project {
   /** Tempo in beats per minute. */
   bpm: number;
   timeSignature: TimeSignature;
-  /** Length of the song (and the loop region) in bars. */
-  lengthBars: number;
   /** Root of the musical scale, as a pitch class 0..11 (0 = C). */
   scaleRoot: number;
   /** Which scale melodic notes snap to, e.g. 'majorPentatonic'. */
   scaleId: string;
+  /** The song's parts. Always at least one. */
+  sections: Section[];
+  /** The song = sections played in this order. Always at least one entry. */
+  arrangement: ArrangementEntry[];
   tracks: Track[];
 }

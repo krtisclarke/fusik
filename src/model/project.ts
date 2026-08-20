@@ -6,8 +6,8 @@
 // stash and restore. Projects are small, so targeted cloning is cheap and far
 // clearer than deep-cloning everything.
 
-import { newGroupId, newNoteId, newTrackId } from './ids';
-import type { Instrument, Note, Project, TimeSignature, Track } from './types';
+import { newEntryId, newGroupId, newNoteId, newSectionId, newTrackId } from './ids';
+import type { Instrument, Note, Project, Section, TimeSignature, Track } from './types';
 import { PROJECT_FORMAT_VERSION } from './types';
 import { getVoice, isPitched } from './voices';
 import { DEFAULT_SCALE_ID, DEFAULT_SCALE_ROOT } from './scales';
@@ -23,6 +23,39 @@ export const DEFAULT_NOTE_VELOCITY = 0.8;
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+// ---- Sections (the song's parts) -----------------------------------------
+
+/** Chip colours for parts, assigned round-robin as parts are created. */
+export const SECTION_COLORS = [
+  '#f59e0b',
+  '#60a5fa',
+  '#34d399',
+  '#f472b6',
+  '#a78bfa',
+  '#f87171',
+  '#22d3ee',
+  '#facc15',
+];
+
+/** The next free single-letter name (A, B, …), falling back to "Part n". */
+function nextSectionName(sections: Section[]): string {
+  const used = new Set(sections.map((s) => s.name));
+  for (let i = 0; i < 26; i++) {
+    const letter = String.fromCharCode(65 + i);
+    if (!used.has(letter)) return letter;
+  }
+  return `Part ${sections.length + 1}`;
+}
+
+export function createSection(sections: Section[], lengthBars = DEFAULT_BARS): Section {
+  return {
+    id: newSectionId(),
+    name: nextSectionName(sections),
+    lengthBars: clamp(Math.round(lengthBars), MIN_BARS, MAX_BARS),
+    color: SECTION_COLORS[sections.length % SECTION_COLORS.length],
+  };
 }
 
 /** Build a fresh track wired to a given voice, with sensible presentation. */
@@ -49,19 +82,22 @@ export function createTrackForVoice(voiceId: string): Track {
  * the building blocks immediately.
  */
 export function createDefaultProject(name = 'My Song'): Project {
+  const section = createSection([]);
   return {
     formatVersion: PROJECT_FORMAT_VERSION,
     name,
     bpm: DEFAULT_BPM,
     timeSignature: { ...DEFAULT_TIME_SIGNATURE },
-    lengthBars: DEFAULT_BARS,
     scaleRoot: DEFAULT_SCALE_ROOT,
     scaleId: DEFAULT_SCALE_ID,
+    sections: [section],
+    arrangement: [{ id: newEntryId(), sectionId: section.id }],
     tracks: [createTrackForVoice('kick'), createTrackForVoice('snare'), createTrackForVoice('hihat')],
   };
 }
 
 export function createNote(
+  sectionId: string,
   startBeat: number,
   lengthBeats = 1,
   velocity = DEFAULT_NOTE_VELOCITY,
@@ -69,6 +105,7 @@ export function createNote(
 ): Note {
   const note: Note = {
     id: newNoteId(),
+    sectionId,
     startBeat: Math.max(0, startBeat),
     lengthBeats: Math.max(0.0625, lengthBeats),
     velocity: clamp(velocity, 0, 1),
@@ -268,12 +305,127 @@ export function moveNote(
 
 // ---- Song-level edits ----------------------------------------------------
 
+// Each of these returns the *same* project when the edit changes nothing (a
+// stepper pressed at its limit, a rename to the current name). The store commits
+// whatever it is handed, so a fresh-but-identical object would otherwise land an
+// undo step that does nothing — and wipe the redo stack on the way.
+
 export function setBpm(project: Project, bpm: number): Project {
-  return { ...project, bpm: clamp(Math.round(bpm), MIN_BPM, MAX_BPM) };
+  const next = clamp(Math.round(bpm), MIN_BPM, MAX_BPM);
+  if (next === project.bpm) return project;
+  return { ...project, bpm: next };
 }
 
-export function setLengthBars(project: Project, lengthBars: number): Project {
-  return { ...project, lengthBars: clamp(Math.round(lengthBars), MIN_BARS, MAX_BARS) };
+// ---- Section & arrangement edits -----------------------------------------
+//
+// The song = sections (parts) played in arrangement order. Invariant kept by
+// every operation here: at least one section, at least one arrangement entry,
+// and every section appears in the arrangement (no hidden parts).
+
+/** Add a brand-new empty part to the end of the song. */
+export function addSection(project: Project): Project {
+  const last = project.sections[project.sections.length - 1];
+  const section = createSection(project.sections, last?.lengthBars ?? DEFAULT_BARS);
+  return {
+    ...project,
+    sections: [...project.sections, section],
+    arrangement: [...project.arrangement, { id: newEntryId(), sectionId: section.id }],
+  };
+}
+
+/**
+ * Copy a part — a new independent section with a copy of every note the source
+ * had, added to the end of the song. Chains are copied too, but re-linked among
+ * the copies so editing the copy never drags the original along.
+ */
+export function duplicateSection(project: Project, sectionId: string): Project {
+  const source = project.sections.find((s) => s.id === sectionId);
+  if (!source) return project;
+  const section: Section = {
+    ...createSection(project.sections, source.lengthBars),
+  };
+  const groupMap = new Map<string, string>();
+  const tracks = project.tracks.map((t) => {
+    const copies = t.notes
+      .filter((n) => n.sectionId === sectionId)
+      .map((n) => {
+        const copy: Note = { ...n, id: newNoteId(), sectionId: section.id, params: { ...n.params } };
+        if (n.groupId) {
+          if (!groupMap.has(n.groupId)) groupMap.set(n.groupId, newGroupId());
+          copy.groupId = groupMap.get(n.groupId);
+        }
+        return copy;
+      });
+    return copies.length > 0 ? { ...t, notes: [...t.notes, ...copies] } : t;
+  });
+  return {
+    ...project,
+    sections: [...project.sections, section],
+    arrangement: [...project.arrangement, { id: newEntryId(), sectionId: section.id }],
+    tracks,
+  };
+}
+
+export function renameSection(project: Project, sectionId: string, name: string): Project {
+  const section = project.sections.find((s) => s.id === sectionId);
+  if (!section || section.name === name) return project;
+  return {
+    ...project,
+    sections: project.sections.map((s) => (s.id === sectionId ? { ...s, name } : s)),
+  };
+}
+
+export function setSectionLength(project: Project, sectionId: string, lengthBars: number): Project {
+  const bars = clamp(Math.round(lengthBars), MIN_BARS, MAX_BARS);
+  const section = project.sections.find((s) => s.id === sectionId);
+  if (!section || section.lengthBars === bars) return project;
+  return {
+    ...project,
+    sections: project.sections.map((s) => (s.id === sectionId ? { ...s, lengthBars: bars } : s)),
+  };
+}
+
+/** Play a part one more time: add another arrangement slot for it at the end. */
+export function repeatSection(project: Project, sectionId: string): Project {
+  if (!project.sections.some((s) => s.id === sectionId)) return project;
+  return {
+    ...project,
+    arrangement: [...project.arrangement, { id: newEntryId(), sectionId }],
+  };
+}
+
+/** Move one slot of the song's running order to a new position. */
+export function moveArrangementEntry(project: Project, fromIndex: number, toIndex: number): Project {
+  const a = project.arrangement;
+  if (fromIndex < 0 || fromIndex >= a.length || toIndex < 0 || toIndex >= a.length) return project;
+  if (fromIndex === toIndex) return project;
+  const next = [...a];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+  return { ...project, arrangement: next };
+}
+
+/**
+ * Remove one slot from the song. If that was the section's only slot, the
+ * section and its notes go too (nothing hidden). The last remaining slot can't
+ * be removed — a song always has at least one part.
+ */
+export function removeArrangementEntry(project: Project, entryId: string): Project {
+  if (project.arrangement.length <= 1) return project;
+  const entry = project.arrangement.find((e) => e.id === entryId);
+  if (!entry) return project;
+  const arrangement = project.arrangement.filter((e) => e.id !== entryId);
+  const stillUsed = arrangement.some((e) => e.sectionId === entry.sectionId);
+  if (stillUsed) return { ...project, arrangement };
+  return {
+    ...project,
+    arrangement,
+    sections: project.sections.filter((s) => s.id !== entry.sectionId),
+    tracks: project.tracks.map((t) => ({
+      ...t,
+      notes: t.notes.filter((n) => n.sectionId !== entry.sectionId),
+    })),
+  };
 }
 
 export function renameProject(project: Project, name: string): Project {

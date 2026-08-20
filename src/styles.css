@@ -736,3 +736,145 @@ select.snap {
   background: #3a4056;
   background-clip: padding-box;
 }
+
+/* ---- section strip (the song's running order) --------------------------- */
+
+.section-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+  overflow-x: auto;
+}
+
+.strip-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  flex: none;
+}
+
+.strip-chips {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 64px;
+  padding: 5px 22px 5px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  border-left: 4px solid var(--chip, var(--accent));
+  background: var(--bg-panel-2);
+  cursor: pointer;
+  user-select: none;
+  flex: none;
+}
+.chip:hover {
+  background: var(--bg-elev);
+}
+.chip.current {
+  border-color: var(--chip, var(--accent));
+  background: var(--bg-elev);
+  box-shadow: 0 0 0 1px var(--chip, var(--accent));
+}
+.chip.playing .chip-name::after {
+  content: ' ♪';
+}
+.chip.playing {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 1px;
+}
+
+.chip-name {
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.chip-bars {
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.chip-x {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  place-items: center;
+  padding: 0;
+}
+.chip:hover .chip-x {
+  display: grid;
+}
+.chip-x:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.chip-rename {
+  width: 72px;
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 6px;
+  outline: none;
+}
+
+.strip-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  flex: none;
+}
+.strip-actions .tbtn {
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
+/* segmented Song/Part toggle in the transport */
+.tgroup.seg {
+  gap: 0;
+}
+.tgroup.seg .tbtn {
+  border-radius: 0;
+  font-size: 12px;
+}
+.tgroup.seg .tbtn:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+.tgroup.seg .tbtn:last-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.chip.drop-here {
+  box-shadow: -3px 0 0 0 var(--accent-2);
+}
+.chip {
+  touch-action: none;
+}

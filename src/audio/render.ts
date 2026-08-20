@@ -3,10 +3,13 @@
 // This is the same sound path as live playback — every block through its voice,
 // through per-track gain, through the master chain — but scheduled all at once
 // into an OfflineAudioContext. That's what makes Export produce exactly what you
-// hear. A short tail is added so reverbs and long decays ring out naturally.
+// hear. The full arrangement is rendered: each slot's section at its absolute
+// position, so A A B A comes out as A A B A. A short tail is added so reverbs
+// and long decays ring out naturally.
 
 import type { Project } from '../model/types';
-import { beatsToSeconds, totalBeats } from '../model/time';
+import { beatsToSeconds } from '../model/time';
+import { resolveArrangement, songBeats } from '../model/arrange';
 import { resolveParams } from '../model/voices';
 import { createMasterChain } from './master';
 import { getTrigger } from './synth';
@@ -14,7 +17,7 @@ import { getTrigger } from './synth';
 const TAIL_SECONDS = 2.5;
 
 export interface RenderOptions {
-  /** How many times to repeat the song's bars. */
+  /** How many times to repeat the whole song. */
   loops?: number;
   sampleRate?: number;
 }
@@ -23,7 +26,8 @@ export async function renderProject(project: Project, opts: RenderOptions = {}):
   const loops = Math.max(1, Math.floor(opts.loops ?? 1));
   const sampleRate = opts.sampleRate ?? 44100;
 
-  const beatsPerLoop = totalBeats(project.lengthBars, project.timeSignature);
+  const entries = resolveArrangement(project);
+  const beatsPerLoop = songBeats(project);
   const musicSeconds = beatsToSeconds(beatsPerLoop * loops, project.bpm);
   const length = Math.max(1, Math.ceil((musicSeconds + TAIL_SECONDS) * sampleRate));
 
@@ -43,12 +47,15 @@ export async function renderProject(project: Project, opts: RenderOptions = {}):
 
     const trigger = getTrigger(track.instrument.voiceId);
     for (const note of track.notes) {
-      if (note.startBeat >= beatsPerLoop) continue;
       const params = resolveParams(track.instrument.voiceId, note.params);
       const durationSec = beatsToSeconds(note.lengthBeats, project.bpm);
-      for (let k = 0; k < loops; k++) {
-        const when = beatsToSeconds(note.startBeat + k * beatsPerLoop, project.bpm);
-        trigger(ctx, node, when, params, note.velocity, { midi: note.pitch, durationSec });
+      for (const entry of entries) {
+        if (entry.sectionId !== note.sectionId || note.startBeat >= entry.lengthBeats) continue;
+        const baseBeat = entry.startBeat + note.startBeat;
+        for (let k = 0; k < loops; k++) {
+          const when = beatsToSeconds(baseBeat + k * beatsPerLoop, project.bpm);
+          trigger(ctx, node, when, params, note.velocity, { midi: note.pitch, durationSec });
+        }
       }
     }
   }
