@@ -19,7 +19,7 @@ export interface NotePlayback {
 
 /** A voice trigger: schedule this sound at `time`, played `velocity` hard. */
 export type TriggerFn = (
-  ctx: AudioContext,
+  ctx: BaseAudioContext,
   destination: AudioNode,
   time: number,
   params: Record<string, number>,
@@ -63,7 +63,7 @@ function makeDistortionCurve(amount: number) {
 
 /** Percussive sine/triangle body with a pitch drop — the heart of kicks/toms. */
 function membrane(
-  ctx: AudioContext,
+  ctx: BaseAudioContext,
   dest: AudioNode,
   time: number,
   p: Record<string, number>,
@@ -109,7 +109,7 @@ function membrane(
 
 /** A shaped burst of filtered noise — hats, snares, cymbals, claps. */
 function noiseBurst(
-  ctx: AudioContext,
+  ctx: BaseAudioContext,
   dest: AudioNode,
   time: number,
   opts: { type: BiquadFilterType; freq: number; Q?: number; decay: number; gain: number },
@@ -140,7 +140,7 @@ function noiseBurst(
 
 /** A short tuned blip (square/triangle) — cowbell, rim, generic percussion. */
 function blip(
-  ctx: AudioContext,
+  ctx: BaseAudioContext,
   dest: AudioNode,
   time: number,
   opts: { freq: number; type: OscillatorType; decay: number; gain: number },
@@ -170,7 +170,7 @@ function blip(
  * cutoff, detune, gain.
  */
 function pitchedSynth(
-  ctx: AudioContext,
+  ctx: BaseAudioContext,
   dest: AudioNode,
   time: number,
   p: Record<string, number>,
@@ -230,7 +230,7 @@ function pitchedSynth(
 /** A layered kick: a pitch-dropping body + a pure sub for weight + a beater
  *  click for attack. Beefier and more modern than a single sine. */
 function kickVoice(
-  ctx: AudioContext,
+  ctx: BaseAudioContext,
   dest: AudioNode,
   time: number,
   p: Record<string, number>,
@@ -288,7 +288,7 @@ function kickVoice(
  *  and high-pass filters. The classic drum-machine hat — far richer than plain
  *  filtered noise. */
 function metallicHat(
-  ctx: AudioContext,
+  ctx: BaseAudioContext,
   dest: AudioNode,
   time: number,
   opts: { decay: number; tone: number; gain: number },

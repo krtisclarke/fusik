@@ -257,7 +257,8 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
 | Playable keyboard + MIDI input | ⬜ | Play live, not just place notes — the natural next step. |
 | Sections / arrangement / automation | ⬜ | Phase 6. |
-| WAV/MP3 export | ⬜ | Phase 7 (via OfflineAudioContext). |
+| WAV export | ✅ | Renders the whole song offline through the master chain to a 16-bit stereo `.wav` (native Save dialog on desktop, download in browser). Verified: valid RIFF header, non-silent, no clipping. |
+| MP3 export | ⬜ | WAV is in; MP3 would need a bundled encoder + a licensing look. |
 
 Nothing above is faked: the disabled Record button is visibly disabled, and
 "partial" means exactly what the note says.

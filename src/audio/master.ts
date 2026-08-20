@@ -75,7 +75,12 @@ export function createMasterChain(ctx: BaseAudioContext): MasterChain {
   limiter.attack.value = 0.003;
   limiter.release.value = 0.1;
 
-  sum.connect(saturation).connect(limiter);
+  // A final touch of headroom so a fast transient slipping past the limiter's
+  // attack still can't reach full scale and clip.
+  const output = ctx.createGain();
+  output.gain.value = 0.9;
 
-  return { input, output: limiter };
+  sum.connect(saturation).connect(limiter).connect(output);
+
+  return { input, output };
 }

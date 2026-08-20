@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld('desktop', {
   /** Open a project file via a native dialog; returns its JSON text. */
   openProject: () => ipcRenderer.invoke('project:open'),
 
+  /** Save rendered WAV bytes via a native dialog. */
+  saveAudio: (suggestedName, bytes) => ipcRenderer.invoke('audio:save', { suggestedName, bytes }),
+
   /** Subscribe to native menu commands. Returns an unsubscribe function. */
   onMenu: (channel, handler) => {
     const allowed = ['menu:new', 'menu:open', 'menu:save', 'menu:undo', 'menu:redo'];

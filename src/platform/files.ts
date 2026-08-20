@@ -17,6 +17,10 @@ interface DesktopBridge {
     json: string,
   ) => Promise<{ ok: boolean; canceled?: boolean; path?: string }>;
   openProject: () => Promise<{ ok: boolean; canceled?: boolean; path?: string; json?: string }>;
+  saveAudio?: (
+    suggestedName: string,
+    bytes: Uint8Array<ArrayBuffer>,
+  ) => Promise<{ ok: boolean; canceled?: boolean; path?: string }>;
   onMenu: (channel: string, handler: () => void) => () => void;
 }
 
@@ -55,6 +59,28 @@ export async function saveProjectToFile(project: Project): Promise<SaveResult> {
   a.remove();
   URL.revokeObjectURL(url);
   return { saved: true, name: project.name };
+}
+
+/** Save rendered WAV bytes — native dialog on desktop, download in the browser. */
+export async function saveAudioFile(
+  name: string,
+  bytes: Uint8Array<ArrayBuffer>,
+): Promise<{ saved: boolean }> {
+  const desktop = getDesktop();
+  if (desktop?.isDesktop && desktop.saveAudio) {
+    const result = await desktop.saveAudio(name, bytes);
+    return { saved: result.ok };
+  }
+  const blob = new Blob([bytes], { type: 'audio/wav' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${sanitize(name)}.wav`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  return { saved: true };
 }
 
 export interface OpenResult {

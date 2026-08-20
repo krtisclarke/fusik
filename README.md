@@ -53,6 +53,7 @@ npm run package:mac   # build a macOS app bundle
 - Press **Space** to play/stop. The song loops by default.
 - Change the tempo, mute/solo/volume per track, and snap to a musical grid.
 - **Ctrl/Cmd+Z** to undo, **Ctrl/Cmd+S** to save, **Ctrl/Cmd+O** to open.
+- **Export** turns the song into a `.wav` audio file you can play or share anywhere.
 
 Every sound is synthesized by the app itself, so there are no audio files to
 license and every sound is fully tweakable.

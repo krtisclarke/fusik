@@ -78,6 +78,17 @@ ipcMain.handle('project:open', async () => {
   return { ok: true, path: filePath, json };
 });
 
+ipcMain.handle('audio:save', async (_event, { suggestedName, bytes }) => {
+  const result = await dialog.showSaveDialog(mainWindow ?? undefined, {
+    title: 'Export WAV',
+    defaultPath: `${suggestedName || 'My Song'}.wav`,
+    filters: [{ name: 'WAV Audio', extensions: ['wav'] }],
+  });
+  if (result.canceled || !result.filePath) return { ok: false, canceled: true };
+  await fs.writeFile(result.filePath, Buffer.from(bytes));
+  return { ok: true, path: result.filePath };
+});
+
 // -------------------------------------------------------------------------
 
 function buildMenu() {

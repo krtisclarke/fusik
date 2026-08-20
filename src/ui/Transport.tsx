@@ -53,6 +53,7 @@ export function Transport() {
   const saveCurrent = useStore((s) => s.saveCurrent);
   const openFromFile = useStore((s) => s.openFromFile);
   const newProject = useStore((s) => s.newProject);
+  const exportSong = useStore((s) => s.exportSong);
 
   return (
     <div className="transport">
@@ -154,6 +155,13 @@ export function Transport() {
         </button>
         <button className="tbtn" onClick={saveCurrent} title="Save this song (Ctrl/Cmd+S)">
           💾 Save
+        </button>
+        <button
+          className="tbtn"
+          onClick={() => void exportSong()}
+          title="Export the song as a .wav audio file"
+        >
+          ⬇ Export
         </button>
       </div>
     </div>

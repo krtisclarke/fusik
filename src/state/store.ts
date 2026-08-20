@@ -25,7 +25,9 @@ import {
   undo,
   type History,
 } from './history';
-import { openProjectFromFile, saveProjectToFile } from '../platform/files';
+import { openProjectFromFile, saveProjectToFile, saveAudioFile } from '../platform/files';
+import { renderProject } from '../audio/render';
+import { encodeWav } from '../audio/wav';
 
 export interface Selection {
   /** The track the selected blocks belong to (selection stays within one track). */
@@ -51,6 +53,8 @@ export interface StoreState {
   loadProject: (project: Project) => void;
   saveCurrent: () => Promise<void>;
   openFromFile: () => Promise<void>;
+  /** Render the song to a .wav file and save it. */
+  exportSong: () => Promise<void>;
 
   // history
   undo: () => void;
@@ -186,6 +190,21 @@ export const useStore = create<StoreState>((set, get) => {
         if (result) get().loadProject(result.project);
       } catch (err) {
         set({ status: `Couldn't open: ${(err as Error).message}` });
+      }
+    },
+
+    exportSong: async () => {
+      const project = get().history.present;
+      try {
+        set({ status: 'Rendering…' });
+        const buffer = await renderProject(project, { loops: 1 });
+        const left = buffer.getChannelData(0);
+        const right = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : left;
+        const bytes = encodeWav([left, right], buffer.sampleRate);
+        const result = await saveAudioFile(project.name, bytes);
+        set({ status: result.saved ? `Exported "${project.name}.wav"` : 'Export cancelled' });
+      } catch (err) {
+        set({ status: `Export failed: ${(err as Error).message}` });
       }
     },
 
