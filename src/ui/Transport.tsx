@@ -94,6 +94,8 @@ export function Transport() {
   const toggleLoop = useStore((s) => s.toggleLoop);
   const setPlayMode = useStore((s) => s.setPlayMode);
   const setPartBars = useStore((s) => s.setPartBars);
+  const showKeyboard = useStore((s) => s.showKeyboard);
+  const toggleKeyboard = useStore((s) => s.toggleKeyboard);
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
   const setBpm = useStore((s) => s.setBpm);
@@ -132,6 +134,13 @@ export function Transport() {
         </button>
         <button className="tbtn rec" disabled title="Microphone recording arrives in a later update">
           ⏺
+        </button>
+        <button
+          className={`tbtn ${showKeyboard ? 'on' : ''}`}
+          onClick={toggleKeyboard}
+          title="Show or hide the keyboard you can play"
+        >
+          🎹
         </button>
       </div>
 

@@ -5,6 +5,7 @@ import { Library } from './ui/Library';
 import { SectionStrip } from './ui/SectionStrip';
 import { Timeline } from './ui/Timeline';
 import { SoundEditor } from './ui/SoundEditor';
+import { Keyboard } from './ui/Keyboard';
 import { getDesktop } from './platform/files';
 
 function isTypingTarget(el: EventTarget | null): boolean {
@@ -17,6 +18,7 @@ function isTypingTarget(el: EventTarget | null): boolean {
 export function App() {
   const status = useStore((s) => s.status);
   const setStatus = useStore((s) => s.setStatus);
+  const showKeyboard = useStore((s) => s.showKeyboard);
 
   // Keyboard shortcuts.
   useEffect(() => {
@@ -91,7 +93,7 @@ export function App() {
   }, [status, setStatus]);
 
   return (
-    <div className="app">
+    <div className={`app ${showKeyboard ? 'with-keys' : ''}`}>
       <Transport />
       <Library />
       <div className="stage">
@@ -99,6 +101,7 @@ export function App() {
         <Timeline />
       </div>
       <SoundEditor />
+      {showKeyboard && <Keyboard />}
       {status && <div className="toast">{status}</div>}
     </div>
   );

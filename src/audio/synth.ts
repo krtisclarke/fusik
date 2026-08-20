@@ -30,6 +30,12 @@ export type TriggerFn = (
 /** Oscillator waveforms, indexed by the numeric `wave` parameter. */
 const WAVES: OscillatorType[] = ['sine', 'triangle', 'sawtooth', 'square'];
 
+/** A note that is still being held down, and can be let go of later. */
+export interface HeldNote {
+  /** Let the note go: run its release, then free the oscillators. */
+  release(at?: number): void;
+}
+
 // ---- shared white-noise buffer (one per context, reused) -----------------
 
 const noiseBuffers = new WeakMap<BaseAudioContext, AudioBuffer>();
@@ -225,6 +231,94 @@ function pitchedSynth(
   osc2.start(time);
   osc1.stop(stopAt);
   osc2.stop(stopAt);
+}
+
+/**
+ * The same melodic voice, but played by hand rather than from the timeline: the
+ * envelope's gate is left *open* — attack, decay, then hold at the sustain level
+ * for as long as the key is down — and closes only when `release()` is called.
+ *
+ * Timeline notes can't work this way because their length is known up front, and
+ * scheduling the whole envelope in one go is what keeps them sample-accurate.
+ * A finger on a key has no known length, so the note has to be held instead.
+ */
+export function startHeldNote(
+  ctx: BaseAudioContext,
+  dest: AudioNode,
+  time: number,
+  p: Record<string, number>,
+  vel: number,
+  midi: number,
+): HeldNote {
+  const freq = midiToFreq(midi);
+  const wave = WAVES[Math.round(p.wave ?? 1)] ?? 'triangle';
+  const attack = Math.max(0.001, p.attack ?? 0.01);
+  const decay = Math.max(0.01, p.decay ?? 0.2);
+  const sustain = Math.min(1, Math.max(0, p.sustain ?? 0.5));
+  const release = Math.max(0.02, p.release ?? 0.2);
+
+  const osc1 = ctx.createOscillator();
+  osc1.type = wave;
+  osc1.frequency.value = freq;
+  const osc2 = ctx.createOscillator();
+  osc2.type = wave;
+  osc2.frequency.value = freq;
+  osc2.detune.value = p.detune ?? 0;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = p.cutoff ?? 4000;
+  filter.Q.value = 0.7;
+
+  const amp = ctx.createGain();
+  const peak = Math.max(0.0002, (p.gain ?? 0.5) * vel);
+  // A voice whose sustain is 0 (a plucky one) would die away to nothing and the
+  // key would feel dead. Held notes keep a floor under the sustain level.
+  const susLevel = Math.max(peak * 0.25, peak * sustain);
+
+  const attackEnd = time + attack;
+  const decayEnd = attackEnd + decay;
+  amp.gain.setValueAtTime(EPS, time);
+  amp.gain.linearRampToValueAtTime(peak, attackEnd);
+  amp.gain.exponentialRampToValueAtTime(susLevel, decayEnd);
+
+  /** The level the envelope has reached at `t`, following the curve above. */
+  function levelAt(t: number): number {
+    if (t <= time) return EPS;
+    if (t < attackEnd) return Math.max(EPS, peak * ((t - time) / attack));
+    if (t < decayEnd) {
+      const through = (t - attackEnd) / Math.max(1e-6, decayEnd - attackEnd);
+      return Math.max(EPS, peak * Math.pow(susLevel / peak, through));
+    }
+    return susLevel;
+  }
+
+  osc1.connect(filter);
+  osc2.connect(filter);
+  filter.connect(amp);
+  amp.connect(dest);
+  osc1.start(time);
+  osc2.start(time);
+
+  let released = false;
+  return {
+    release(at?: number) {
+      if (released) return;
+      released = true;
+      const when = Math.max(at ?? ctx.currentTime, time);
+      // Pin the level the envelope has reached at `when` before ramping down.
+      // Without that explicit point, a ramp is interpolated from the *previous*
+      // automation event — the end of the decay — so the note would start
+      // fading the moment its decay finished and be gone long before the key
+      // came up.
+      amp.gain.cancelScheduledValues(when);
+      amp.gain.setValueAtTime(levelAt(when), when);
+      amp.gain.exponentialRampToValueAtTime(EPS, when + release);
+      const stopAt = when + release + 0.05;
+      osc1.stop(stopAt);
+      osc2.stop(stopAt);
+    },
+  };
 }
 
 /** A layered kick: a pitch-dropping body + a pure sub for weight + a beater

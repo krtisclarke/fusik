@@ -55,6 +55,11 @@ npm run package:mac   # build a macOS app bundle
   new part, play a part again (A A B A!), copy one to tweak, drag chips to
   rearrange, double-click to rename. Play the whole **Song** or loop just the
   **Part** you're working on.
+- **Play it yourself:** the keyboard along the bottom plays the notes of the
+  scale, so nothing you hit sounds wrong. Use the mouse (hold and slide along the
+  keys) or the computer keys — `z x c v b…` for the lower octave, `a s d f g…`
+  for the upper. Pick Piano, Synth, Bells or Bass, or select a block on the
+  timeline and the keyboard follows it. The 🎹 button hides it.
 - Press **Space** to play/stop. The song loops by default.
 - Change the tempo, mute/solo/volume per track, and snap to a musical grid.
 - **Ctrl/Cmd+Z** to undo, **Ctrl/Cmd+S** to save, **Ctrl/Cmd+O** to open.

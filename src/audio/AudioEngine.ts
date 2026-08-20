@@ -20,7 +20,8 @@ import type { Project, Track } from '../model/types';
 import { secondsToBeats, beatsToSeconds, beatOccurrencesInWindow } from '../model/time';
 import { resolveArrangement, sectionBeats, sectionById, songPositionAt } from '../model/arrange';
 import { resolveParams } from '../model/voices';
-import { getTrigger } from './synth';
+import { getTrigger, startHeldNote, type HeldNote } from './synth';
+import { getVoice, isPitched } from '../model/voices';
 import { createMasterChain } from './master';
 
 const LOOK_AHEAD_S = 0.1; // how far ahead we schedule
@@ -387,6 +388,53 @@ export class AudioEngine {
 
   // ---- one-shot preview --------------------------------------------------
 
+  // ---- live playing (the keyboard) ---------------------------------------
+  //
+  // Notes played by hand, outside the timeline. A melodic voice is held open
+  // until the key comes back up; a drum has nothing to hold, so it just fires.
+
+  private held = new Map<number, HeldNote>();
+  private nextHeldId = 1;
+
+  /**
+   * Start a note now and keep it sounding. Returns a handle to pass to
+   * `noteOff`. Safe to call before any audio exists — it starts the context.
+   */
+  async noteOn(
+    voiceId: string,
+    midi: number,
+    overrides: Record<string, number> = {},
+    velocity = 0.85,
+  ): Promise<number> {
+    const ctx = await this.ensureRunning();
+    if (!this.masterGain) return 0;
+    const params = resolveParams(voiceId, overrides);
+    const id = this.nextHeldId++;
+
+    if (!isPitched(getVoice(voiceId))) {
+      getTrigger(voiceId)(ctx, this.masterGain, ctx.currentTime, params, velocity, {
+        durationSec: 0.5,
+      });
+      return id; // nothing to hold; noteOff is a no-op for this id
+    }
+    this.held.set(id, startHeldNote(ctx, this.masterGain, ctx.currentTime, params, velocity, midi));
+    return id;
+  }
+
+  /** Let a held note go. Unknown or already-released handles are ignored. */
+  noteOff(id: number): void {
+    const note = this.held.get(id);
+    if (!note) return;
+    this.held.delete(id);
+    note.release();
+  }
+
+  /** Let go of everything — for losing focus, or closing the keyboard. */
+  releaseAllHeld(): void {
+    for (const note of this.held.values()) note.release();
+    this.held.clear();
+  }
+
   /** Play a voice immediately — used for click/drag "hear it now" feedback.
    *  `midi` sets the pitch for melodic voices (ignored by drums). */
   async audition(
@@ -404,6 +452,7 @@ export class AudioEngine {
 
   dispose(): void {
     this.stopTimer();
+    this.held.clear();
     this.ctx?.close();
     this.ctx = null;
   }

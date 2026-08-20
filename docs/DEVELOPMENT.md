@@ -153,6 +153,19 @@ pluck. They differ only by their default parameters (waveform, envelope, filter,
 octave range). A note's MIDI pitch becomes the oscillator frequency; its length
 becomes the envelope gate.
 
+**Held notes (the keyboard).** A note on the timeline knows its length up front,
+so its whole envelope is scheduled in one go — that's what keeps it
+sample-accurate. A finger on a key has no known length, so `startHeldNote`
+builds the same voice with the envelope's gate left *open*: attack, decay, then
+hold, until `release()` closes it. Two consequences worth knowing:
+
+- Releasing has to *pin* the level the envelope has reached (an explicit
+  `setValueAtTime` at that instant) before ramping down. Web Audio interpolates
+  a ramp from the previous automation event, so without the pin the note starts
+  fading the moment its decay ends and is gone long before the key comes up.
+- Voices whose `sustain` is 0 (the piano plucks) would die away under a held
+  key, so held notes put a floor under the sustain level.
+
 **Scale-snapping (the kid-friendly bit).** A melodic track doesn't offer all 12
 chromatic notes — only the notes of the project's scale (`model/scales.ts`),
 default C major pentatonic. The note-grid's rows *are* the scale, so a child
@@ -312,7 +325,9 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Per-track effects rack (echo/delay/reverb sends) | ⬜ | Master reverb exists; per-sound effect chains are the next Phase-3 step. |
 | Melodic instruments (piano, synth, bells, bass) | ✅ | Pitched subtractive synth: 2 oscillators, ADSR, low-pass filter. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
-| Playable keyboard + MIDI input | ⬜ | Play live, not just place notes — the natural next step. |
+| Playable keyboard | ✅ | Play the scale live with mouse/touch (slide across the keys) or two rows of computer keys an octave apart, with an octave shift. Follows the selected melodic track, or pick a voice. Performance only — what you play isn't recorded into the song yet. |
+| MIDI input | ⬜ | The keyboard is in; a real MIDI controller would feed the same `noteOn`/`noteOff`. |
+| Recording a performance into the song | ⬜ | The natural next step: capture what's played, quantised to the snap setting. |
 | Song sections & arrangement | ✅ | Parts (A/B/…) with their own notes and lengths; a strip of chips shows the running order — click to edit, drag to rearrange, repeat/copy/rename/remove. Song vs. Part play modes. |
 | Automation | ⬜ | Phase 6. |
 | WAV export | ✅ | Renders the whole song offline through the master chain to a 16-bit stereo `.wav` (native Save dialog on desktop, download in browser). Verified: valid RIFF header, non-silent, no clipping. |
@@ -344,6 +359,10 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       and both chips take the new name.
 - [ ] Song vs. Part play modes; the playhead only shows on the part being heard.
 - [ ] Stretch the part you're editing *while it plays* — no jump, no silence.
+- [ ] Play the keyboard with the mouse and with the computer keys; hold a note
+      and it holds. Slide along the keys and they play in turn.
+- [ ] Hold keys and then click away / hide the keyboard — nothing keeps ringing.
+- [ ] Select a Bass block: the keyboard becomes a bass, low notes and all.
 
 ---
 
@@ -363,9 +382,11 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 
 ## 10. Roadmap
 
-Melodic instruments (originally Phase 4) were brought forward and are now in,
-as are song sections & arrangement. Remaining, roughly following the brief: a
-playable on-screen/MIDI keyboard so notes can be performed live, not just
-placed; step sequencer & humanize; per-track effect sends; microphone
-recording; automation; and polish — onboarding, more voices, accessibility,
-export, autosave.
+Melodic instruments (originally Phase 4) were brought forward and are now in, as
+are song sections & arrangement and a playable keyboard. Remaining, roughly
+following the brief: **recording a performance into the song** (the keyboard
+plays live but nothing it plays is kept — the obvious next step, and what makes
+the keyboard more than a toy), MIDI input through the same `noteOn`/`noteOff`,
+per-note velocity, step sequencer & humanize, per-track effect sends,
+microphone recording, automation, and polish — onboarding, more voices,
+accessibility, autosave.

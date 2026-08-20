@@ -51,6 +51,8 @@ export interface StoreState {
   snap: SnapId;
   selection: Selection;
   status: string | null;
+  /** Whether the playable keyboard is open along the bottom. */
+  showKeyboard: boolean;
 
   // lifecycle
   newProject: () => void;
@@ -116,6 +118,7 @@ export interface StoreState {
   selectTrackNotes: (trackId: string) => void;
   audition: (voiceId: string) => void;
   setStatus: (status: string | null) => void;
+  toggleKeyboard: () => void;
 }
 
 // The project state captured at the start of a live drag (slider or resize), so
@@ -209,6 +212,7 @@ export const useStore = create<StoreState>((set, get) => {
     snap: 'sixteenth',
     selection: { trackId: null, noteIds: [] },
     status: null,
+    showKeyboard: true,
 
     // ---- lifecycle -------------------------------------------------------
     newProject: () => {
@@ -541,5 +545,10 @@ export const useStore = create<StoreState>((set, get) => {
       void engine.audition(voiceId, {}, 0.9, middlePitch(voiceId, get().history.present));
     },
     setStatus: (status) => set({ status }),
+    toggleKeyboard: () => {
+      const next = !get().showKeyboard;
+      if (!next) engine.releaseAllHeld(); // don't leave a note ringing behind it
+      set({ showKeyboard: next });
+    },
   };
 });
