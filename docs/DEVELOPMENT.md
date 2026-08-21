@@ -26,6 +26,26 @@ development. Those two facts drove the stack.
 slightly slower than a hand-written native app. For a kids' creative tool this
 is irrelevant next to sound quality and cross-platform development.
 
+**Keep Electron current — this one bites.** Apple revokes the notarization of
+older Electron builds. Once that happens macOS does not merely warn: it SIGKILLs
+the binary on launch and XProtect deletes the app bundle from disk, with a
+"malware" message that looks nothing like a version problem. Electron 31.7.7 was
+revoked this way; 43.4.1 runs fine. `spctl -a -vvv node_modules/electron/dist/Electron.app`
+says `notarization indicates this code has been revoked` when this is what's
+happening — the fix is a newer Electron, never re-signing or disabling Gatekeeper.
+
+**iCloud Drive damages the bundle too, separately.** This project lives in
+`~/Documents`, which iCloud syncs. iCloud strips the app bundle's
+`Contents/_CodeSignature` and keeps re-stamping `com.apple.FinderInfo` on the
+frameworks, which breaks the signature seal (`code has no resources but
+signature indicates they must be present`) and makes re-signing in place
+impossible — the attribute is back before `codesign` finishes. A notarized
+Electron still launches in that state, so it is survivable, but it is why the
+`node_modules` folder here occasionally turns up renamed `node_modules 2`
+(an iCloud sync conflict) after an `npm install`. If that happens: delete the
+stray, rename it back, and `npm install` again. Moving the project out of
+`~/Documents` would end this class of problem for good.
+
 ---
 
 ## 2. Architecture

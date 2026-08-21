@@ -28,11 +28,13 @@ Use **Chrome** (or Edge/Firefox), not Safari: Safari's "HTTPS-Only" setting
 refuses plain `http://` local pages. Chrome treats `http://127.0.0.1` as secure,
 so everything (including audio) works.
 
-> **macOS note:** if `npm run app` is blocked with a "malware" / "revoked"
-> message, that's macOS refusing the unsigned Electron binary, not real malware.
-> Either use `npm run dev` above, or move this project out of your iCloud
-> Documents folder and re-sign Electron (`xattr -cr` + `codesign --force --deep
-> -s -` on `node_modules/electron/dist/Electron.app`).
+> **macOS note — "Electron is malware":** if macOS kills the app on launch (or
+> deletes it outright), it is not malware and not your Mac being broken. Apple
+> revokes the notarization of old Electron builds; macOS then treats every copy
+> of that exact build as known-bad and removes it. The fix is to move to a
+> current Electron — `npm install --save-dev electron@latest`, then
+> `node node_modules/electron/install.js` if the binary didn't download. This is
+> why the project requires Electron 43 or newer.
 
 ## Other commands
 
