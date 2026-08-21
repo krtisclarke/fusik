@@ -11,7 +11,8 @@ import { engine, type PlayMode } from '../audio/AudioEngine';
 import * as P from '../model/project';
 import type { Project } from '../model/types';
 import type { SnapId } from '../model/time';
-import { snapBeat } from '../model/time';
+import { snapBeat, snapStepInBeats } from '../model/time';
+import { songPositionAt } from '../model/arrange';
 import { getVoice, isPitched } from '../model/voices';
 import { pitchLadder } from '../model/scales';
 import {
@@ -53,6 +54,8 @@ export interface StoreState {
   status: string | null;
   /** Whether the playable keyboard is open along the bottom. */
   showKeyboard: boolean;
+  /** Recording is armed: anything played while the song runs is kept. */
+  isRecording: boolean;
 
   // lifecycle
   newProject: () => void;
@@ -110,6 +113,21 @@ export interface StoreState {
   unchainSelected: () => void;
   removeSelected: () => void;
   auditionSelected: () => void;
+
+  // recording a performance
+  /** Arm/disarm recording. Armed + playing = what you play is kept. */
+  toggleRecording: () => void;
+  /**
+   * Write a note played on the keyboard into the song. `startBeats`/`endBeats`
+   * are transport positions taken when the key went down and came back up.
+   */
+  recordPlayedNote: (played: {
+    voiceId: string;
+    midi: number;
+    startBeats: number;
+    endBeats: number;
+    velocity: number;
+  }) => void;
 
   // ui / selection
   setSnap: (snap: SnapId) => void;
@@ -213,6 +231,7 @@ export const useStore = create<StoreState>((set, get) => {
     selection: { trackId: null, noteIds: [] },
     status: null,
     showKeyboard: true,
+    isRecording: false,
 
     // ---- lifecycle -------------------------------------------------------
     newProject: () => {
@@ -230,6 +249,7 @@ export const useStore = create<StoreState>((set, get) => {
         canUndo: false,
         canRedo: false,
         isPlaying: false,
+        isRecording: false,
         selection: { trackId: null, noteIds: [] },
         status: 'New song',
       });
@@ -249,6 +269,7 @@ export const useStore = create<StoreState>((set, get) => {
         canUndo: false,
         canRedo: false,
         isPlaying: false,
+        isRecording: false,
         selection: { trackId: null, noteIds: [] },
         status: `Opened "${project.name}"`,
       });
@@ -337,10 +358,14 @@ export const useStore = create<StoreState>((set, get) => {
     },
     pause: () => {
       engine.pause();
+      // Close the take when the music stops, so what was just played is one
+      // undo step. Recording stays armed — pressing play again starts a new one.
+      if (get().isRecording) get().commitEdit();
       set({ isPlaying: false });
     },
     stop: () => {
       engine.stop();
+      if (get().isRecording) get().commitEdit();
       set({ isPlaying: false });
     },
     toggleLoop: () => {
@@ -428,10 +453,17 @@ export const useStore = create<StoreState>((set, get) => {
     commitEdit: () => {
       if (!editBaseline) return;
       const s = get();
-      const past = [...s.history.past, editBaseline];
+      const baseline = editBaseline;
+      editBaseline = null;
+      // Nothing actually happened between picking the thing up and putting it
+      // down: a record button armed and disarmed without playing, a slider
+      // nudged back to where it started. Committing that would spend an undo
+      // step that undoes nothing, so the child's *next* undo appears to do
+      // nothing and they have to press it twice to get their work back.
+      if (baseline === s.history.present) return;
+      const past = [...s.history.past, baseline];
       if (past.length > DEFAULT_HISTORY_LIMIT) past.shift();
       const history = { past, present: s.history.present, future: [] };
-      editBaseline = null;
       set({ history, canUndo: canUndo(history), canRedo: canRedo(history) });
     },
 
@@ -515,6 +547,77 @@ export const useStore = create<StoreState>((set, get) => {
       const project = get().history.present;
       const snapped = snapBeat(beat, get().snap, project.timeSignature);
       apply(P.moveNote(project, fromTrackId, noteId, toTrackId, snapped));
+    },
+
+    // ---- recording a performance -----------------------------------------
+    //
+    // A whole take collapses into one undo step: arming captures a baseline,
+    // each finished note is folded into the live project without touching the
+    // history, and disarming (or stopping) commits the lot. So a child who
+    // records four bars and hates it presses undo once, not forty times.
+
+    toggleRecording: () => {
+      const wasRecording = get().isRecording;
+      if (wasRecording) {
+        get().commitEdit(); // close the take into a single undo step
+        set({ isRecording: false, status: 'Recording stopped' });
+        return;
+      }
+      editBaseline = get().history.present;
+      set({ isRecording: true, status: 'Recording — play the keyboard' });
+    },
+
+    recordPlayedNote: ({ voiceId, midi, startBeats, endBeats, velocity }) => {
+      const s = get();
+      if (!s.isRecording || !s.isPlaying) return; // armed but parked: just a preview
+      const project = s.history.present;
+
+      // Where the song was when the key went down. In Part mode the transport
+      // position *is* the position in the part being edited; playing the whole
+      // song, it's an absolute beat that has to be traced back to whichever
+      // part was sounding — so a take spanning A into B lands in both.
+      let sectionId: string;
+      let beatInSection: number;
+      if (s.playMode === 'section') {
+        sectionId = s.currentSectionId;
+        beatInSection = startBeats;
+      } else {
+        const at = songPositionAt(project, startBeats);
+        if (!at) return;
+        sectionId = at.entry.sectionId;
+        beatInSection = at.beatInSection;
+      }
+      const section = project.sections.find((x) => x.id === sectionId);
+      if (!section) return;
+
+      const ts = project.timeSignature;
+      const sectionBeats = section.lengthBars * ts.numerator;
+      const step = s.snap === 'off' ? 0.25 : snapStepInBeats(s.snap, ts);
+      const start = Math.min(snapBeat(beatInSection, s.snap, ts), Math.max(0, sectionBeats - step));
+
+      // Held past the end of the pass, so the release wrapped around to a
+      // smaller number than the press. Run it to the end of the part instead.
+      let lengthBeats = endBeats - startBeats;
+      if (lengthBeats <= 0) lengthBeats = sectionBeats - beatInSection;
+      lengthBeats = Math.max(step, s.snap === 'off' ? lengthBeats : snapBeat(lengthBeats, s.snap, ts));
+      lengthBeats = Math.min(lengthBeats, sectionBeats - start);
+
+      const note = P.createNote(sectionId, start, lengthBeats, velocity, midi);
+      const existing = P.findTrackByVoice(project, voiceId);
+      let next: Project;
+      if (existing) {
+        next = P.addNote(project, existing.id, note);
+      } else {
+        const track = P.createTrackForVoice(voiceId);
+        next = P.addNote(P.addTrack(project, track), track.id, note);
+      }
+
+      // Straight into the live project, not the history — the note appears on
+      // the timeline at once and is heard on the next pass, but the take stays
+      // a single undo step until it's finished.
+      if (!editBaseline) editBaseline = project;
+      engine.setProject(next);
+      set({ history: replacePresent(s.history, next), project: next });
     },
 
     // ---- ui / selection --------------------------------------------------

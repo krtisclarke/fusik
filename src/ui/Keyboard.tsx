@@ -29,6 +29,11 @@ interface Sounding {
   midi: number;
   pressId: number;
   handle: number;
+  /** Where the transport was when the key went down, for recording. */
+  startBeats: number;
+  /** The instrument as it was at press time — switching voice mid-hold must
+   *  not file the note under the instrument it wasn't played on. */
+  voiceId: string;
 }
 
 /** Notes are held per source: one per finger, one per computer key. */
@@ -37,6 +42,8 @@ const pointerSource = (pointerId: number) => `pointer:${pointerId}`;
 export function Keyboard() {
   const project = useStore((s) => s.project);
   const selectedTrackId = useStore((s) => s.selection.trackId);
+  const recordPlayedNote = useStore((s) => s.recordPlayedNote);
+  const isRecording = useStore((s) => s.isRecording);
 
   // The picker is the single source of truth for which instrument the keys
   // play. Selecting a melodic track on the timeline *moves* the picker, rather
@@ -89,7 +96,14 @@ export function Keyboard() {
       const pressId = nextPressId.current++;
       // Claim the slot before the engine answers, so the key lights up at once
       // and a repeat can't start the same note twice while audio wakes up.
-      sounding.current.set(source, { midi, pressId, handle: 0 });
+      // Take the transport's position now, not when the note finally starts.
+      sounding.current.set(source, {
+        midi,
+        pressId,
+        handle: 0,
+        startBeats: engine.getPositionBeats(),
+        voiceId,
+      });
       refreshLit();
       void engine.noteOn(voiceId, midi).then((handle) => {
         const live = sounding.current.get(source);
@@ -111,18 +125,29 @@ export function Keyboard() {
       // A handle of 0 means the note is still starting; the promise above sees
       // the press has gone and stops it as soon as it exists.
       if (live.handle) engine.noteOff(live.handle);
+      // The store ignores this unless recording is armed and the song is running.
+      recordPlayedNote({
+        voiceId: live.voiceId,
+        midi: live.midi,
+        startBeats: live.startBeats,
+        endBeats: engine.getPositionBeats(),
+        velocity: 0.85,
+      });
     },
-    [refreshLit],
+    [refreshLit, recordPlayedNote],
   );
 
   const activePointers = useRef(new Set<number>());
 
   const releaseEverything = useCallback(() => {
+    // Go through releaseNote so anything played is still kept if a take is
+    // running — losing focus shouldn't cost the child the note they just played.
+    for (const source of [...sounding.current.keys()]) releaseNote(source);
     sounding.current.clear();
     activePointers.current.clear();
     refreshLit();
     engine.releaseAllHeld();
-  }, [refreshLit]);
+  }, [refreshLit, releaseNote]);
 
   // ---- computer keys ------------------------------------------------------
 
@@ -229,9 +254,9 @@ export function Keyboard() {
   };
 
   return (
-    <div className="keyboard">
+    <div className={`keyboard ${isRecording ? 'recording' : ''}`}>
       <div className="kb-side">
-        <span className="kb-title">Play</span>
+        <span className="kb-title">{isRecording ? '● Rec' : 'Play'}</span>
         <div className="kb-voices">
           {MELODIC_VOICES.map((v) => (
             <button

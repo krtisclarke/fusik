@@ -166,6 +166,18 @@ hold, until `release()` closes it. Two consequences worth knowing:
 - Voices whose `sustain` is 0 (the piano plucks) would die away under a held
   key, so held notes put a floor under the sustain level.
 
+**Recording a performance.** Arming captures a baseline of the project; every
+finished note is folded into the live project with `replacePresent` (so it
+appears on the timeline and is heard on the next pass) *without* touching the
+undo history; stopping commits the lot as one entry. So a child who records four
+bars and hates it presses undo once, not forty times. Where a note lands is
+worked out from the transport position taken at key-down: in Part mode that's
+already a position in the part being edited, and in Song mode it's an absolute
+beat traced back through `songPositionAt` to whichever slot was sounding — which
+is what lets one take spill from the verse into the chorus and land correctly in
+both. Start and length are quantised to the current snap setting, so the Snap
+control doubles as the recording's "tidy up my timing" knob.
+
 **Scale-snapping (the kid-friendly bit).** A melodic track doesn't offer all 12
 chromatic notes — only the notes of the project's scale (`model/scales.ts`),
 default C major pentatonic. The note-grid's rows *are* the scale, so a child
@@ -325,9 +337,9 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Per-track effects rack (echo/delay/reverb sends) | ⬜ | Master reverb exists; per-sound effect chains are the next Phase-3 step. |
 | Melodic instruments (piano, synth, bells, bass) | ✅ | Pitched subtractive synth: 2 oscillators, ADSR, low-pass filter. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
-| Playable keyboard | ✅ | Play the scale live with mouse/touch (slide across the keys) or two rows of computer keys an octave apart, with an octave shift. Follows the selected melodic track, or pick a voice. Performance only — what you play isn't recorded into the song yet. |
-| MIDI input | ⬜ | The keyboard is in; a real MIDI controller would feed the same `noteOn`/`noteOff`. |
-| Recording a performance into the song | ⬜ | The natural next step: capture what's played, quantised to the snap setting. |
+| Playable keyboard | ✅ | Play the scale live with mouse/touch (slide across the keys) or two rows of computer keys an octave apart, with an octave shift. Follows the selected melodic track, or pick a voice. |
+| Recording a performance | ✅ | Arm ⏺, press play, and what you play on the keyboard is written into the song — quantised to the snap setting, into whichever part is sounding, on the track for that instrument (created if needed). A whole take is one undo step. |
+| MIDI input | ⬜ | The keyboard is in; a real MIDI controller would feed the same `noteOn`/`noteOff` and record through the same path. |
 | Song sections & arrangement | ✅ | Parts (A/B/…) with their own notes and lengths; a strip of chips shows the running order — click to edit, drag to rearrange, repeat/copy/rename/remove. Song vs. Part play modes. |
 | Automation | ⬜ | Phase 6. |
 | WAV export | ✅ | Renders the whole song offline through the master chain to a 16-bit stereo `.wav` (native Save dialog on desktop, download in browser). Verified: valid RIFF header, non-silent, no clipping. |
@@ -363,6 +375,10 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       and it holds. Slide along the keys and they play in turn.
 - [ ] Hold keys and then click away / hide the keyboard — nothing keeps ringing.
 - [ ] Select a Bass block: the keyboard becomes a bass, low notes and all.
+- [ ] Arm ⏺, play the song, play a melody: the notes appear as you play and are
+      heard on the next pass round. One undo removes the whole take.
+- [ ] Record in Song mode across a part boundary — the notes land in both parts.
+- [ ] Arm ⏺ but don't press play: playing the keyboard writes nothing.
 
 ---
 
@@ -383,10 +399,9 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 ## 10. Roadmap
 
 Melodic instruments (originally Phase 4) were brought forward and are now in, as
-are song sections & arrangement and a playable keyboard. Remaining, roughly
-following the brief: **recording a performance into the song** (the keyboard
-plays live but nothing it plays is kept — the obvious next step, and what makes
-the keyboard more than a toy), MIDI input through the same `noteOn`/`noteOff`,
-per-note velocity, step sequencer & humanize, per-track effect sends,
-microphone recording, automation, and polish — onboarding, more voices,
-accessibility, autosave.
+are song sections & arrangement, a playable keyboard, and recording what's played
+into the song. Remaining, roughly following the brief: per-note velocity (so a
+performance keeps its light and heavy hits — the keyboard currently records every
+note at one strength), MIDI input through the same `noteOn`/`noteOff`, step
+sequencer & humanize, per-track effect sends, microphone recording, automation,
+and polish — onboarding, more voices, accessibility, autosave.

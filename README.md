@@ -60,6 +60,9 @@ npm run package:mac   # build a macOS app bundle
   keys) or the computer keys — `z x c v b…` for the lower octave, `a s d f g…`
   for the upper. Pick Piano, Synth, Bells or Bass, or select a block on the
   timeline and the keyboard follows it. The 🎹 button hides it.
+- **Record what you play:** press ⏺ so it glows red, press play, and whatever you
+  play on the keyboard is written into the song, tidied up to the grid. Press ⏺
+  again to stop. One undo takes the whole take back.
 - Press **Space** to play/stop. The song loops by default.
 - Change the tempo, mute/solo/volume per track, and snap to a musical grid.
 - **Ctrl/Cmd+Z** to undo, **Ctrl/Cmd+S** to save, **Ctrl/Cmd+O** to open.
