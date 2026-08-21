@@ -43,8 +43,9 @@ import {
 } from '../platform/library';
 import { newClipId, newSongId } from '../model/ids';
 import { MicRecorder, micAvailable } from '../audio/mic';
-import { clipsAvailable, readClip, writeClip } from '../platform/clips';
+import { clipsAvailable, readClip, sweepClips, writeClip } from '../platform/clips';
 import { hasSeenTutorial, markTutorialSeen } from '../platform/prefs';
+import { flushAutosave } from './autosave';
 import { TOUR_STEPS } from './tour';
 import { renderProject } from '../audio/render';
 import { encodeWav } from '../audio/wav';
@@ -242,6 +243,21 @@ let micStartBeat = 0;
 let micStartSectionId: string | null = null;
 
 /**
+ * Throw away a take in progress and let the microphone go.
+ *
+ * Whenever the song on screen is replaced, a running take has nowhere to land:
+ * the part it was being sung into is gone. Left alone, the recorder keeps
+ * running with the microphone light on, and the *next* press of stop drops that
+ * take into whatever song is open by then — someone else's song, from the
+ * child's point of view.
+ */
+function abandonMicTake(): void {
+  mic.release();
+  micStartBeat = 0;
+  micStartSectionId = null;
+}
+
+/**
  * Load a song's recordings into the engine so its blocks can sound.
  *
  * Deliberately not awaited by whatever opens the song: a clip can be megabytes,
@@ -252,6 +268,10 @@ let micStartSectionId: string | null = null;
 function loadClipsFor(project: Project, songId: string): void {
   engine.clearClips();
   const wanted = P.clipIdsIn(project);
+  // Opening a song starts a fresh undo history, so any recording this song
+  // doesn't mention can no longer be reached by undoing. This is the one moment
+  // it is safe to clear those away.
+  void sweepClips(songId, wanted);
   for (const clipId of wanted) {
     void readClip(songId, clipId).then(async (bytes) => {
       if (!bytes) return;
@@ -415,8 +435,12 @@ export const useStore = create<StoreState>((set, get) => {
       // Starting a new song used to be the one control that could destroy work,
       // so it asked first. It doesn't any more: the song being left stays on the
       // shelf under its own id, and the new one gets a fresh slot. Nothing is
-      // lost, so nothing needs confirming.
+      // lost, so nothing needs confirming — as long as the song being left is
+      // written out first. Autosave runs a second behind, and a second is long
+      // enough to hold a whole recording.
+      flushAutosave();
       engine.stop();
+      abandonMicTake();
       editBaseline = null;
       const songId = newSongId();
       writeCurrentSongId(songId);
@@ -437,6 +461,7 @@ export const useStore = create<StoreState>((set, get) => {
         canRedo: false,
         isPlaying: false,
         isRecording: false,
+        isMicRecording: false,
         selection: { trackId: null, noteIds: [] },
         status: 'New song',
       });
@@ -444,6 +469,7 @@ export const useStore = create<StoreState>((set, get) => {
 
     loadProject: (project) => {
       engine.stop();
+      abandonMicTake();
       editBaseline = null;
       const history = createHistory(project);
       const currentSectionId = fixSectionId(project, null);
@@ -475,6 +501,7 @@ export const useStore = create<StoreState>((set, get) => {
         set({ showSongs: false });
         return;
       }
+      flushAutosave(); // don't leave the last second of the current song behind
       const project = readSong(id);
       if (!project) {
         // The slot is gone or unreadable. Say so and drop it from the list
@@ -529,6 +556,7 @@ export const useStore = create<StoreState>((set, get) => {
 
     openFromFile: async () => {
       try {
+        flushAutosave(); // the song being replaced is written out first
         const result = await openProjectFromFile();
         // A song opened from a file joins the shelf as its own song, rather
         // than overwriting whatever slot happened to be current.

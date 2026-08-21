@@ -48,3 +48,21 @@ export async function deleteClip(songId: string, clipId: string): Promise<void> 
     // Already gone, or unreachable. Nothing to put right.
   }
 }
+
+/**
+ * Throw away recordings the song no longer mentions.
+ *
+ * Safe only just after a song is opened, when its undo history is empty — at
+ * that point a recording nothing points at can never be reached again. Doing it
+ * the moment a block is deleted would be tidier and wrong: one undo would bring
+ * the block back to a file that had gone.
+ */
+export async function sweepClips(songId: string, keep: Iterable<string>): Promise<void> {
+  const clips = getDesktop()?.clips;
+  if (!clips) return;
+  try {
+    await clips.sweep(songId, [...keep]);
+  } catch {
+    // Tidying failed. Nothing is lost by that — only disk space.
+  }
+}

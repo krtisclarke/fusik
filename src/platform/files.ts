@@ -34,6 +34,7 @@ interface DesktopBridge {
     write: (songId: string, clipId: string, bytes: Uint8Array) => Promise<{ ok: boolean }>;
     read: (songId: string, clipId: string) => Promise<{ ok: boolean; bytes?: ArrayBuffer }>;
     remove: (songId: string, clipId: string) => Promise<{ ok: boolean }>;
+    sweep: (songId: string, keep: string[]) => Promise<{ ok: boolean; removed?: number }>;
   };
   onMenu: (channel: string, handler: () => void) => () => void;
 }

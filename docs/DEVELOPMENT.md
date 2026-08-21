@@ -281,6 +281,25 @@ fact drives every decision here.
   megabyte of audio that survives a reload, and offering it there would mean a
   child records their voice and loses it. The button says so and is disabled.
 
+**A recording outlives the block that used it, on purpose.** Deleting a block
+does *not* delete its `.wav` — one press of undo would otherwise bring the block
+back to a file that had gone. Instead, unreferenced recordings are swept when a
+song is **opened**, and that timing is the whole safety argument: opening a song
+starts a fresh undo history, so a recording the song doesn't mention can no
+longer be reached by any amount of undoing.
+
+**Leaving a song flushes first.** Autosave runs a second behind, and a second is
+long enough to hold an entire take. So New, opening another song and opening a
+file all write the current song out before replacing it — otherwise a child who
+recorded and immediately switched would find the take gone.
+
+**Replacing the song abandons a take in progress.** A take running when the song
+on screen changes has nowhere to land: the part it was being sung into is gone.
+Left alone the recorder keeps running with the microphone light on, and the next
+press of stop drops that take into whatever song is open by then — someone
+else's song, from the child's point of view. `abandonMicTake` stops it and lets
+the microphone go.
+
 Silence is treated as a failure, not a result: a take whose peak never gets
 above 0.005 almost always means a muted or unplugged microphone, and a silent
 block on the timeline looks exactly like the app having lost it.
@@ -730,6 +749,13 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Rename the song — the recordings folder moves with it and the block still
       plays. Delete the song — the folder goes too.
 - [ ] Export a song with a recording in it: the voice is in the file.
+- [ ] Delete a recorded block and press undo — it comes back and still sounds.
+      Reopen the song afterwards and the file for a block you really did delete
+      is gone from the `.recordings` folder.
+- [ ] Record, then immediately press New or open another song — come back and
+      the take is still there.
+- [ ] Press 🎤 and, while it is recording, press New: the microphone stops, and
+      the abandoned take does not turn up in the new song.
 - [ ] Refuse microphone permission, or record with the microphone muted: the app
       says so plainly and adds no block.
 - [ ] Upgrade paths: seed `beatbox.autosave.v1` (oldest) or `beatbox.songs.v1`

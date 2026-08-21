@@ -140,6 +140,38 @@ ipcMain.handle('clips:read', async (_event, { songId, clipId }) => {
   }
 });
 
+/**
+ * Delete recordings this song no longer refers to.
+ *
+ * Only ever called just after a song is opened, and that timing is the whole
+ * safety argument: opening a song starts a fresh undo history, so a recording
+ * the song doesn't mention can no longer be reached by any amount of undoing.
+ * Deleting a clip the moment its block is removed would look tidier and be
+ * wrong — one press of undo would bring the block back to a file that had gone.
+ */
+ipcMain.handle('clips:sweep', async (_event, { songId, keep }) => {
+  const dir = path.join(ensureSongsDir(), recordingsDirFor(path.basename(String(songId || ''))));
+  const kept = new Set(Array.isArray(keep) ? keep : []);
+  let removed = 0;
+  let entries;
+  try {
+    entries = await fs.readdir(dir);
+  } catch {
+    return { ok: true, removed: 0 }; // no recordings folder: nothing to tidy
+  }
+  for (const entry of entries) {
+    if (!entry.endsWith('.wav')) continue;
+    if (kept.has(entry.slice(0, -4))) continue;
+    try {
+      await fs.unlink(path.join(dir, entry));
+      removed++;
+    } catch {
+      // Someone else has it open, or it is already gone. Leave it.
+    }
+  }
+  return { ok: true, removed };
+});
+
 ipcMain.handle('clips:delete', async (_event, { songId, clipId }) => {
   const { file } = clipPath(songId, clipId);
   try {

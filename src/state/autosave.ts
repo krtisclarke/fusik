@@ -70,6 +70,18 @@ export function createAutosaver(
  * Wire autosaving to the store and the page's lifecycle. Returns a function
  * that unhooks it again (used by React's effect cleanup).
  */
+/**
+ * Write anything outstanding right now.
+ *
+ * Leaving a song — opening another, starting a new one — throws away whatever
+ * is in memory, and up to a second of work may not have reached the shelf yet.
+ * That second is exactly where a whole recording can live.
+ */
+let flushPending: (() => void) | null = null;
+export function flushAutosave(): void {
+  flushPending?.();
+}
+
 export function startAutosave(store: UseBoundStore<StoreApi<StoreState>>): () => void {
   // Storage being full is worth telling the child once — "your song is safe
   // here" quietly becoming untrue is the one failure that matters. Repeating it
@@ -93,6 +105,8 @@ export function startAutosave(store: UseBoundStore<StoreApi<StoreState>>): () =>
       store.getState().setStatus("Your songs can't be saved right now — there may be no room left.");
     }
   });
+
+  flushPending = () => autosaver.flush();
 
   const unsubscribe = store.subscribe((state, previous) => {
     if (state.project !== previous.project) autosaver.schedule(state.project);
@@ -118,5 +132,6 @@ export function startAutosave(store: UseBoundStore<StoreApi<StoreState>>): () =>
     }
     unsubscribe();
     autosaver.stop();
+    flushPending = null;
   };
 }

@@ -38,6 +38,7 @@ contextBridge.exposeInMainWorld('desktop', {
     write: (songId, clipId, bytes) => ipcRenderer.invoke('clips:write', { songId, clipId, bytes }),
     read: (songId, clipId) => ipcRenderer.invoke('clips:read', { songId, clipId }),
     remove: (songId, clipId) => ipcRenderer.invoke('clips:delete', { songId, clipId }),
+    sweep: (songId, keep) => ipcRenderer.invoke('clips:sweep', { songId, keep }),
   },
 
   /** Subscribe to native menu commands. Returns an unsubscribe function. */
