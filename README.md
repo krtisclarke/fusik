@@ -7,7 +7,7 @@ app (Windows and macOS) using web technology wrapped in Electron.
 > **Status:** Working timeline, transport, a synthesized drum kit **and melodic
 > instruments** (piano, synth, bells, bass) with scale-snapped melodies, **song
 > parts you can arrange** (verse/chorus-style, A A B A), per-block sound
-> editing, WAV export, plus save/load and undo/redo. See
+> editing, WAV export, plus save/load, **autosave** and undo/redo. See
 > [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the full picture and roadmap.
 
 ## Run it (development)
@@ -67,6 +67,9 @@ npm run package:mac   # build a macOS app bundle
 - Change the tempo, mute/solo/volume per track, and snap to a musical grid.
 - **Echo:** each row has a 🔁 slider. Turn it up and that sound repeats in time
   with the song — great on a hi-hat or a bass note. All the way left is off.
+- **Your song keeps itself.** Close the tab or shut the laptop and it's there
+  when you come back — no saving needed. **New** starts a blank one (it asks
+  first). **Save** still puts a copy in a file you can keep or share.
 - **Ctrl/Cmd+Z** to undo, **Ctrl/Cmd+S** to save, **Ctrl/Cmd+O** to open.
 - **Export** turns the song into a `.wav` audio file you can play or share anywhere.
 

@@ -7,6 +7,7 @@ import { Timeline } from './ui/Timeline';
 import { SoundEditor } from './ui/SoundEditor';
 import { Keyboard } from './ui/Keyboard';
 import { getDesktop } from './platform/files';
+import { startAutosave } from './state/autosave';
 
 function isTypingTarget(el: EventTarget | null): boolean {
   const node = el as HTMLElement | null;
@@ -88,6 +89,11 @@ export function App() {
     ];
     return () => offs.forEach((off) => off());
   }, []);
+
+  // Keep the song in the browser's own storage as it's worked on, so closing
+  // the tab (or a crash) doesn't take it away. Restoring happens as the store
+  // starts up; this is the writing half.
+  useEffect(() => startAutosave(useStore), []);
 
   // Auto-dismiss the status toast.
   useEffect(() => {

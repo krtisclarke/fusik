@@ -299,6 +299,34 @@ Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v2):
 - The project file is separate from any exported audio (WAV export is a later
   phase).
 
+### Keeping the song between visits (autosave)
+
+A child does not think to save. So the app keeps its own copy of the song in the
+browser's local storage (`platform/autosave.ts`) and puts it back at the next
+start — one slot, local only, nothing leaves the machine.
+
+The slot holds **the same text a `.beatbox` file holds**: `serializeProject` on
+the way out, `parseProject` on the way back. So a restored song gets the exact
+validation, repair and version check a file does, and a half-written or
+hand-mangled slot can only ever mean "start fresh" — never a broken app. Reading
+never throws and never deletes the slot: startup must not be the thing that
+destroys a song it merely couldn't read today.
+
+**When it writes** (`state/autosave.ts`) is the part with a bug in it if you get
+it wrong. Dragging a sound slider changes the project on every pointer move, and
+a recording take adds a note per key press, so writing on every change is out. A
+plain "write once it goes quiet" debounce is worse than it looks: it keeps
+pushing the write back for as long as the child keeps working, which is exactly
+when there is most to lose. Instead the first change starts a one-second clock
+that is *not* restarted, so no more than a second of work is ever at risk. The
+page-hidden events (`pagehide`, `visibilitychange`) flush immediately, because
+after them there may be no page left to run in.
+
+Storage can be absent (some privacy modes throw on merely touching
+`localStorage`) or full. Both are survivable: the song in front of the child is
+untouched, and a full slot says so once in the status line rather than every
+second.
+
 ---
 
 ## 5. Assets & licensing
@@ -327,10 +355,12 @@ npm run package:mac # macOS app bundle
 
 ### Testing approach
 
-- **Automated (82 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (97 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
-  operations. Run headlessly with Vitest.
+  operations, and autosave (round-trip through the slot, corrupt/newer-version
+  slots, and the write timing under a continuous stream of edits). Run headlessly
+  with Vitest.
 - **The scheduler** (`AudioEngine.test.ts`) is driven for real — the engine
   against a stubbed AudioContext and a fake clock, recording every note it hands
   to Web Audio. Pure-function tests can't catch the bugs that live here, which
@@ -359,6 +389,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Per-track volume / mute / solo | ✅ | |
 | Velocity (visual) | 🟡 | Shown per note; per-note velocity **editing** is Phase 2. |
 | Save / load (`.beatbox`) | ✅ | Native dialogs on desktop; download/upload in browser. |
+| Autosave & restore | ✅ | The song is kept in local storage as it's worked on and comes back on the next start. One slot, local only. **New** clears it. |
 | Undo / redo | ✅ | Snapshot-based; keyboard + buttons + menu. |
 | Master limiter (ear safety) | ✅ | |
 | Microphone recording | ⬜ | Button present but disabled (Phase 5). |
@@ -415,6 +446,11 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Turn a track's 🔁 echo up while the song plays — the repeats come in on
       the beat, and turning it back down removes them.
 - [ ] Export a song with echo: the repeats are in the file and aren't cut off.
+- [ ] Put a few beats in, close the tab, open it again — the song is back and
+      the status line says so.
+- [ ] Press **New** with a song in progress — it asks first, and Cancel keeps
+      the song.
+- [ ] After **New**, reload — the empty song stays empty, not the old one.
 
 ---
 
@@ -440,4 +476,4 @@ into the song. Remaining, roughly following the brief: per-note velocity (so a
 performance keeps its light and heavy hits — the keyboard currently records every
 note at one strength), MIDI input through the same `noteOn`/`noteOff`, step
 sequencer & humanize, per-track effect sends, microphone recording, automation,
-and polish — onboarding, more voices, accessibility, autosave.
+and polish — onboarding, more voices, accessibility. Autosave is now in.

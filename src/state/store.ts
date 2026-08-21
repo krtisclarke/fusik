@@ -27,6 +27,7 @@ import {
   type History,
 } from './history';
 import { openProjectFromFile, saveProjectToFile, saveAudioFile } from '../platform/files';
+import { clearAutosave, readAutosave } from '../platform/autosave';
 import { renderProject } from '../audio/render';
 import { encodeWav } from '../audio/wav';
 
@@ -246,7 +247,11 @@ export const useStore = create<StoreState>((set, get) => {
     set({ currentSectionId: sectionId, selection: { trackId: null, noteIds: [] } });
   }
 
-  const initialProject = P.createDefaultProject();
+  // The song from last time, if the app was closed with one in progress. It
+  // comes back through the same validation a file does, and anything unreadable
+  // simply means "start fresh" — the app must never fail to open.
+  const restored = readAutosave();
+  const initialProject = restored?.project ?? P.createDefaultProject();
   engine.setProject(initialProject);
   const initialSectionId = fixSectionId(initialProject, null);
   engine.setEditSection(initialSectionId);
@@ -264,14 +269,27 @@ export const useStore = create<StoreState>((set, get) => {
     currentSectionId: initialSectionId,
     snap: 'sixteenth',
     selection: { trackId: null, noteIds: [] },
-    status: null,
+    status: restored ? 'Picked up where you left off' : null,
     showKeyboard: true,
     isRecording: false,
 
     // ---- lifecycle -------------------------------------------------------
     newProject: () => {
+      // With autosave in, the song on screen is the only copy unless the child
+      // chose to save a file — and New sits right next to Open and Save. Undo
+      // can't bring it back either, because a new song starts a new history. So
+      // this is the one control here that can destroy work outright: ask first,
+      // but only when there is something to lose.
+      const hasWork = get().history.present.tracks.some((t) => t.notes.length > 0);
+      if (hasWork && typeof window !== 'undefined' && typeof window.confirm === 'function') {
+        if (!window.confirm('Start a new song? This one will be cleared.')) return;
+      }
       engine.stop();
       editBaseline = null;
+      // Nothing to come back to any more. The autosave of the *new* song lands
+      // a moment later on its own; clearing here means that even if writing
+      // fails (storage full), the old song can't reappear at the next start.
+      clearAutosave();
       const project = P.createDefaultProject();
       const history = createHistory(project);
       const currentSectionId = fixSectionId(project, null);
