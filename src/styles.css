@@ -87,7 +87,11 @@ button {
 .transport {
   display: flex;
   align-items: center;
-  gap: 18px;
+  /* Wrapping matters more than it looks: the bar has no scrollbar, so on a
+     narrower window anything past the right edge was simply unreachable —
+     Save and the songs list included. It wraps to a second line instead. */
+  flex-wrap: wrap;
+  gap: 12px 18px;
   padding: 10px 16px;
   background: linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel));
   border-bottom: 1px solid var(--line);
@@ -1258,4 +1262,146 @@ select.tname:focus {
   padding: 0 12px;
   font-size: 13px;
   font-weight: 600;
+}
+
+/* ---- the song's name, and the shelf it sits on -------------------------- */
+.song-field {
+  min-width: 0;
+}
+.song-name {
+  width: 150px;
+  max-width: 22vw;
+  height: 30px;
+  background: var(--bg-elev);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 0 8px;
+}
+.song-name:hover {
+  border-color: var(--line);
+}
+.song-name:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* The list hangs off its button, so it needs a positioned parent. */
+.songs-anchor {
+  position: relative;
+  display: inline-flex;
+}
+.songs-panel {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 50;
+  width: 268px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--bg-elev);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 7px;
+}
+/* Everything you can do to the song as a whole. */
+.songs-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 6px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid var(--line);
+}
+.songs-actions button {
+  background: none;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.songs-actions button:hover {
+  background: var(--bg-panel-2);
+}
+
+.songs-head {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 3px 6px 7px;
+}
+.songs-empty {
+  color: var(--text-dim);
+  font-size: 13px;
+  padding: 4px 6px 8px;
+}
+.songs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.songs-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-sm);
+}
+.songs-list li:hover {
+  background: var(--bg-panel-2);
+}
+.songs-list li.on {
+  background: var(--bg-panel-2);
+  box-shadow: inset 2px 0 0 0 var(--accent);
+}
+.songs-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+.songs-name {
+  font-weight: 600;
+  font-size: 13.5px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.songs-when {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.songs-del {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+.songs-del:hover {
+  color: var(--danger);
+  background: rgba(248, 113, 113, 0.12);
 }

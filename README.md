@@ -91,9 +91,11 @@ npm run package:mac   # build a macOS app bundle
   put it.
 - **Echo:** each row has a 🔁 slider. Turn it up and that sound repeats in time
   with the song — great on a hi-hat or a bass note. All the way left is off.
-- **Your song keeps itself.** Close the tab or shut the laptop and it's there
-  when you come back — no saving needed. **New** starts a blank one (it asks
-  first). **Save** still puts a copy in a file you can keep or share.
+- **Your songs keep themselves.** Close the tab or shut the laptop and your song
+  is there when you come back — no saving needed. Give it a name in the box at
+  the top, and **🎵 Songs** lists everything you've made: click one to open it.
+  Starting a new song doesn't lose the old one. **Save to a file** still puts a
+  copy somewhere you choose, to keep or to share.
 - **Ctrl/Cmd+Z** to undo, **Ctrl/Cmd+S** to save, **Ctrl/Cmd+O** to open.
 - **Export** turns the song into a `.wav` audio file you can play or share anywhere.
 

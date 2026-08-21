@@ -384,18 +384,31 @@ Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v2):
 - The project file is separate from any exported audio (WAV export is a later
   phase).
 
-### Keeping the song between visits (autosave)
+### Keeping songs between visits (the shelf)
 
-A child does not think to save. So the app keeps its own copy of the song in the
-browser's local storage (`platform/autosave.ts`) and puts it back at the next
-start — one slot, local only, nothing leaves the machine.
+A child does not think to save. So the app keeps its own copies in the browser's
+local storage (`platform/library.ts`) — an index of songs plus one slot each —
+and opens the last one at the next start. Local only, nothing leaves the machine.
 
-The slot holds **the same text a `.beatbox` file holds**: `serializeProject` on
+It started as a **single** slot, which is enough right up until a child makes
+something they like and then starts a new one; at that point the first was gone
+unless they had thought to save a file. New now leaves the old song on the shelf
+under its own id and takes a fresh slot, so it destroys nothing and no longer
+asks before it runs. The only thing in the app that ends work for good is
+deleting a song from the list, and that is the one place that asks.
+
+Each slot holds **the same text a `.beatbox` file holds**: `serializeProject` on
 the way out, `parseProject` on the way back. So a restored song gets the exact
 validation, repair and version check a file does, and a half-written or
-hand-mangled slot can only ever mean "start fresh" — never a broken app. Reading
-never throws and never deletes the slot: startup must not be the thing that
-destroys a song it merely couldn't read today.
+hand-mangled slot can only ever mean "that song isn't there" — never a broken
+app. Reading never throws and never deletes: opening a song must not be the thing
+that destroys one it merely couldn't read today.
+
+**The upgrade path is the risky part.** Anyone already using the app has a song
+in the old single slot, and losing it on an update is precisely what autosave
+exists to prevent. `importLegacyAutosave` moves it onto the shelf once, under a
+new id, and clears the old key **only after** the copy is safely stored — a
+failed write leaves the original exactly where it was.
 
 **When it writes** (`state/autosave.ts`) is the part with a bug in it if you get
 it wrong. Dragging a sound slider changes the project on every pointer move, and
@@ -409,7 +422,7 @@ after them there may be no page left to run in.
 
 Storage can be absent (some privacy modes throw on merely touching
 `localStorage`) or full. Both are survivable: the song in front of the child is
-untouched, and a full slot says so once in the status line rather than every
+untouched, and a full shelf says so once in the status line rather than every
 second.
 
 ---
@@ -468,6 +481,13 @@ its full range for the model and the tests. The general rule this stands for:
 where a control's options can't be judged by the person using it, the app should
 make the choice and offer only the one that changes what they get.
 
+The same pressure shows up as sheer count. Every feature so far has added a
+control to the toolbar, and at 1150px wide — an ordinary laptop — the last six
+had scrolled off the right edge of a bar with no scrollbar, unreachable. So the
+things you do to a song *as a whole* (New, Open, Save, Export) now live in the
+🎵 Songs panel next to the list of songs, which is what they were always about,
+and the bar wraps rather than putting a control out of reach.
+
 ### The first-song walkthrough
 
 `state/tour.ts` holds the steps as plain data and pure functions; `ui/Tutorial.tsx`
@@ -507,7 +527,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (134 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (141 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -547,7 +567,8 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Per-note velocity | ✅ | Played and recorded notes keep how hard they were hit — where on the key you land sets it. Drawn on every block. Editing a block's strength by hand is a later nicety. |
 | Save / load (`.beatbox`) | ✅ | Native dialogs on desktop; download/upload in browser. |
 | First-song walkthrough | ✅ | Interactive: highlights the real control, advances when the child actually does it. Offers itself once; the **?** button replays it. |
-| Autosave & restore | ✅ | The song is kept in local storage as it's worked on and comes back on the next start. One slot, local only. **New** clears it. |
+| Autosave & restore | ✅ | Songs are kept in local storage as they're worked on and the last one comes back at the next start. Local only. |
+| Several songs, named | ✅ | The song has a name you can type over, and 🎵 Songs lists everything kept on this computer — click one to open it. **New** keeps the one you were on rather than replacing it. |
 | Undo / redo | ✅ | Snapshot-based; keyboard + buttons + menu. |
 | Master limiter (ear safety) | ✅ | |
 | Microphone recording | ⬜ | Button present but disabled (Phase 5). |
@@ -620,9 +641,13 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Export a song with echo: the repeats are in the file and aren't cut off.
 - [ ] Put a few beats in, close the tab, open it again — the song is back and
       the status line says so.
-- [ ] Press **New** with a song in progress — it asks first, and Cancel keeps
-      the song.
-- [ ] After **New**, reload — the empty song stays empty, not the old one.
+- [ ] Name a song, press **New**, name that one too — 🎵 Songs lists both, and
+      clicking the first brings it back exactly.
+- [ ] Delete a song you are *not* in: it goes, yours is untouched. Delete the one
+      you *are* in: the screen clears to a fresh song and the deleted one stays
+      deleted (it must not reappear a second later).
+- [ ] Upgrade path: put a song in the old `beatbox.autosave.v1` key, reload —
+      it appears on the shelf and the old key is gone.
 - [ ] Press **New** while the song is playing and leave the question on screen
       for a few seconds, then Cancel — the song picks up quietly, with no burst.
 - [ ] Open the app with no saved song: the walkthrough offers itself. Work

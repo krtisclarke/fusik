@@ -15,3 +15,5 @@ export const newNoteId = () => randomId('note');
 export const newGroupId = () => randomId('grp');
 export const newSectionId = () => randomId('sec');
 export const newEntryId = () => randomId('arr');
+/** Identifies a saved song on this computer, not anything inside the song. */
+export const newSongId = () => randomId('song');

@@ -31,7 +31,16 @@ import {
   type History,
 } from './history';
 import { openProjectFromFile, saveProjectToFile, saveAudioFile } from '../platform/files';
-import { clearAutosave, readAutosave } from '../platform/autosave';
+import {
+  deleteSong as deleteSongSlot,
+  importLegacyAutosave,
+  listSongs,
+  readCurrentSongId,
+  readSong,
+  writeCurrentSongId,
+  type SongSummary,
+} from '../platform/library';
+import { newSongId } from '../model/ids';
 import { hasSeenTutorial, markTutorialSeen } from '../platform/prefs';
 import { TOUR_STEPS } from './tour';
 import { renderProject } from '../audio/render';
@@ -63,6 +72,12 @@ export interface StoreState {
   showKeyboard: boolean;
   /** Recording is armed: anything played while the song runs is kept. */
   isRecording: boolean;
+  /** Which shelf slot the song on screen belongs to. */
+  currentSongId: string;
+  /** Every song kept on this computer, most recent first. */
+  songs: SongSummary[];
+  /** Whether the songs list is open. */
+  showSongs: boolean;
   /**
    * Which step of the first-song walkthrough is showing, or null when it isn't
    * running. See state/tour.ts.
@@ -79,6 +94,15 @@ export interface StoreState {
   // lifecycle
   newProject: () => void;
   loadProject: (project: Project) => void;
+  /** Name the song on screen. */
+  renameSong: (name: string) => void;
+  /** Open one of the kept songs. */
+  openSong: (id: string) => void;
+  /** Remove a kept song for good. */
+  deleteSong: (id: string) => void;
+  /** Re-read the shelf (after an autosave writes to it). */
+  refreshSongs: () => void;
+  toggleSongs: () => void;
   saveCurrent: () => Promise<void>;
   openFromFile: () => Promise<void>;
   /** Render the song to a .wav file and save it. */
@@ -292,11 +316,18 @@ export const useStore = create<StoreState>((set, get) => {
     set({ currentSectionId: sectionId, selection: { trackId: null, noteIds: [] } });
   }
 
-  // The song from last time, if the app was closed with one in progress. It
-  // comes back through the same validation a file does, and anything unreadable
-  // simply means "start fresh" — the app must never fail to open.
-  const restored = readAutosave();
-  const initialProject = restored?.project ?? P.createDefaultProject();
+  // Pick up where the child left off. In order: whatever the old single-slot
+  // autosave was holding (carried onto the shelf once, so updating the app can't
+  // swallow a song in progress), then the song that was open last time, then the
+  // most recent one on the shelf. Anything unreadable simply means a fresh song
+  // — the app must never fail to open.
+  const migratedId = importLegacyAutosave(newSongId());
+  const startId = migratedId ?? readCurrentSongId() ?? listSongs()[0]?.id ?? null;
+  const restoredProject = startId ? readSong(startId) : null;
+  const initialSongId = restoredProject && startId ? startId : newSongId();
+  const restored = restoredProject != null;
+  const initialProject = restoredProject ?? P.createDefaultProject();
+  if (restored) writeCurrentSongId(initialSongId);
   engine.setProject(initialProject);
   const initialSectionId = fixSectionId(initialProject, null);
   engine.setEditSection(initialSectionId);
@@ -317,6 +348,9 @@ export const useStore = create<StoreState>((set, get) => {
     status: restored ? 'Picked up where you left off' : null,
     showKeyboard: true,
     isRecording: false,
+    currentSongId: initialSongId,
+    songs: listSongs(),
+    showSongs: false,
     // Offered once, unasked, to a child opening the app for the first time —
     // and only when there is no song to come back to, so it can never appear
     // over work already in progress.
@@ -325,21 +359,14 @@ export const useStore = create<StoreState>((set, get) => {
 
     // ---- lifecycle -------------------------------------------------------
     newProject: () => {
-      // With autosave in, the song on screen is the only copy unless the child
-      // chose to save a file — and New sits right next to Open and Save. Undo
-      // can't bring it back either, because a new song starts a new history. So
-      // this is the one control here that can destroy work outright: ask first,
-      // but only when there is something to lose.
-      const hasWork = get().history.present.tracks.some((t) => t.notes.length > 0);
-      if (hasWork && typeof window !== 'undefined' && typeof window.confirm === 'function') {
-        if (!window.confirm('Start a new song? This one will be cleared.')) return;
-      }
+      // Starting a new song used to be the one control that could destroy work,
+      // so it asked first. It doesn't any more: the song being left stays on the
+      // shelf under its own id, and the new one gets a fresh slot. Nothing is
+      // lost, so nothing needs confirming.
       engine.stop();
       editBaseline = null;
-      // Nothing to come back to any more. The autosave of the *new* song lands
-      // a moment later on its own; clearing here means that even if writing
-      // fails (storage full), the old song can't reappear at the next start.
-      clearAutosave();
+      const songId = newSongId();
+      writeCurrentSongId(songId);
       const project = P.createDefaultProject();
       const history = createHistory(project);
       const currentSectionId = fixSectionId(project, null);
@@ -349,6 +376,9 @@ export const useStore = create<StoreState>((set, get) => {
         history,
         project,
         currentSectionId,
+        currentSongId: songId,
+        songs: listSongs(),
+        showSongs: false,
         canUndo: false,
         canRedo: false,
         isPlaying: false,
@@ -378,6 +408,50 @@ export const useStore = create<StoreState>((set, get) => {
       });
     },
 
+    renameSong: (name) => {
+      apply(P.renameProject(get().history.present, name));
+      set({ songs: listSongs() });
+    },
+
+    openSong: (id) => {
+      const s = get();
+      if (id === s.currentSongId) {
+        set({ showSongs: false });
+        return;
+      }
+      const project = readSong(id);
+      if (!project) {
+        // The slot is gone or unreadable. Say so and drop it from the list
+        // rather than leaving a row that does nothing when it's pressed.
+        set({ songs: listSongs(), status: "That song couldn't be opened" });
+        return;
+      }
+      // The song being left is already on the shelf — autosave put it there —
+      // so switching away costs nothing.
+      writeCurrentSongId(id);
+      s.loadProject(project);
+      set({ currentSongId: id, songs: listSongs(), showSongs: false });
+    },
+
+    deleteSong: (id) => {
+      const wasCurrent = id === get().currentSongId;
+      deleteSongSlot(id);
+      // Deleting the song you are *in* has to clear the screen too. Leaving the
+      // work up would give it nowhere to be saved, and the next autosave — a
+      // second later — would quietly put it back on the shelf under a new name,
+      // so "delete" would visibly undo itself. A blank song is what the child
+      // asked for.
+      if (wasCurrent) {
+        get().newProject();
+        set({ songs: listSongs(), status: 'Song deleted' });
+        return;
+      }
+      set({ songs: listSongs(), showSongs: get().songs.length > 1, status: 'Song deleted' });
+    },
+
+    refreshSongs: () => set({ songs: listSongs() }),
+    toggleSongs: () => set({ showSongs: !get().showSongs }),
+
     saveCurrent: async () => {
       try {
         const result = await saveProjectToFile(get().history.present);
@@ -390,7 +464,14 @@ export const useStore = create<StoreState>((set, get) => {
     openFromFile: async () => {
       try {
         const result = await openProjectFromFile();
-        if (result) get().loadProject(result.project);
+        // A song opened from a file joins the shelf as its own song, rather
+        // than overwriting whatever slot happened to be current.
+        if (result) {
+          const songId = newSongId();
+          writeCurrentSongId(songId);
+          get().loadProject(result.project);
+          set({ currentSongId: songId, showSongs: false });
+        }
       } catch (err) {
         set({ status: `Couldn't open: ${(err as Error).message}` });
       }

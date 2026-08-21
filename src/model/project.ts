@@ -532,8 +532,15 @@ export function removeArrangementEntry(project: Project, entryId: string): Proje
   };
 }
 
+/**
+ * Name the song. Blank is refused and the same name is a no-op: with several
+ * songs on a shelf now, a row of blanks would be unusable, and committing an
+ * unchanged name would spend an undo step that undoes nothing.
+ */
 export function renameProject(project: Project, name: string): Project {
-  return { ...project, name };
+  const trimmed = name.trim().slice(0, 40);
+  if (!trimmed || trimmed === project.name) return project;
+  return { ...project, name: trimmed };
 }
 
 /** Find an existing track for a voice, or null. Used to group dropped drums. */

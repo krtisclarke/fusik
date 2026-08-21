@@ -4,6 +4,7 @@ import { engine } from '../audio/AudioEngine';
 import { formatPosition } from '../model/time';
 import { MAX_BARS, MAX_BPM, MIN_BARS, MIN_BPM } from '../model/project';
 import { SCALE_CHOICES } from '../model/scales';
+import { SongName, SongsPanel } from './Songs';
 
 /**
  * A number box that only reports a value when the child has finished typing one
@@ -94,11 +95,9 @@ export function Transport() {
   const setBpm = useStore((s) => s.setBpm);
   const setTidyTiming = useStore((s) => s.setTidyTiming);
   const setScale = useStore((s) => s.setScale);
-  const saveCurrent = useStore((s) => s.saveCurrent);
-  const openFromFile = useStore((s) => s.openFromFile);
-  const newProject = useStore((s) => s.newProject);
   const startTour = useStore((s) => s.startTour);
-  const exportSong = useStore((s) => s.exportSong);
+  const showSongs = useStore((s) => s.showSongs);
+  const toggleSongs = useStore((s) => s.toggleSongs);
 
   return (
     <div className="transport">
@@ -255,9 +254,24 @@ export function Transport() {
         <span className="lbl">bars</span>
       </div>
 
+      <div className="field song-field">
+        <span className="lbl">Song</span>
+        <SongName />
+      </div>
+
       <div className="spacer" />
 
       <div className="tgroup">
+        <div className="songs-anchor">
+          <button
+            className={`tbtn ${showSongs ? 'on' : ''}`}
+            onClick={toggleSongs}
+            title="The songs you've made"
+          >
+            🎵 Songs
+          </button>
+          <SongsPanel />
+        </div>
         <button
           className="tbtn"
           onClick={startTour}
@@ -265,22 +279,6 @@ export function Transport() {
           aria-label="Show me how to make a song"
         >
           ?
-        </button>
-        <button className="tbtn" onClick={newProject} title="New song (Ctrl/Cmd+N)">
-          New
-        </button>
-        <button className="tbtn" onClick={openFromFile} title="Open a song (Ctrl/Cmd+O)">
-          Open
-        </button>
-        <button className="tbtn" onClick={saveCurrent} title="Save this song (Ctrl/Cmd+S)">
-          💾 Save
-        </button>
-        <button
-          className="tbtn"
-          onClick={() => void exportSong()}
-          title="Export the song as a .wav audio file"
-        >
-          ⬇ Export
         </button>
       </div>
     </div>
