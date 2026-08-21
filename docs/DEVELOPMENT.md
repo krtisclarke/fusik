@@ -269,14 +269,27 @@ fact drives every decision here.
   format the browser preferred.
 - **Playback** is scheduled by the same window, with the same clamp, as every
   other block, through the same track chain — so a recording gets the track's
-  volume, mute, echo and the master limiter exactly like a drum.
+  volume, mute, echo and the master limiter exactly like a drum. But unlike
+  every other block it needs **an end and a handle**. Each synthesised voice
+  stops itself when its envelope runs out; a recording plays until told
+  otherwise. Started and forgotten, it kept singing after Stop with no control
+  that would silence it, every press of Play layered another copy over the one
+  still running, and shortening a block changed nothing about the sound. So each
+  source is given an explicit end at its block's length and kept in `liveClips`,
+  which `stop`, `pause` and opening another song all clear.
 - **Tempo can't stretch a voice.** A recording plays at the speed it was made,
   so `setBpm` re-measures the *block* to match the sound rather than the other
   way round; `clipSeconds` is the truth and `lengthBeats` follows it.
 - **Export had to learn about it too**, or the exported file would come out with
   the child's voice silently missing — the one part of the song that can't be
-  rebuilt from numbers. The render tail also grows to cover a recording that
-  runs past the last beat, so nobody gets cut off mid-word.
+  rebuilt from numbers. The render is also made long enough for a recording that
+  runs past the last beat (`clipOverhangSeconds`), so nobody is cut off
+  mid-word. That measure is **clip end minus song end**, and getting it wrong is
+  easy: the first version compared a recording against its own block, which is
+  always the same number — the block is created from the recording's length and
+  rescaled with the tempo — so it was always zero and the tail never grew.
+  Twenty seconds of singing in an eight-second song came out of Export as ten
+  and a half.
 - **It is a desktop feature.** In a plain browser there is nowhere to put a
   megabyte of audio that survives a reload, and offering it there would mean a
   child records their voice and loses it. The button says so and is disabled.
@@ -617,7 +630,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (157 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (168 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -748,7 +761,10 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Quit and reopen: the recording is still there and still sounds.
 - [ ] Rename the song — the recordings folder moves with it and the block still
       plays. Delete the song — the folder goes too.
-- [ ] Export a song with a recording in it: the voice is in the file.
+- [ ] Export a song with a recording in it: the voice is in the file — including
+      a take that runs well past the end of the song.
+- [ ] Press play with a recording in the song, then Stop part-way through: the
+      voice stops with it. Press play again: one copy, not two.
 - [ ] Delete a recorded block and press undo — it comes back and still sounds.
       Reopen the song afterwards and the file for a block you really did delete
       is gone from the `.recordings` folder.

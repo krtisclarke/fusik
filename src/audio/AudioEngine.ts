@@ -254,12 +254,14 @@ export class AudioEngine {
     if (!this.isPlaying) return;
     this.pausedBeat = this.getPositionBeats();
     this.stopTimer();
+    this.stopLiveClips();
     this.isPlaying = false;
     this.lastPeriod = null;
   }
 
   stop(): void {
     this.stopTimer();
+    this.stopLiveClips();
     this.isPlaying = false;
     this.pausedBeat = 0;
     this.lastPeriod = null;
@@ -407,7 +409,17 @@ export class AudioEngine {
             const gain = ctx.createGain();
             gain.gain.value = note.velocity;
             source.connect(gain).connect(chain.input);
-            source.start(Math.max(when, now));
+            const at = Math.max(when, now);
+            source.start(at);
+            // Every synthesised voice ends itself: its envelope runs out. A
+            // recording has no envelope — it plays until told otherwise — so it
+            // has to be given an end and a handle. Without the end, shortening
+            // a block would change nothing about the sound; without the handle,
+            // Stop couldn't silence it and every press of Play would layer
+            // another copy over the one still running.
+            source.stop(at + beatsToSeconds(note.lengthBeats, bpm));
+            this.liveClips.add(source);
+            source.onended = () => this.liveClips.delete(source);
           }
           continue;
         }
@@ -441,6 +453,24 @@ export class AudioEngine {
    */
   private clips = new Map<string, AudioBuffer>();
 
+  /**
+   * Recordings sounding right now. Held so the transport can silence them:
+   * everything else in this engine stops on its own when its envelope ends.
+   */
+  private liveClips = new Set<AudioBufferSourceNode>();
+
+  /** Cut short every recording currently sounding. */
+  private stopLiveClips(): void {
+    for (const source of this.liveClips) {
+      try {
+        source.stop();
+      } catch {
+        // Already finished, or never started. Either way it makes no sound.
+      }
+    }
+    this.liveClips.clear();
+  }
+
   /** The live audio context, starting it if it hasn't been started yet. */
   async context(): Promise<BaseAudioContext> {
     return this.ensureRunning();
@@ -462,6 +492,7 @@ export class AudioEngine {
 
   /** Forget every recording — used when a different song is opened. */
   clearClips(): void {
+    this.stopLiveClips(); // a recording from the last song must not sing over the next
     this.clips.clear();
   }
 

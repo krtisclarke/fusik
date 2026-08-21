@@ -29,6 +29,42 @@ export interface RenderOptions {
   clips?: Map<string, AudioBuffer>;
 }
 
+/**
+ * How far past the end of the song its recordings run.
+ *
+ * A recording plays for as long as it was recorded, wherever it sits — so one
+ * started near the end of a part carries on after the last beat. Without room
+ * for that, an exported file cuts the child off mid-word, silently, while live
+ * playback plays the whole thing.
+ *
+ * Measured as *clip end minus song end*. An earlier version compared the clip's
+ * length against its own block, which is always the same number — the block is
+ * created from the recording's length and rescaled with the tempo — so it was
+ * always zero and the tail never grew.
+ */
+export function clipOverhangSeconds(
+  project: Project,
+  entries: { sectionId: string; startBeat: number; lengthBeats: number }[],
+  beatsPerLoop: number,
+  loops: number,
+): number {
+  const musicSeconds = beatsToSeconds(beatsPerLoop * loops, project.bpm);
+  let overhang = 0;
+  for (const track of project.tracks) {
+    for (const note of track.notes) {
+      if (!note.clipId || !note.clipSeconds) continue;
+      for (const entry of entries) {
+        if (entry.sectionId !== note.sectionId || note.startBeat >= entry.lengthBeats) continue;
+        // The last pass is the one that runs latest.
+        const startBeat = entry.startBeat + note.startBeat + (loops - 1) * beatsPerLoop;
+        const endsAt = beatsToSeconds(startBeat, project.bpm) + note.clipSeconds;
+        if (endsAt - musicSeconds > overhang) overhang = endsAt - musicSeconds;
+      }
+    }
+  }
+  return Math.max(0, overhang);
+}
+
 export async function renderProject(project: Project, opts: RenderOptions = {}): Promise<AudioBuffer> {
   const loops = Math.max(1, Math.floor(opts.loops ?? 1));
   const sampleRate = opts.sampleRate ?? 44100;
@@ -40,18 +76,8 @@ export async function renderProject(project: Project, opts: RenderOptions = {}):
   // outlast the note that made them, so a song ending on an echo doesn't get
   // its tail chopped off in the exported file.
   const echoSeconds = project.tracks.some((t) => t.echo > 0) ? (30 / Math.max(1, project.bpm)) * 8 : 0;
-  // A recording near the end of a part can run past the end of the song — it
-  // plays for as long as it was recorded, whatever the grid says. Without room
-  // for that, an exported file would cut a child off mid-word.
-  let clipOverhang = 0;
-  for (const track of project.tracks) {
-    for (const note of track.notes) {
-      if (!note.clipId || !note.clipSeconds) continue;
-      const beyond = note.clipSeconds - beatsToSeconds(note.lengthBeats, project.bpm);
-      if (beyond > clipOverhang) clipOverhang = beyond;
-    }
-  }
-  const tail = TAIL_SECONDS + echoSeconds + Math.max(0, clipOverhang);
+  const tail =
+    TAIL_SECONDS + echoSeconds + clipOverhangSeconds(project, entries, beatsPerLoop, loops);
   const length = Math.max(1, Math.ceil((musicSeconds + tail) * sampleRate));
 
   const ctx = new OfflineAudioContext(2, length, sampleRate);

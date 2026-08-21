@@ -36,6 +36,14 @@ function fakeNode(): any {
   return node;
 }
 
+/** Every recording the engine started, and what happened to it. */
+interface FakeSource {
+  startedAt: number | null;
+  stoppedAt: number | null;
+  stopCalls: number;
+}
+const sources: FakeSource[] = [];
+
 /** A stand-in AudioContext whose clock we advance by hand. */
 class FakeAudioContext {
   currentTime = 0;
@@ -44,6 +52,21 @@ class FakeAudioContext {
   createGain = () => fakeNode();
   createDelay = () => fakeNode();
   createBiquadFilter = () => fakeNode();
+  createBufferSource = () => {
+    const record: FakeSource = { startedAt: null, stoppedAt: null, stopCalls: 0 };
+    sources.push(record);
+    const node: any = fakeNode();
+    node.buffer = null;
+    node.onended = null;
+    node.start = (when?: number) => {
+      record.startedAt = when ?? 0;
+    };
+    node.stop = (when?: number) => {
+      record.stopCalls++;
+      if (record.stoppedAt == null) record.stoppedAt = when ?? -1;
+    };
+    return node;
+  };
   resume = async () => undefined;
   close = async () => undefined;
 }
@@ -52,6 +75,7 @@ let ctx: FakeAudioContext;
 
 beforeEach(() => {
   scheduled.length = 0;
+  sources.length = 0;
   vi.useFakeTimers();
   ctx = new FakeAudioContext();
   vi.stubGlobal(
@@ -262,5 +286,99 @@ describe('a stalled scheduler', () => {
     // And it keeps playing afterwards.
     await advance(0.5);
     expect(scheduled.length).toBeGreaterThan(6);
+  });
+});
+
+/** A one-bar song with a single recorded block on an audio track. */
+function songWithARecording(clipSeconds = 20) {
+  let project = P.createDefaultProject();
+  project = P.setSectionLength(project, project.sections[0].id, 1); // 4 beats = 2s at 120bpm
+  const track = P.createAudioTrack();
+  project = P.addTrack(project, track);
+  const lengthBeats = clipSeconds * 2; // 120bpm: 2 beats per second
+  project = P.addNote(
+    project,
+    track.id,
+    P.createClipNote(project.sections[0].id, 0, lengthBeats, 'clip_1', clipSeconds),
+  );
+  return project;
+}
+
+/** Something buffer-shaped for the engine to play. */
+const fakeBuffer = { duration: 20, length: 20 * 44100, numberOfChannels: 1 } as unknown as AudioBuffer;
+
+describe('a recording that is playing', () => {
+  // Everything else the engine makes ends itself when its envelope runs out. A
+  // recording has no envelope, so without an explicit end and a handle it plays
+  // on after Stop — and every press of Play layers another copy over it.
+  it('is silenced by Stop', async () => {
+    const engine = await newEngine();
+    engine.setClip('clip_1', fakeBuffer);
+    engine.setProject(songWithARecording());
+    await engine.play();
+    await advance(0.3);
+
+    expect(sources).toHaveLength(1);
+    expect(sources[0].startedAt).not.toBeNull();
+    expect(sources[0].stopCalls).toBe(1); // given an end when it started
+
+    engine.stop();
+    expect(sources[0].stopCalls).toBeGreaterThanOrEqual(2); // and cut short now
+  });
+
+  it('is silenced by Pause', async () => {
+    const engine = await newEngine();
+    engine.setClip('clip_1', fakeBuffer);
+    engine.setProject(songWithARecording());
+    await engine.play();
+    await advance(0.3);
+    engine.pause();
+    expect(sources[0].stopCalls).toBeGreaterThanOrEqual(2);
+  });
+
+  it('does not pile up a second copy when Play is pressed again', async () => {
+    const engine = await newEngine();
+    engine.setClip('clip_1', fakeBuffer);
+    engine.setProject(songWithARecording());
+    await engine.play();
+    await advance(0.3);
+    engine.stop();
+    const stoppedFirst = sources[0].stopCalls;
+    await engine.play();
+    await advance(0.3);
+
+    expect(sources).toHaveLength(2); // a new one, as expected
+    expect(stoppedFirst).toBeGreaterThanOrEqual(2); // with the old one already silenced
+  });
+
+  it('stops when a different song is opened', async () => {
+    const engine = await newEngine();
+    engine.setClip('clip_1', fakeBuffer);
+    engine.setProject(songWithARecording());
+    await engine.play();
+    await advance(0.3);
+    engine.clearClips(); // what opening another song does
+    expect(sources[0].stopCalls).toBeGreaterThanOrEqual(2);
+  });
+
+  it('lasts as long as its block, so shortening one shortens the sound', async () => {
+    const engine = await newEngine();
+    engine.setClip('clip_1', fakeBuffer);
+    // A 20-second recording, but its block has been dragged down to 1 beat.
+    let project = P.createDefaultProject();
+    project = P.setSectionLength(project, project.sections[0].id, 1);
+    const track = P.createAudioTrack();
+    project = P.addTrack(project, track);
+    project = P.addNote(
+      project,
+      track.id,
+      P.createClipNote(project.sections[0].id, 0, 1, 'clip_1', 20),
+    );
+    engine.setProject(project);
+    await engine.play();
+    await advance(0.3);
+
+    // one beat at 120bpm = half a second after it started
+    expect(sources[0].stoppedAt).toBeCloseTo((sources[0].startedAt ?? 0) + 0.5, 3);
   });
 });
