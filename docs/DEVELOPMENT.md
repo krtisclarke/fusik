@@ -458,7 +458,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (114 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (118 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -492,7 +492,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Timeline (bars/beats/grid, snapping) | ✅ | Snap bar→1/16, or off. |
 | Transport (play/pause/stop/loop, BPM, position) | ✅ | Two-clock scheduler; live tempo change. |
 | Synthesized drum kit (12 voices) | ✅ | Membrane / noise / blip primitives. |
-| Place / remove / move notes | ✅ | Click to place, click to remove, drag to move in time. |
+| Place / remove / move notes | ✅ | Click to place, click to remove, drag sideways to move in time and up/down to change the note. A dragged note lands on the scale, so it can't be dropped on a wrong one. |
 | Drag sound from library | ✅ | Creates or reuses the voice's track. |
 | Per-track volume / mute / solo | ✅ | |
 | Per-note velocity | ✅ | Played and recorded notes keep how hard they were hit — where on the key you land sets it. Drawn on every block. Editing a block's strength by hand is a later nicety. |
@@ -529,6 +529,9 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Place beats by clicking; remove by clicking a beat.
 - [ ] Drag a sound from the library onto the timeline.
 - [ ] Drag a beat left/right to move it in time (snaps to grid).
+- [ ] Drag a piano block up and down — it changes note, follows the pointer as
+      it goes, stops at the ends of the scale, and one undo puts it back.
+- [ ] Drag a *drum* block up and down — it stays put and keeps working.
 - [ ] Change tempo while playing — song speeds up/slows smoothly.
 - [ ] Mute / solo / volume per track behave correctly.
 - [ ] Undo/redo across add, remove, move, tempo.
@@ -578,9 +581,12 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 
 ## 9. Known limitations
 
-- Blocks can be moved in **time** and resized (right edge), but not yet dragged
-  vertically to change pitch, nor between tracks — to change a note's pitch,
-  remove it and click the row you want. A planned nicety.
+- Blocks can be moved in **time**, dragged up and down to change the note, and
+  resized (right edge) — but not dragged **between tracks**, so a tune written
+  on the Piano can't be handed to the Bells without writing it again. The model
+  already supports it (`moveNote` takes a destination track); what's missing is
+  the interaction, and the decisions that come with it — a drum block has no
+  pitch to land on, and a chained block would have to take its chain with it.
 - Multi-select uses Shift/Cmd/Ctrl-click (or a row's name for all of a row).
   A more touch/kid-friendly select (lasso, link-mode) is a candidate follow-up.
 - Packaging a signed Windows installer requires a Windows machine or CI; the app

@@ -120,7 +120,14 @@ export interface StoreState {
   dropVoiceAt: (voiceId: string, beat: number) => void;
   addNoteAt: (trackId: string, beat: number, opts?: { pitch?: number; velocity?: number }) => void;
   removeNote: (trackId: string, noteId: string) => void;
-  moveNote: (fromTrackId: string, noteId: string, toTrackId: string, beat: number) => void;
+  /** Move a block in time, and — for a block that has a pitch — up or down the scale. */
+  moveNote: (
+    fromTrackId: string,
+    noteId: string,
+    toTrackId: string,
+    beat: number,
+    pitch?: number,
+  ) => void;
 
   // per-block sound + chaining (act on the current selection, plus any chained partners)
   /** Live-update a sound parameter on the selected block(s) while dragging a slider. */
@@ -636,10 +643,10 @@ export const useStore = create<StoreState>((set, get) => {
 
     removeNote: (trackId, noteId) => apply(P.removeNote(get().history.present, trackId, noteId)),
 
-    moveNote: (fromTrackId, noteId, toTrackId, beat) => {
+    moveNote: (fromTrackId, noteId, toTrackId, beat, pitch) => {
       const project = get().history.present;
       const snapped = snapBeat(beat, get().snap, project.timeSignature);
-      apply(P.moveNote(project, fromTrackId, noteId, toTrackId, snapped));
+      apply(P.moveNote(project, fromTrackId, noteId, toTrackId, snapped, pitch));
     },
 
     // ---- recording a performance -----------------------------------------

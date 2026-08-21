@@ -16,6 +16,13 @@ interface DragState {
   startX: number;
   previewBeat: number;
   moved: boolean;
+  /** Vertical half of the gesture — absent for drums, which have no pitch. */
+  startY: number;
+  /** The scale the block's track offers, so the drag can step down its rows. */
+  pitches: number[] | null;
+  /** Where it started, so each move is measured from there and can't compound. */
+  origPitch: number | null;
+  previewPitch: number | null;
 }
 
 /** Index of the ladder pitch closest to `pitch` (for laying out loaded notes). */
@@ -113,6 +120,7 @@ export function Timeline() {
     }
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     select(track.id, note.id);
+    const pitches = pitchesFor(track);
     setDrag({
       noteId: note.id,
       trackId: track.id,
@@ -120,24 +128,60 @@ export function Timeline() {
       startX: e.clientX,
       previewBeat: note.startBeat,
       moved: false,
+      startY: e.clientY,
+      pitches: note.pitch != null ? pitches : null,
+      origPitch: note.pitch ?? null,
+      previewPitch: note.pitch ?? null,
     });
   }
 
   function onNotePointerMove(e: React.PointerEvent) {
     if (!drag) return;
     const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
     const raw = Math.max(0, drag.origBeat + xToBeat(dx));
     // Keep the block inside its part. A block dragged past the end would still
     // exist but never play, which just looks like the app ate it.
     const step = snap === 'off' ? 0.0625 : snapStepInBeats(snap, ts);
     const lastStart = Math.max(0, total - step);
     const previewBeat = Math.min(snapBeat(raw, snap, ts), lastStart);
-    setDrag({ ...drag, previewBeat, moved: drag.moved || Math.abs(dx) > 4 });
+
+    // Up and down moves the note through the scale, one row per row. The rows
+    // *are* the scale, so a dragged note lands on a real note of it and can't
+    // be dropped somewhere that sounds wrong — the same promise the note-grid
+    // makes when a block is first placed.
+    let previewPitch = drag.previewPitch;
+    const { pitches, origPitch } = drag;
+    if (pitches && origPitch != null) {
+      // Measured from where the drag started, never from the last preview —
+      // otherwise every move event would step again from the step before and
+      // the note would run away up the scale.
+      const origRow = pitches.length - 1 - nearestIndex(pitches, origPitch);
+      const row = clamp(origRow + Math.round(dy / PITCH_ROW_H), 0, pitches.length - 1);
+      previewPitch = pitches[pitches.length - 1 - row];
+    }
+
+    setDrag({
+      ...drag,
+      previewBeat,
+      previewPitch,
+      // A drag straight up or down moves nothing sideways, and must still count
+      // as a move or letting go would throw the new pitch away.
+      moved: drag.moved || Math.abs(dx) > 4 || Math.abs(dy) > 4,
+    });
   }
 
   function onNotePointerUp() {
     if (!drag) return;
-    if (drag.moved) moveNote(drag.trackId, drag.noteId, drag.trackId, drag.previewBeat);
+    if (drag.moved) {
+      moveNote(
+        drag.trackId,
+        drag.noteId,
+        drag.trackId,
+        drag.previewBeat,
+        drag.previewPitch ?? undefined,
+      );
+    }
     // A click with no drag just selects (done on pointer-down). Remove via the ✕
     // on the block or the Delete key — no accidental deletes.
     setDrag(null);
@@ -196,13 +240,14 @@ export function Timeline() {
 
     let label = getVoice(track.instrument.voiceId)?.emoji ?? '●';
     let pitched = false;
-    if (pitches && note.pitch != null) {
+    const shownPitch = isDragging && drag!.previewPitch != null ? drag!.previewPitch : note.pitch;
+    if (pitches && shownPitch != null) {
       pitched = true;
-      const idx = nearestIndex(pitches, note.pitch);
+      const idx = nearestIndex(pitches, shownPitch);
       const rowFromTop = pitches.length - 1 - idx;
       style.top = rowFromTop * PITCH_ROW_H + 1;
       style.height = PITCH_ROW_H - 2;
-      label = midiToLetter(note.pitch);
+      label = midiToLetter(shownPitch);
     }
 
     return (
@@ -213,7 +258,11 @@ export function Timeline() {
         onPointerDown={(e) => onNotePointerDown(e, track, note)}
         onPointerMove={onNotePointerMove}
         onPointerUp={onNotePointerUp}
-        title="Click to select · Shift-click to add · drag to move"
+        title={
+          pitched
+            ? 'Click to select · drag sideways to move it in time, up and down to change the note'
+            : 'Click to select · Shift-click to add · drag to move'
+        }
       >
         <span className="vel" style={{ height: `${note.velocity * 100}%` }} />
         {(!pitched || width >= 22) && <span className="emoji">{label}</span>}

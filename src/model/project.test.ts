@@ -82,6 +82,52 @@ describe('note edits are immutable', () => {
     expect(p.tracks[0].notes).toHaveLength(0);
     expect(p.tracks[1].notes[0].startBeat).toBe(3);
   });
+
+  it('moves a note up and down in pitch as well as along in time', () => {
+    // Dragging a block up the note-grid: it lands on a different note of the
+    // scale without being removed and placed again.
+    let p = createDefaultProject();
+    const trackId = p.tracks[0].id;
+    const note = createNote(sec(p), 0, 1, 0.8, 60);
+    p = addNote(p, trackId, note);
+    p = moveNote(p, trackId, note.id, trackId, 2, 67);
+    expect(p.tracks[0].notes[0].startBeat).toBe(2);
+    expect(p.tracks[0].notes[0].pitch).toBe(67);
+  });
+
+  it('keeps everything else about the block it moved', () => {
+    let p = createDefaultProject();
+    const trackId = p.tracks[0].id;
+    const note = { ...createNote(sec(p), 0, 2.5, 0.42, 60), groupId: 'grp_1' };
+    p = addNote(p, trackId, note);
+    p = moveNote(p, trackId, note.id, trackId, 1, 64);
+    const moved = p.tracks[0].notes[0];
+    expect(moved.id).toBe(note.id);
+    expect(moved.lengthBeats).toBe(2.5);
+    expect(moved.velocity).toBe(0.42);
+    expect(moved.groupId).toBe('grp_1');
+  });
+
+  it('refuses to give a drum a pitch it has no row for', () => {
+    // Drum blocks have no pitch: the note-grid draws them on a single row and
+    // the drum voices don't read one. Handing one a pitch would make a block
+    // with nowhere to live.
+    let p = createDefaultProject();
+    const trackId = p.tracks[0].id;
+    const note = createNote(sec(p), 0); // no pitch
+    p = addNote(p, trackId, note);
+    p = moveNote(p, trackId, note.id, trackId, 1, 72);
+    expect(p.tracks[0].notes[0].pitch).toBeUndefined();
+  });
+
+  it('leaves the pitch alone when the move does not mention one', () => {
+    let p = createDefaultProject();
+    const trackId = p.tracks[0].id;
+    const note = createNote(sec(p), 0, 1, 0.8, 60);
+    p = addNote(p, trackId, note);
+    p = moveNote(p, trackId, note.id, trackId, 1);
+    expect(p.tracks[0].notes[0].pitch).toBe(60);
+  });
 });
 
 describe('song settings', () => {

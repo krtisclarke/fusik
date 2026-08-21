@@ -299,12 +299,19 @@ export function moveNote(
   noteId: string,
   toTrackId: string,
   startBeat: number,
+  pitch?: number,
 ): Project {
   const fromTrack = project.tracks.find((t) => t.id === fromTrackId);
   const note = fromTrack?.notes.find((n) => n.id === noteId);
   if (!note) return project;
 
   const moved: Note = { ...note, startBeat: Math.max(0, startBeat) };
+  // Re-pitching is only meaningful for a block that has a pitch. Giving a drum
+  // one would make it a note the drum voices don't read and the note-grid can't
+  // draw — silently turning a kick into something with no row to live on.
+  if (pitch != null && note.pitch != null) {
+    moved.pitch = clamp(Math.round(pitch), 0, 127);
+  }
   if (fromTrackId === toTrackId) {
     return mapTrack(project, fromTrackId, (t) => ({
       ...t,

@@ -60,6 +60,9 @@ npm run package:mac   # build a macOS app bundle
   write a melody or bassline. The grid only offers notes from a musical scale, so
   whatever you place sounds right together.
 - Drag a sound from the left onto the timeline, or click it to hear it.
+- **Wrong note?** Drag the block up or down to change it — it slides through the
+  scale, so wherever you drop it still sounds right. Drag sideways to move it in
+  time.
 - **Parts:** the strip above the timeline is your song's running order. Add a
   new part, play a part again (A A B A!), copy one to tweak, drag chips to
   rearrange, double-click to rename. Play the whole **Song** or loop just the
