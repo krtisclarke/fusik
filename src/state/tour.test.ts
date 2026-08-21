@@ -4,6 +4,7 @@ import {
   isStepDone,
   nextCelebration,
   remainingLabel,
+  stepApplies,
   type TourContext,
 } from './tour';
 
@@ -15,6 +16,8 @@ const EMPTY: TourContext = {
   isPlaying: false,
   playedNotes: 0,
   parts: 1,
+  recordings: 0,
+  canRecordMic: true,
 };
 
 const step = (id: string) => {
@@ -55,6 +58,8 @@ describe('the first-song walkthrough', () => {
       isPlaying: false,
       playedNotes: 50,
       parts: 4,
+      recordings: 3,
+      canRecordMic: true,
     };
     for (const s of TOUR_STEPS) {
       if (!s.goal || s.id === 'play') continue; // 'play' asks for a state, not a count
@@ -88,7 +93,7 @@ describe('the first-song walkthrough', () => {
   });
 
   it('points every step at a control that exists, and starts at the beginning', () => {
-    const targets = new Set(['lanes', 'play', 'library', 'keyboard', 'parts']);
+    const targets = new Set(['lanes', 'play', 'library', 'keyboard', 'parts', 'mic']);
     for (const s of TOUR_STEPS) {
       if (s.target) expect(targets.has(s.target), `${s.id} -> ${s.target}`).toBe(true);
       expect(s.title.length).toBeGreaterThan(0);
@@ -138,5 +143,35 @@ describe('the tick between steps', () => {
     expect(closed).toBeNull();
     expect(nextCelebration(closed, 0, false)).toBeNull(); // welcome has nothing to do
     expect(nextCelebration(closed, 1, true)).toBe(1);
+  });
+});
+
+describe('a step that does not apply here', () => {
+  // Recording needs the desktop app. A step telling a child in a browser to
+  // press a button that is disabled is worse than no step at all.
+  it('is skipped where it cannot be followed', () => {
+    const voice = TOUR_STEPS.find((s) => s.id === 'voice');
+    expect(voice, 'the walkthrough should teach recording').toBeTruthy();
+    expect(stepApplies(voice!, { ...EMPTY, canRecordMic: true })).toBe(true);
+    expect(stepApplies(voice!, { ...EMPTY, canRecordMic: false })).toBe(false);
+  });
+
+  it('is the only one that is ever skipped', () => {
+    // Everything else must be doable wherever the app runs, or a child could be
+    // left on a step with nothing to press and no way forward but Skip.
+    for (const step of TOUR_STEPS) {
+      if (step.id === 'voice') continue;
+      expect(stepApplies(step, { ...EMPTY, canRecordMic: false }), step.id).toBe(true);
+    }
+  });
+
+  it('completes when a recording is made', () => {
+    const voice = TOUR_STEPS.find((s) => s.id === 'voice')!;
+    expect(isStepDone(voice, EMPTY, EMPTY)).toBe(false);
+    expect(isStepDone(voice, { ...EMPTY, recordings: 1 }, EMPTY)).toBe(true);
+    // and on a replay, an existing recording doesn't count for a new one
+    const busy = { ...EMPTY, recordings: 4 };
+    expect(isStepDone(voice, busy, busy)).toBe(false);
+    expect(isStepDone(voice, { ...busy, recordings: 5 }, busy)).toBe(true);
   });
 });

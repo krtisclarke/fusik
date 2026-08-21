@@ -186,6 +186,18 @@ describe('recorded blocks', () => {
     expect(p.tracks[0].notes[0].lengthBeats).toBe(1);
   });
 
+  it('counts a recording wherever in the song it sits', () => {
+    // A take made while the song plays lands in whichever part was sounding,
+    // which needn't be the part on screen.
+    let p = createDefaultProject();
+    p = addSection(p); // a second part
+    const track = createAudioTrack();
+    p = addTrack(p, track);
+    p = addNote(p, track.id, createClipNote(p.sections[0].id, 0, 2, 'clip_a', 1));
+    p = addNote(p, track.id, createClipNote(p.sections[1].id, 0, 2, 'clip_b', 1));
+    expect(clipIdsIn(p).size).toBe(2);
+  });
+
   it('knows every recording the song refers to', () => {
     let p = createDefaultProject();
     const track = createAudioTrack();

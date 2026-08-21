@@ -136,6 +136,7 @@ export function Transport() {
         </button>
         <button
           className={`tbtn mic ${isMicRecording ? 'armed' : ''}`}
+          data-tour="mic"
           onClick={() => void toggleMicRecording()}
           disabled={!canRecordMic}
           title={

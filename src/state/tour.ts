@@ -27,6 +27,10 @@ export interface TourContext {
   playedNotes: number;
   /** How many parts the song has. */
   parts: number;
+  /** Recorded blocks in the song. */
+  recordings: number;
+  /** Whether recording from a microphone is possible here at all. */
+  canRecordMic: boolean;
 }
 
 export interface TourProgress {
@@ -48,6 +52,13 @@ export interface TourStep {
    * read it, so the button is the only way on.
    */
   goal?: (now: TourContext, start: TourContext) => TourProgress;
+  /**
+   * Whether this step applies at all. A step asking a child to do something
+   * they have no way to do is worse than no step: recording needs the desktop
+   * app, so in a browser this one is passed over rather than left as an
+   * instruction that can never be followed.
+   */
+  applies?: (ctx: TourContext) => boolean;
 }
 
 /** Clamped progress towards `total` more of something than there was at `start`. */
@@ -105,6 +116,14 @@ export const TOUR_STEPS: TourStep[] = [
     goal: (now, start) => moreThan(now.playedNotes, start.playedNotes, 3),
   },
   {
+    id: 'voice',
+    title: 'Put yourself in it',
+    body: 'Press *🎤* and sing, or beatbox, or say hello. Press it again to stop, and what you sang joins the song.',
+    target: 'mic',
+    applies: (ctx) => ctx.canRecordMic,
+    goal: (now, start) => moreThan(now.recordings, start.recordings, 1),
+  },
+  {
     id: 'parts',
     title: 'Give it a second bit',
     body: 'Real songs change halfway through. Press *＋ New part* and make a different beat in it.',
@@ -114,10 +133,15 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'done',
     title: "That's a song!",
-    body: "It saves itself, so it'll be waiting for you next time. *Export* turns it into an audio file you can play anywhere.",
+    body: "It saves itself, so it'll be waiting for you next time. *🎵 Songs* keeps everything you make — and turns a song into an audio file you can share.",
     button: 'Finish',
   },
 ];
+
+/** Does this step make sense here? Steps without a condition always do. */
+export function stepApplies(step: TourStep, ctx: TourContext): boolean {
+  return step.applies ? step.applies(ctx) : true;
+}
 
 /** Has the child done what this step asked? Read-only steps are never "done". */
 export function isStepDone(step: TourStep, now: TourContext, start: TourContext): boolean {

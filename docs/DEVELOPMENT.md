@@ -644,6 +644,19 @@ already has forty blocks in it would tick six steps off instantly and teach
 nothing. The snapshot is tied to its step index so a stale one can't complete
 the next step the moment it opens.
 
+**A step can decline to apply.** Recording needs the desktop app, and a step
+telling a child in a browser to press a disabled button is worse than no step:
+it can never be followed and the walkthrough would sit on it. `stepApplies`
+lets the recording step stand down where it makes no sense, and the card moves
+straight past it.
+
+**Recordings are counted across the whole song, not just the part on screen** —
+unlike every other goal, which counts what the child can see. A take made while
+the song plays lands in whichever part was *sounding*, which needn't be the part
+being looked at, so counting only the visible one left a child who had done
+exactly as asked stuck on the step. That only showed up by walking the
+walkthrough with several parts in the song.
+
 It offers itself once, to a child opening the app with no song to come back to,
 and is remembered as seen in local storage (`platform/prefs.ts`). Steps point at
 controls by `data-tour` attribute rather than by CSS class, so restyling a
@@ -652,7 +665,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (168 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (172 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -807,6 +820,9 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       through it — each step ticks off when you do the thing, not when you press
       a button, and the app stays fully usable underneath the card.
 - [ ] Finish it, reload: it doesn't come back. Press **?**: it does.
+- [ ] The walkthrough teaches the microphone, and its last card points at
+      something that exists. In a browser, where recording isn't possible, that
+      step is passed over rather than shown.
 - [ ] Press **?** on a song that already has plenty in it — it still asks for
       new beats rather than skipping ahead.
 - [ ] Play the same key near the bottom and near the top — the bottom is

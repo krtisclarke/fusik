@@ -14,6 +14,7 @@ import {
   isStepDone,
   nextCelebration,
   remainingLabel,
+  stepApplies,
   type TourContext,
 } from '../state/tour';
 
@@ -28,16 +29,27 @@ function useTourContext(): TourContext {
   const sectionId = useStore((s) => s.currentSectionId);
   const isPlaying = useStore((s) => s.isPlaying);
   const playedNotes = useStore((s) => s.playedNotes);
+  const canRecordMic = useStore((s) => s.canRecordMic);
 
   return useMemo(() => {
     let drumNotes = 0;
     let instrumentNotes = 0;
     let instrumentTracks = 0;
+    let recordings = 0;
     const drumRows = new Set<string>();
     for (const track of project.tracks) {
       if (track.type === 'instrument') instrumentTracks++;
       for (const note of track.notes) {
-        // Only the part on screen — it's the only one the child can see.
+        // Recordings count wherever they are. A take made while the song plays
+        // lands in whichever part was *sounding*, which needn't be the part on
+        // screen — so counting only what's visible would leave a child who did
+        // exactly as asked stuck on the step for ever.
+        if (note.clipId) {
+          recordings++;
+          continue;
+        }
+        // Everything else is placed by hand into the part on screen, which is
+        // the only one the child can see.
         if (note.sectionId !== sectionId) continue;
         if (track.type === 'instrument') instrumentNotes++;
         else {
@@ -54,8 +66,10 @@ function useTourContext(): TourContext {
       isPlaying,
       playedNotes,
       parts: project.sections.length,
+      recordings,
+      canRecordMic,
     };
-  }, [project, sectionId, isPlaying, playedNotes]);
+  }, [project, sectionId, isPlaying, playedNotes, canRecordMic]);
 }
 
 interface Rect {
@@ -178,6 +192,12 @@ export function Tutorial() {
   useEffect(() => {
     setCelebratingStep((current) => nextCelebration(current, stepIndex, done));
   }, [stepIndex, done]);
+
+  // A step that doesn't apply here — recording, in a browser — is passed over
+  // rather than left on screen as an instruction that can never be followed.
+  useEffect(() => {
+    if (step && !stepApplies(step, ctx)) nextTourStep();
+  }, [step, ctx, nextTourStep]);
 
   useEffect(() => {
     if (celebratingStep == null) return;
