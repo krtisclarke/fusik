@@ -35,7 +35,8 @@ contextBridge.exposeInMainWorld('desktop', {
 
   /** A song's recordings. Asynchronous — a clip can be megabytes. */
   clips: {
-    write: (songId, clipId, bytes) => ipcRenderer.invoke('clips:write', { songId, clipId, bytes }),
+    write: (songId, clipId, bytes, extension) =>
+      ipcRenderer.invoke('clips:write', { songId, clipId, bytes, extension }),
     read: (songId, clipId) => ipcRenderer.invoke('clips:read', { songId, clipId }),
     remove: (songId, clipId) => ipcRenderer.invoke('clips:delete', { songId, clipId }),
     sweep: (songId, keep) => ipcRenderer.invoke('clips:sweep', { songId, keep }),

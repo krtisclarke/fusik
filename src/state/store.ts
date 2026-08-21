@@ -885,7 +885,7 @@ export const useStore = create<StoreState>((set, get) => {
         const after = get();
         const project = after.history.present;
         const clipId = newClipId();
-        const saved = await writeClip(after.currentSongId, clipId, recording.wav);
+        const saved = await writeClip(after.currentSongId, clipId, recording.bytes, recording.extension);
         if (!saved) {
           set({ status: "Couldn't save that recording" });
           return;
@@ -905,7 +905,7 @@ export const useStore = create<StoreState>((set, get) => {
         const existing = project.tracks.find((t) => t.type === 'audio');
         const track = existing ?? P.createAudioTrack();
         const withTrack = existing ? project : P.addTrack(project, track);
-        engine.setClip(clipId, await engine.decodeClip(recording.wav.slice().buffer));
+        engine.setClip(clipId, recording.buffer); // already decoded when it was measured
         apply(P.addNote(withTrack, track.id, note));
         set({ status: `Recorded ${recording.seconds.toFixed(1)} seconds` });
         return;

@@ -263,10 +263,32 @@ fact drives every decision here.
   `<Song Name>.recordings/` next to the song — beside it rather than in one
   shared pile, so copying a song takes its voice with it. Renaming the song
   moves the folder; deleting the song takes it too.
-- **Capture** (`audio/mic.ts`) goes through the browser's own recorder, is
-  decoded once, and is written out through the same `encodeWav` Export uses. So
-  what lands on disk is a plain WAV anyone can open, not whatever compressed
-  format the browser preferred.
+- **Capture** (`audio/mic.ts`) goes through the browser's own recorder and is
+  stored **exactly as captured**, as AAC in an MP4 container — a `.m4a`. That
+  format was chosen for two properties at once: it is roughly *forty times*
+  smaller than the same audio as WAV (a three-second take is 12 KB rather than
+  500 KB), and it opens on a double-click on macOS and Windows alike, which is
+  the whole point of keeping songs as files a grown-up can find.
+
+  It has to be asked for by name — `audio/mp4;codecs=mp4a.40.2`. Plain
+  `audio/mp4` looks like the same request and is not: this engine answers that
+  with *Opus* inside an MP4, which nothing outside a browser will open. There is
+  no MP3 option; the engine cannot encode it and would need a bundled library to
+  offer one. (MP3's patents expired in 2017, so licensing is no longer the
+  obstacle an earlier note here claimed.)
+
+  The first version decoded the capture and re-encoded it to WAV for
+  openability — buying that one property at forty times the size. AAC buys both.
+
+  **Lossy decoding overshoots, which makes the limiter matter more.** Decoded
+  AAC comes back slightly *above* full scale: measured at 1.0236, with 6,320
+  samples past 1.0 from a single loud take. Through the master chain the worst
+  case a child can build still peaks at 0.977 with zero clipped samples, so the
+  safety net holds — but nothing upstream of it should be assumed to stay inside
+  ±1.
+
+  Recordings are found on disk **by id rather than by extension**, so takes made
+  while this was writing WAVs keep playing, with no migration.
 - **Playback** is scheduled by the same window, with the same clamp, as every
   other block, through the same track chain — so a recording gets the track's
   volume, mute, echo and the master limiter exactly like a drum. But unlike
@@ -674,7 +696,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Several songs, named | ✅ | The song has a name you can type over, and 🎵 Songs lists everything kept on this computer — click one to open it. **New** keeps the one you were on rather than replacing it. On the desktop each song is a real file in `~/Documents/Beatbox Studio/`. |
 | Undo / redo | ✅ | Snapshot-based; keyboard + buttons + menu. |
 | Master limiter (ear safety) | ✅ | |
-| Microphone recording | ✅ | 🎤 records your voice into the song as a block on an audio track. Saved as a plain `.wav` beside the song, reloaded when the song opens, included in Export. Desktop only — see above. |
+| Microphone recording | ✅ | 🎤 records your voice into the song as a block on an audio track. Saved as an `.m4a` beside the song — small, and it plays on a double-click. Reloaded when the song opens, included in Export. Desktop only — see above. |
 | Step sequencer, humanize, per-note velocity | ⬜ | Phase 2. |
 | Per-block sound editor | ✅ | Every block has its own sound. Select one or several and shape live (volume, pitch, decay, brightness, ADSR, drive…): simple/advanced split, hover hints, one-undo-per-drag, reset. |
 | Chaining (link blocks) | ✅ | Multi-select (Shift-click, or a row's name for all) and **Link** blocks into a group that shares sound **and** length; edit or resize any member and the whole chain follows. Unlink to break. |
@@ -691,7 +713,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Song sections & arrangement | ✅ | Parts (A/B/…) with their own notes and lengths; a strip of chips shows the running order — click to edit, drag to rearrange, repeat/copy/rename/remove. Song vs. Part play modes. |
 | Automation | ⬜ | Phase 6. |
 | WAV export | ✅ | Renders the whole song offline through the master chain to a 16-bit stereo `.wav` (native Save dialog on desktop, download in browser). Verified: valid RIFF header, non-silent, no clipping. |
-| MP3 export | ⬜ | WAV is in; MP3 would need a bundled encoder + a licensing look. |
+| MP3 export | ⬜ | WAV is in. MP3 needs a bundled encoder — the engine can't make one — though the patents expired in 2017, so it's a size question, not a legal one. Recordings already use AAC, which needs no extra library. |
 
 Nothing above is faked: the disabled Record button is visibly disabled, and
 "partial" means exactly what the note says.
@@ -756,8 +778,10 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       full of `/ : * ?` — it saves, and keeps its real name in the app.
 - [ ] Quit and reopen the desktop app: it opens the song you were on.
 - [ ] Press 🎤, say something, press it again — a striped block appears, plays
-      back in time with the song, and a `.wav` turns up in the song's
-      `.recordings` folder.
+      back in time with the song, and an `.m4a` turns up in the song's
+      `.recordings` folder. Double-click that file: it plays.
+- [ ] A song recorded by an older build, whose recordings are `.wav`, still
+      plays.
 - [ ] Quit and reopen: the recording is still there and still sounds.
 - [ ] Rename the song — the recordings folder moves with it and the block still
       plays. Delete the song — the folder goes too.

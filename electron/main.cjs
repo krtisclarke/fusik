@@ -117,20 +117,44 @@ handleSongs('songs:folder', () => ({ ok: true, path: ensureSongsDir() }));
 // to wait for one before the app can draw. A block whose recording hasn't
 // loaded yet simply doesn't sound until it has.
 
-function clipPath(songId, clipId) {
-  const dir = path.join(ensureSongsDir(), recordingsDirFor(path.basename(String(songId || ''))));
-  return { dir, file: path.join(dir, `${path.basename(String(clipId || ''))}.wav`) };
+function clipDir(songId) {
+  return path.join(ensureSongsDir(), recordingsDirFor(path.basename(String(songId || ''))));
 }
 
-ipcMain.handle('clips:write', async (_event, { songId, clipId, bytes }) => {
-  const { dir, file } = clipPath(songId, clipId);
+/**
+ * The file holding a recording, whatever it was saved as.
+ *
+ * Found by its id rather than by a fixed extension, because the extension has
+ * changed: recordings used to be written as WAV and are now AAC in an `.m4a`.
+ * Looking the file up by name means anything already recorded keeps playing
+ * with no migration and no lost takes.
+ */
+async function findClipFile(songId, clipId) {
+  const dir = clipDir(songId);
+  const id = path.basename(String(clipId || ''));
+  if (!id) return null;
+  let entries;
+  try {
+    entries = await fs.readdir(dir);
+  } catch {
+    return null;
+  }
+  const match = entries.find((entry) => entry.slice(0, entry.lastIndexOf('.')) === id);
+  return match ? path.join(dir, match) : null;
+}
+
+ipcMain.handle('clips:write', async (_event, { songId, clipId, bytes, extension }) => {
+  const dir = clipDir(songId);
   await fs.mkdir(dir, { recursive: true });
+  const safe = /^\.[a-z0-9]{1,5}$/i.test(String(extension || '')) ? String(extension) : '.webm';
+  const file = path.join(dir, `${path.basename(String(clipId || ''))}${safe}`);
   await fs.writeFile(file, Buffer.from(bytes));
   return { ok: true, path: file };
 });
 
 ipcMain.handle('clips:read', async (_event, { songId, clipId }) => {
-  const { file } = clipPath(songId, clipId);
+  const file = await findClipFile(songId, clipId);
+  if (!file) return { ok: false };
   try {
     const data = await fs.readFile(file);
     // A plain ArrayBuffer crosses the bridge; the renderer decodes it.
@@ -160,8 +184,9 @@ ipcMain.handle('clips:sweep', async (_event, { songId, keep }) => {
     return { ok: true, removed: 0 }; // no recordings folder: nothing to tidy
   }
   for (const entry of entries) {
-    if (!entry.endsWith('.wav')) continue;
-    if (kept.has(entry.slice(0, -4))) continue;
+    const dot = entry.lastIndexOf('.');
+    if (dot <= 0) continue; // not a recording we wrote
+    if (kept.has(entry.slice(0, dot))) continue;
     try {
       await fs.unlink(path.join(dir, entry));
       removed++;
@@ -173,7 +198,8 @@ ipcMain.handle('clips:sweep', async (_event, { songId, keep }) => {
 });
 
 ipcMain.handle('clips:delete', async (_event, { songId, clipId }) => {
-  const { file } = clipPath(songId, clipId);
+  const file = await findClipFile(songId, clipId);
+  if (!file) return { ok: true };
   try {
     await fs.unlink(file);
   } catch {

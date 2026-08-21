@@ -15,12 +15,13 @@ export function clipsAvailable(): boolean {
 export async function writeClip(
   songId: string,
   clipId: string,
-  wav: Uint8Array,
+  bytes: Uint8Array,
+  extension: string,
 ): Promise<boolean> {
   const clips = getDesktop()?.clips;
   if (!clips) return false;
   try {
-    const result = await clips.write(songId, clipId, wav);
+    const result = await clips.write(songId, clipId, bytes, extension);
     return !!result.ok;
   } catch {
     return false;

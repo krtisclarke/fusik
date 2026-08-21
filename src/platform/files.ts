@@ -31,7 +31,12 @@ interface DesktopBridge {
   };
   /** A song's recordings, kept beside it on disk. */
   clips?: {
-    write: (songId: string, clipId: string, bytes: Uint8Array) => Promise<{ ok: boolean }>;
+    write: (
+      songId: string,
+      clipId: string,
+      bytes: Uint8Array,
+      extension: string,
+    ) => Promise<{ ok: boolean }>;
     read: (songId: string, clipId: string) => Promise<{ ok: boolean; bytes?: ArrayBuffer }>;
     remove: (songId: string, clipId: string) => Promise<{ ok: boolean }>;
     sweep: (songId: string, keep: string[]) => Promise<{ ok: boolean; removed?: number }>;
