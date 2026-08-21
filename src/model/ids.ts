@@ -17,3 +17,5 @@ export const newSectionId = () => randomId('sec');
 export const newEntryId = () => randomId('arr');
 /** Identifies a saved song on this computer, not anything inside the song. */
 export const newSongId = () => randomId('song');
+/** Identifies one recording. Becomes a .wav file name next to the song. */
+export const newClipId = () => randomId('clip');

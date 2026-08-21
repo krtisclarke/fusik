@@ -33,6 +33,13 @@ contextBridge.exposeInMainWorld('desktop', {
     folder: () => ipcRenderer.sendSync('songs:folder'),
   },
 
+  /** A song's recordings. Asynchronous — a clip can be megabytes. */
+  clips: {
+    write: (songId, clipId, bytes) => ipcRenderer.invoke('clips:write', { songId, clipId, bytes }),
+    read: (songId, clipId) => ipcRenderer.invoke('clips:read', { songId, clipId }),
+    remove: (songId, clipId) => ipcRenderer.invoke('clips:delete', { songId, clipId }),
+  },
+
   /** Subscribe to native menu commands. Returns an unsubscribe function. */
   onMenu: (channel, handler) => {
     const allowed = ['menu:new', 'menu:open', 'menu:save', 'menu:undo', 'menu:redo'];

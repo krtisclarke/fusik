@@ -11,7 +11,7 @@ import { engine, type PlayMode } from '../audio/AudioEngine';
 import * as P from '../model/project';
 import type { Project } from '../model/types';
 import type { SnapId } from '../model/time';
-import { snapBeat, snapStepInBeats } from '../model/time';
+import { secondsToBeats, snapBeat, snapStepInBeats } from '../model/time';
 
 /** How fine the grid is when lining-up is on. Fine enough to feel free, coarse
  *  enough that everything lands in time. */
@@ -41,7 +41,9 @@ import {
   writeCurrentSongId,
   type SongSummary,
 } from '../platform/library';
-import { newSongId } from '../model/ids';
+import { newClipId, newSongId } from '../model/ids';
+import { MicRecorder, micAvailable } from '../audio/mic';
+import { clipsAvailable, readClip, writeClip } from '../platform/clips';
 import { hasSeenTutorial, markTutorialSeen } from '../platform/prefs';
 import { TOUR_STEPS } from './tour';
 import { renderProject } from '../audio/render';
@@ -73,6 +75,10 @@ export interface StoreState {
   showKeyboard: boolean;
   /** Recording is armed: anything played while the song runs is kept. */
   isRecording: boolean;
+  /** A microphone take is running right now. */
+  isMicRecording: boolean;
+  /** Whether recording from a microphone is possible at all here. */
+  canRecordMic: boolean;
   /** Which shelf slot the song on screen belongs to. On the desktop this is the
    *  song's file name, so it changes when the song is renamed. */
   currentSongId: string;
@@ -182,6 +188,11 @@ export interface StoreState {
   /** Arm/disarm recording. Armed + playing = what you play is kept. */
   toggleRecording: () => void;
   /**
+   * Start or stop recording from the microphone. What comes back is written
+   * into the song as a block on an audio track.
+   */
+  toggleMicRecording: () => Promise<void>;
+  /**
    * Write a note played on the keyboard into the song. `startBeats`/`endBeats`
    * are transport positions taken when the key went down and came back up.
    */
@@ -223,6 +234,36 @@ export interface StoreState {
 // the whole drag collapses into one undo entry when the user lets go. Transient
 // UI state, so it lives outside the reactive store.
 let editBaseline: Project | null = null;
+
+/** The microphone. Transient, like the drag baseline above — never in state. */
+const mic = new MicRecorder();
+/** Where the song was when the microphone take started, and in which part. */
+let micStartBeat = 0;
+let micStartSectionId: string | null = null;
+
+/**
+ * Load a song's recordings into the engine so its blocks can sound.
+ *
+ * Deliberately not awaited by whatever opens the song: a clip can be megabytes,
+ * and the timeline should draw at once. A block whose recording hasn't arrived
+ * yet is simply silent until it has, which is a far better wait than a blank
+ * screen.
+ */
+function loadClipsFor(project: Project, songId: string): void {
+  engine.clearClips();
+  const wanted = P.clipIdsIn(project);
+  for (const clipId of wanted) {
+    void readClip(songId, clipId).then(async (bytes) => {
+      if (!bytes) return;
+      try {
+        engine.setClip(clipId, await engine.decodeClip(bytes));
+      } catch {
+        // A damaged or unreadable recording. Its block stays silent rather than
+        // taking the rest of the song down with it.
+      }
+    });
+  }
+}
 
 /** A pleasant default pitch (middle of the instrument's range) for previews and
  *  freshly-dropped instrument notes. Undefined for drums. */
@@ -341,6 +382,7 @@ export const useStore = create<StoreState>((set, get) => {
   const initialSectionId = fixSectionId(initialProject, null);
   engine.setEditSection(initialSectionId);
   const startHistory = createHistory(initialProject);
+  loadClipsFor(initialProject, initialSongId);
 
   return {
     history: startHistory,
@@ -357,6 +399,8 @@ export const useStore = create<StoreState>((set, get) => {
     status: restored ? 'Picked up where you left off' : null,
     showKeyboard: true,
     isRecording: false,
+    isMicRecording: false,
+    canRecordMic: micAvailable() && clipsAvailable(),
     currentSongId: initialSongId,
     songs: listSongs(),
     showSongs: false,
@@ -376,6 +420,7 @@ export const useStore = create<StoreState>((set, get) => {
       editBaseline = null;
       const songId = newSongId();
       writeCurrentSongId(songId);
+      engine.clearClips();
       const project = P.createDefaultProject();
       const history = createHistory(project);
       const currentSectionId = fixSectionId(project, null);
@@ -404,6 +449,7 @@ export const useStore = create<StoreState>((set, get) => {
       const currentSectionId = fixSectionId(project, null);
       engine.setProject(project);
       engine.setEditSection(currentSectionId);
+      loadClipsFor(project, get().currentSongId);
       set({
         history,
         project,
@@ -412,6 +458,7 @@ export const useStore = create<StoreState>((set, get) => {
         canRedo: false,
         isPlaying: false,
         isRecording: false,
+        isMicRecording: false,
         selection: { trackId: null, noteIds: [] },
         status: `Opened "${project.name}"`,
       });
@@ -438,8 +485,11 @@ export const useStore = create<StoreState>((set, get) => {
       // The song being left is already on the shelf — autosave put it there —
       // so switching away costs nothing.
       writeCurrentSongId(id);
+      // Before loadProject, not after: it loads the song's recordings, and it
+      // reads which song we're in to know where to look for them.
+      set({ currentSongId: id });
       s.loadProject(project);
-      set({ currentSongId: id, songs: listSongs(), showSongs: false });
+      set({ songs: listSongs(), showSongs: false });
     },
 
     deleteSong: (id) => {
@@ -485,8 +535,9 @@ export const useStore = create<StoreState>((set, get) => {
         if (result) {
           const songId = newSongId();
           writeCurrentSongId(songId);
+          set({ currentSongId: songId });
           get().loadProject(result.project);
-          set({ currentSongId: songId, showSongs: false });
+          set({ showSongs: false });
         }
       } catch (err) {
         set({ status: `Couldn't open: ${(err as Error).message}` });
@@ -497,7 +548,7 @@ export const useStore = create<StoreState>((set, get) => {
       const project = get().history.present;
       try {
         set({ status: 'Rendering…' });
-        const buffer = await renderProject(project, { loops: 1 });
+        const buffer = await renderProject(project, { loops: 1, clips: engine.getClips() });
         const left = buffer.getChannelData(0);
         const right = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : left;
         const bytes = encodeWav([left, right], buffer.sampleRate);
@@ -780,6 +831,89 @@ export const useStore = create<StoreState>((set, get) => {
     // each finished note is folded into the live project without touching the
     // history, and disarming (or stopping) commits the lot. So a child who
     // records four bars and hates it presses undo once, not forty times.
+
+    toggleMicRecording: async () => {
+      const s = get();
+      if (s.isMicRecording) {
+        set({ isMicRecording: false, status: 'Tidying up your recording…' });
+        let recording;
+        try {
+          recording = await mic.stop(await engine.context());
+        } catch (err) {
+          set({ status: `Recording failed: ${(err as Error).message}` });
+          return;
+        }
+        if (!recording) {
+          set({ status: 'Nothing was recorded' });
+          return;
+        }
+        if (recording.peak < 0.005) {
+          // Silence almost always means a muted or unplugged microphone. A
+          // silent block on the timeline would look like the app losing it.
+          set({ status: "That came out silent — is the microphone on?" });
+          return;
+        }
+
+        const after = get();
+        const project = after.history.present;
+        const clipId = newClipId();
+        const saved = await writeClip(after.currentSongId, clipId, recording.wav);
+        if (!saved) {
+          set({ status: "Couldn't save that recording" });
+          return;
+        }
+
+        // Where it goes: the part on screen, at the beat the take started from.
+        const sectionId =
+          micStartSectionId && project.sections.some((x) => x.id === micStartSectionId)
+            ? micStartSectionId
+            : after.currentSectionId;
+        const section = project.sections.find((x) => x.id === sectionId);
+        const sectionBeats = (section?.lengthBars ?? 1) * project.timeSignature.numerator;
+        const start = Math.min(Math.max(0, micStartBeat), Math.max(0, sectionBeats - 0.25));
+        const lengthBeats = Math.max(0.25, secondsToBeats(recording.seconds, project.bpm));
+        const note = P.createClipNote(sectionId, start, lengthBeats, clipId, recording.seconds);
+
+        const existing = project.tracks.find((t) => t.type === 'audio');
+        const track = existing ?? P.createAudioTrack();
+        const withTrack = existing ? project : P.addTrack(project, track);
+        engine.setClip(clipId, await engine.decodeClip(recording.wav.slice().buffer));
+        apply(P.addNote(withTrack, track.id, note));
+        set({ status: `Recorded ${recording.seconds.toFixed(1)} seconds` });
+        return;
+      }
+
+      if (!s.canRecordMic) {
+        set({ status: 'Recording needs the desktop app' });
+        return;
+      }
+      try {
+        await mic.start();
+      } catch {
+        // Refused, or there is no microphone. Both look the same to a child.
+        set({ status: "Can't hear a microphone — is one plugged in?" });
+        return;
+      }
+      // Where the song is *now* is where this take belongs.
+      micStartBeat = 0;
+      micStartSectionId = null;
+      if (get().isPlaying) {
+        const at = get();
+        if (at.playMode === 'section') {
+          micStartBeat = engine.getPositionBeats();
+        } else {
+          // Playing the whole song, the transport is at an absolute beat: trace
+          // it back to the part that was actually sounding, the same way a
+          // keyboard take does, so a recording lands where it was sung.
+          const where = songPositionAt(at.history.present, engine.getPositionBeats());
+          if (where) {
+            micStartBeat = where.beatInSection;
+            micStartSectionId = where.entry.sectionId;
+          }
+        }
+      }
+      set({ isMicRecording: true, status: 'Recording — sing!' });
+    },
 
     toggleRecording: () => {
       const wasRecording = get().isRecording;

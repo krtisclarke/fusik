@@ -75,6 +75,9 @@ npm run package:mac   # build a macOS app bundle
 - **Hit it hard or gently.** Where you land on a key decides how strong the note
   is — near the bottom is a hard hit, near the top a soft one. Record a melody
   and it keeps every light and heavy note exactly as you played it.
+- **Record your own voice.** Press 🎤, sing or beatbox, press it again. What you
+  sang becomes a block in your song that plays along with everything else — and
+  it's saved as an ordinary sound file next to the song. (Desktop app only.)
 - **Record what you play:** press ⏺ so it glows red, press play, and whatever you
   play on the keyboard is written into the song, tidied up to the grid. Press ⏺
   again to stop. One undo takes the whole take back.

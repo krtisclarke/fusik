@@ -28,6 +28,9 @@ import {
   setTrackVoice,
   addTrack,
   createTrackForVoice,
+  createAudioTrack,
+  createClipNote,
+  clipIdsIn,
 } from './project';
 
 /** The default project's one starting section id. */
@@ -133,6 +136,65 @@ describe('note edits are immutable', () => {
     p = addNote(p, trackId, note);
     p = moveNote(p, trackId, note.id, trackId, 1);
     expect(p.tracks[0].notes[0].pitch).toBe(60);
+  });
+});
+
+describe('recorded blocks', () => {
+  it('is a block like any other, so the timeline needs no special case', () => {
+    let p = createDefaultProject();
+    const track = createAudioTrack();
+    p = addTrack(p, track);
+    const note = createClipNote(sec(p), 2, 4, 'clip_1', 2.0);
+    p = addNote(p, track.id, note);
+    // moved, resized and deleted by exactly the same operations as a drum
+    p = moveNote(p, track.id, note.id, track.id, 6);
+    expect(p.tracks[3].notes[0].startBeat).toBe(6);
+    expect(p.tracks[3].notes[0].clipId).toBe('clip_1');
+    p = updateNote(p, track.id, note.id, { lengthBeats: 8 });
+    expect(p.tracks[3].notes[0].lengthBeats).toBe(8);
+  });
+
+  it('refuses to be given a pitch — a recording has no note to be', () => {
+    let p = createDefaultProject();
+    const track = createAudioTrack();
+    p = addTrack(p, track);
+    const note = createClipNote(sec(p), 0, 4, 'clip_1', 2.0);
+    p = addNote(p, track.id, note);
+    p = moveNote(p, track.id, note.id, track.id, 0, 72);
+    expect(p.tracks[3].notes[0].pitch).toBeUndefined();
+  });
+
+  // A recording plays at the speed it was made: the song's tempo can't stretch
+  // a voice. So the block has to be re-measured, or it would stop matching the
+  // sound coming out of it.
+  it('keeps its block matching the sound when the tempo changes', () => {
+    let p = createDefaultProject(); // 120bpm
+    const track = createAudioTrack();
+    p = addTrack(p, track);
+    p = addNote(p, track.id, createClipNote(sec(p), 0, 4, 'clip_1', 2.0)); // 2s = 4 beats
+    p = setBpm(p, 240); // twice as fast: the same 2 seconds is now 8 beats
+    expect(p.tracks[3].notes[0].lengthBeats).toBeCloseTo(8);
+    expect(p.tracks[3].notes[0].clipSeconds).toBe(2.0); // the sound itself is untouched
+    p = setBpm(p, 120);
+    expect(p.tracks[3].notes[0].lengthBeats).toBeCloseTo(4);
+  });
+
+  it('leaves ordinary blocks alone when the tempo changes', () => {
+    let p = createDefaultProject();
+    p = addNote(p, p.tracks[0].id, createNote(sec(p), 0, 1));
+    p = setBpm(p, 240);
+    expect(p.tracks[0].notes[0].lengthBeats).toBe(1);
+  });
+
+  it('knows every recording the song refers to', () => {
+    let p = createDefaultProject();
+    const track = createAudioTrack();
+    p = addTrack(p, track);
+    p = addNote(p, track.id, createClipNote(sec(p), 0, 2, 'clip_a', 1));
+    p = addNote(p, track.id, createClipNote(sec(p), 4, 2, 'clip_b', 1));
+    p = addNote(p, track.id, createClipNote(sec(p), 8, 2, 'clip_a', 1)); // used twice
+    p = addNote(p, p.tracks[0].id, createNote(sec(p), 0));
+    expect([...clipIdsIn(p)].sort()).toEqual(['clip_a', 'clip_b']);
   });
 });
 

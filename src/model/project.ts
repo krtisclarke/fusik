@@ -104,6 +104,56 @@ export function createDefaultProject(name = 'My Song'): Project {
   };
 }
 
+/** The id an audio track carries in place of a synth voice. */
+export const CLIP_VOICE_ID = 'clip';
+
+/** A track that plays back recordings rather than making sounds. */
+export function createAudioTrack(name = 'My Voice'): Track {
+  return {
+    id: newTrackId(),
+    name,
+    type: 'audio',
+    color: '#f472b6',
+    instrument: { voiceId: CLIP_VOICE_ID, params: {} },
+    notes: [],
+    // Quieter than the synths by default: a voice recorded close to a laptop
+    // microphone is a much hotter signal than a synthesised drum.
+    gain: 0.75,
+    muted: false,
+    solo: false,
+    echo: 0,
+  };
+}
+
+/** A block that plays a recording. `seconds` is the recording's real length. */
+export function createClipNote(
+  sectionId: string,
+  startBeat: number,
+  lengthBeats: number,
+  clipId: string,
+  seconds: number,
+): Note {
+  return {
+    id: newNoteId(),
+    sectionId,
+    startBeat: Math.max(0, startBeat),
+    lengthBeats: Math.max(0.0625, lengthBeats),
+    velocity: DEFAULT_NOTE_VELOCITY,
+    params: {},
+    clipId,
+    clipSeconds: Math.max(0, seconds),
+  };
+}
+
+/** Every recording the song refers to. Used to know what to keep on disk. */
+export function clipIdsIn(project: Project): Set<string> {
+  const ids = new Set<string>();
+  for (const track of project.tracks) {
+    for (const note of track.notes) if (note.clipId) ids.add(note.clipId);
+  }
+  return ids;
+}
+
 export function createNote(
   sectionId: string,
   startBeat: number,
@@ -417,7 +467,25 @@ export function setScale(project: Project, scaleRoot: number, scaleId: string): 
 export function setBpm(project: Project, bpm: number): Project {
   const next = clamp(Math.round(bpm), MIN_BPM, MAX_BPM);
   if (next === project.bpm) return project;
-  return { ...project, bpm: next };
+
+  // A recording plays at the speed it was made — changing the song's tempo
+  // can't stretch a voice. So the block it occupies has to be re-measured, or a
+  // child who speeds the song up would see a block that no longer matches the
+  // sound coming out of it.
+  const ratio = next / project.bpm;
+  const tracks = project.tracks.map((track) =>
+    track.notes.some((n) => n.clipId)
+      ? {
+          ...track,
+          notes: track.notes.map((note) =>
+            note.clipId
+              ? { ...note, lengthBeats: Math.max(0.0625, note.lengthBeats * ratio) }
+              : note,
+          ),
+        }
+      : track,
+  );
+  return { ...project, bpm: next, tracks };
 }
 
 // ---- Section & arrangement edits -----------------------------------------

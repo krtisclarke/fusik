@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { serializeProject, parseProject, ProjectLoadError } from './serialization';
-import { createDefaultProject, createNote, addNote, createTrackForVoice, addTrack } from './project';
+import {
+  createDefaultProject,
+  createNote,
+  addNote,
+  createTrackForVoice,
+  createAudioTrack,
+  createClipNote,
+  addTrack,
+} from './project';
 import { PROJECT_FORMAT_VERSION } from './types';
 
 const sec = (p: ReturnType<typeof createDefaultProject>) => p.sections[0].id;
@@ -268,5 +276,68 @@ describe('repairing broken ids and unreachable parts', () => {
       }),
     );
     expect(parsed.tracks[0].notes[0].params).toEqual({ decay: 0.9 });
+  });
+});
+
+describe('recordings in the file', () => {
+  it('round-trips a recorded block', () => {
+    let project = createDefaultProject('With Voice');
+    const track = createAudioTrack();
+    project = addTrack(project, track);
+    project = addNote(project, track.id, createClipNote(project.sections[0].id, 2, 4, 'clip_1', 2.5));
+
+    const back = parseProject(serializeProject(project));
+    expect(back).toEqual(project);
+    expect(back.tracks[3].type).toBe('audio');
+    expect(back.tracks[3].notes[0].clipId).toBe('clip_1');
+    expect(back.tracks[3].notes[0].clipSeconds).toBe(2.5);
+  });
+
+  it('drops a half-written recording rather than making a silent block', () => {
+    // A block claiming a recording that isn't named is one a child could never
+    // explain: it draws, it's selectable, and it makes no sound whatever.
+    const raw = JSON.stringify({
+      formatVersion: 3,
+      name: 'Broken',
+      tracks: [
+        {
+          id: 'trk_1',
+          type: 'audio',
+          instrument: { voiceId: 'clip', params: {} },
+          notes: [
+            { id: 'n1', sectionId: 'sec_1', startBeat: 0, lengthBeats: 4, clipId: '', clipSeconds: 2 },
+            { id: 'n2', sectionId: 'sec_1', startBeat: 4, lengthBeats: 4, clipId: 'clip_ok' },
+          ],
+        },
+      ],
+      sections: [{ id: 'sec_1', name: 'A', lengthBars: 2 }],
+      arrangement: [{ id: 'arr_1', sectionId: 'sec_1' }],
+    });
+    const project = parseProject(raw);
+    expect(project.tracks[0].notes[0].clipId).toBeUndefined();
+    expect(project.tracks[0].notes[1].clipId).toBe('clip_ok');
+    expect(project.tracks[0].notes[1].clipSeconds).toBe(0); // unknown, not broken
+  });
+
+  it('still opens a song made before recordings existed', () => {
+    const older = JSON.stringify({
+      formatVersion: 2,
+      name: 'Old Song',
+      bpm: 100,
+      tracks: [
+        {
+          id: 'trk_1',
+          type: 'drum',
+          instrument: { voiceId: 'kick', params: {} },
+          notes: [{ id: 'n1', sectionId: 'sec_1', startBeat: 0, lengthBeats: 1 }],
+        },
+      ],
+      sections: [{ id: 'sec_1', name: 'A', lengthBars: 2 }],
+      arrangement: [{ id: 'arr_1', sectionId: 'sec_1' }],
+    });
+    const project = parseProject(older);
+    expect(project.bpm).toBe(100);
+    expect(project.tracks[0].notes).toHaveLength(1);
+    expect(project.tracks[0].notes[0].clipId).toBeUndefined();
   });
 });

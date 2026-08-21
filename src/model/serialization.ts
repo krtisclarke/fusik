@@ -99,12 +99,20 @@ function parseNote(value: unknown): Note {
     note.pitch = clamp(Math.round(v.pitch), 0, 127);
   }
   if (typeof v.groupId === 'string') note.groupId = v.groupId;
+  // A recorded block. Both halves have to be there and sane: a clip with no
+  // length would draw as nothing, and a length with no clip would be a silent
+  // block a child can't explain.
+  if (typeof v.clipId === 'string' && v.clipId) {
+    note.clipId = v.clipId;
+    note.clipSeconds = Math.max(0, asNumber(v.clipSeconds, 0));
+  }
   return note;
 }
 
 function parseTrack(value: unknown, version: number): Track {
   const v = isObject(value) ? value : {};
-  const type: TrackType = v.type === 'instrument' ? 'instrument' : 'drum';
+  const type: TrackType =
+    v.type === 'instrument' ? 'instrument' : v.type === 'audio' ? 'audio' : 'drum';
   const instrument = parseInstrument(v.instrument);
   let notes = Array.isArray(v.notes) ? v.notes.map(parseNote) : [];
   // Migration: format-1 files stored the sound on the track. Move it onto each

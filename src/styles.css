@@ -1405,3 +1405,23 @@ select.tname:focus {
   color: var(--danger);
   background: rgba(248, 113, 113, 0.12);
 }
+
+/* The microphone button, glowing while a take is running. */
+.tbtn.mic.armed {
+  border-color: var(--danger);
+  color: var(--danger);
+  animation: rec-pulse 1.4s ease-in-out infinite;
+}
+.tbtn.mic:disabled {
+  opacity: 0.35;
+}
+
+/* A recorded block. Striped so it reads as a piece of sound rather than a
+   note the app made — it can't be re-pitched or re-shaped like the others. */
+.note.clip {
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.16) 0 3px,
+    transparent 3px 9px
+  );
+}

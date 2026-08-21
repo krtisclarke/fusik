@@ -392,6 +392,26 @@ export class AudioEngine {
 
       for (const { note, baseBeat } of this.occurrences(project, track)) {
         if (period !== Infinity && baseBeat >= period) continue;
+
+        // A recorded block plays back a sound rather than building one. It is
+        // scheduled exactly like a note — same window, same clamp — so it lands
+        // in time with everything else, and goes through the same track chain,
+        // so echo, volume, mute and the master limiter all apply to it.
+        if (note.clipId) {
+          const buffer = this.clips.get(note.clipId);
+          if (!buffer) continue; // not loaded yet; it will sound on a later pass
+          for (const absBeat of beatOccurrencesInWindow(lo, hi, baseBeat, period)) {
+            const when = this.timeAtBeat(absBeat, bpm);
+            const source = ctx.createBufferSource();
+            source.buffer = buffer;
+            const gain = ctx.createGain();
+            gain.gain.value = note.velocity;
+            source.connect(gain).connect(chain.input);
+            source.start(Math.max(when, now));
+          }
+          continue;
+        }
+
         const params = resolveParams(track.instrument.voiceId, note.params); // each block its own sound
         const durationSec = beatsToSeconds(note.lengthBeats, bpm);
         for (const absBeat of beatOccurrencesInWindow(lo, hi, baseBeat, period)) {
@@ -413,6 +433,43 @@ export class AudioEngine {
   //
   // Notes played by hand, outside the timeline. A melodic voice is held open
   // until the key comes back up; a drum has nothing to hold, so it just fires.
+
+  /**
+   * Decoded recordings, by clip id. Held here rather than in the project
+   * because they are sound, not song: the project is what gets copied a hundred
+   * times over for undo, and must stay small enough for that to be free.
+   */
+  private clips = new Map<string, AudioBuffer>();
+
+  /** The live audio context, starting it if it hasn't been started yet. */
+  async context(): Promise<BaseAudioContext> {
+    return this.ensureRunning();
+  }
+
+  /** Hand the engine a decoded recording so blocks using it can sound. */
+  setClip(clipId: string, buffer: AudioBuffer): void {
+    this.clips.set(clipId, buffer);
+  }
+
+  hasClip(clipId: string): boolean {
+    return this.clips.has(clipId);
+  }
+
+  /** Every loaded recording, for the offline render behind Export. */
+  getClips(): Map<string, AudioBuffer> {
+    return this.clips;
+  }
+
+  /** Forget every recording — used when a different song is opened. */
+  clearClips(): void {
+    this.clips.clear();
+  }
+
+  /** Decode raw file bytes into something playable. */
+  async decodeClip(bytes: ArrayBuffer): Promise<AudioBuffer> {
+    const ctx = await this.ensureRunning();
+    return ctx.decodeAudioData(bytes);
+  }
 
   private held = new Map<number, HeldNote>();
   private nextHeldId = 1;

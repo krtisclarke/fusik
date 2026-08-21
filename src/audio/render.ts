@@ -21,6 +21,12 @@ export interface RenderOptions {
   /** How many times to repeat the whole song. */
   loops?: number;
   sampleRate?: number;
+  /**
+   * The song's recordings, decoded, by clip id. Without these an exported file
+   * would come out with the child's voice silently missing — the one part of
+   * the song the app can't rebuild from numbers.
+   */
+  clips?: Map<string, AudioBuffer>;
 }
 
 export async function renderProject(project: Project, opts: RenderOptions = {}): Promise<AudioBuffer> {
@@ -34,7 +40,18 @@ export async function renderProject(project: Project, opts: RenderOptions = {}):
   // outlast the note that made them, so a song ending on an echo doesn't get
   // its tail chopped off in the exported file.
   const echoSeconds = project.tracks.some((t) => t.echo > 0) ? (30 / Math.max(1, project.bpm)) * 8 : 0;
-  const tail = TAIL_SECONDS + echoSeconds;
+  // A recording near the end of a part can run past the end of the song — it
+  // plays for as long as it was recorded, whatever the grid says. Without room
+  // for that, an exported file would cut a child off mid-word.
+  let clipOverhang = 0;
+  for (const track of project.tracks) {
+    for (const note of track.notes) {
+      if (!note.clipId || !note.clipSeconds) continue;
+      const beyond = note.clipSeconds - beatsToSeconds(note.lengthBeats, project.bpm);
+      if (beyond > clipOverhang) clipOverhang = beyond;
+    }
+  }
+  const tail = TAIL_SECONDS + echoSeconds + Math.max(0, clipOverhang);
   const length = Math.max(1, Math.ceil((musicSeconds + tail) * sampleRate));
 
   const ctx = new OfflineAudioContext(2, length, sampleRate);
@@ -55,13 +72,27 @@ export async function renderProject(project: Project, opts: RenderOptions = {}):
 
     const trigger = getTrigger(track.instrument.voiceId);
     for (const note of track.notes) {
-      const params = resolveParams(track.instrument.voiceId, note.params);
+      const clip = note.clipId ? opts.clips?.get(note.clipId) : undefined;
+      const params = clip ? {} : resolveParams(track.instrument.voiceId, note.params);
       const durationSec = beatsToSeconds(note.lengthBeats, project.bpm);
       for (const entry of entries) {
         if (entry.sectionId !== note.sectionId || note.startBeat >= entry.lengthBeats) continue;
         const baseBeat = entry.startBeat + note.startBeat;
         for (let k = 0; k < loops; k++) {
           const when = beatsToSeconds(baseBeat + k * beatsPerLoop, project.bpm);
+          if (note.clipId) {
+            // A recording plays back rather than being built. Through the same
+            // track chain as everything else, so it gets the same volume, echo
+            // and — via the master — the same limiter.
+            if (!clip) continue;
+            const source = ctx.createBufferSource();
+            source.buffer = clip;
+            const level = ctx.createGain();
+            level.gain.value = note.velocity;
+            source.connect(level).connect(chain.input);
+            source.start(when);
+            continue;
+          }
           trigger(ctx, chain.input, when, params, note.velocity, { midi: note.pitch, durationSec });
         }
       }

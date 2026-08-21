@@ -90,6 +90,9 @@ export function Transport() {
   const toggleKeyboard = useStore((s) => s.toggleKeyboard);
   const isRecording = useStore((s) => s.isRecording);
   const toggleRecording = useStore((s) => s.toggleRecording);
+  const isMicRecording = useStore((s) => s.isMicRecording);
+  const canRecordMic = useStore((s) => s.canRecordMic);
+  const toggleMicRecording = useStore((s) => s.toggleMicRecording);
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
   const setBpm = useStore((s) => s.setBpm);
@@ -130,6 +133,20 @@ export function Transport() {
           title="Loop the song"
         >
           🔁
+        </button>
+        <button
+          className={`tbtn mic ${isMicRecording ? 'armed' : ''}`}
+          onClick={() => void toggleMicRecording()}
+          disabled={!canRecordMic}
+          title={
+            canRecordMic
+              ? isMicRecording
+                ? 'Stop recording'
+                : 'Record your voice with the microphone'
+              : 'Recording your voice needs the desktop app'
+          }
+        >
+          🎤
         </button>
         <button
           className={`tbtn rec ${isRecording ? 'armed' : ''}`}

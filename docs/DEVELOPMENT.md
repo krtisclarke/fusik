@@ -248,6 +248,43 @@ report a depth into the *label* and read as a soft tap wherever on the key it
 happened. That bug was live for about ten minutes and is exactly the kind that
 survives a reading of the code.
 
+**Recording your own voice.** Everything else in this app is *described* rather
+than stored — a few numbers say "kick, here, this hard" and the engine builds
+the sound every time. A recording can't be described, only kept, and that one
+fact drives every decision here.
+
+- **A recorded block is an ordinary `Note`** carrying a `clipId` instead of a
+  pitch, on a track of type `'audio'`. So placing, moving, resizing, selecting,
+  deleting, undo and the whole arrangement machinery keep working without
+  knowing that some blocks are recordings.
+- **The audio is not in the project file.** A minute of sound is a thousand
+  times the size of the entire song describing it, and undo keeps a hundred
+  copies of the song. Each recording is its own `.wav` in
+  `<Song Name>.recordings/` next to the song — beside it rather than in one
+  shared pile, so copying a song takes its voice with it. Renaming the song
+  moves the folder; deleting the song takes it too.
+- **Capture** (`audio/mic.ts`) goes through the browser's own recorder, is
+  decoded once, and is written out through the same `encodeWav` Export uses. So
+  what lands on disk is a plain WAV anyone can open, not whatever compressed
+  format the browser preferred.
+- **Playback** is scheduled by the same window, with the same clamp, as every
+  other block, through the same track chain — so a recording gets the track's
+  volume, mute, echo and the master limiter exactly like a drum.
+- **Tempo can't stretch a voice.** A recording plays at the speed it was made,
+  so `setBpm` re-measures the *block* to match the sound rather than the other
+  way round; `clipSeconds` is the truth and `lengthBeats` follows it.
+- **Export had to learn about it too**, or the exported file would come out with
+  the child's voice silently missing — the one part of the song that can't be
+  rebuilt from numbers. The render tail also grows to cover a recording that
+  runs past the last beat, so nobody gets cut off mid-word.
+- **It is a desktop feature.** In a plain browser there is nowhere to put a
+  megabyte of audio that survives a reload, and offering it there would mean a
+  child records their voice and loses it. The button says so and is disabled.
+
+Silence is treated as a failure, not a result: a take whose peak never gets
+above 0.005 almost always means a muted or unplugged microphone, and a silent
+block on the timeline looks exactly like the app having lost it.
+
 **Recording a performance.** Arming captures a baseline of the project; every
 finished note is folded into the live project with `replacePresent` (so it
 appears on the timeline and is heard on the next pass) *without* touching the
@@ -314,7 +351,7 @@ Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v2):
 
 ```jsonc
 {
-  "formatVersion": 2,
+  "formatVersion": 3,
   "name": "My Song",
   "bpm": 120,
   "timeSignature": { "numerator": 4, "denominator": 4 },
@@ -561,7 +598,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (149 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (157 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -605,7 +642,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Several songs, named | ✅ | The song has a name you can type over, and 🎵 Songs lists everything kept on this computer — click one to open it. **New** keeps the one you were on rather than replacing it. On the desktop each song is a real file in `~/Documents/Beatbox Studio/`. |
 | Undo / redo | ✅ | Snapshot-based; keyboard + buttons + menu. |
 | Master limiter (ear safety) | ✅ | |
-| Microphone recording | ⬜ | Button present but disabled (Phase 5). |
+| Microphone recording | ✅ | 🎤 records your voice into the song as a block on an audio track. Saved as a plain `.wav` beside the song, reloaded when the song opens, included in Export. Desktop only — see above. |
 | Step sequencer, humanize, per-note velocity | ⬜ | Phase 2. |
 | Per-block sound editor | ✅ | Every block has its own sound. Select one or several and shape live (volume, pitch, decay, brightness, ADSR, drive…): simple/advanced split, hover hints, one-undo-per-drag, reset. |
 | Chaining (link blocks) | ✅ | Multi-select (Shift-click, or a row's name for all) and **Link** blocks into a group that shares sound **and** length; edit or resize any member and the whole chain follows. Unlink to break. |
@@ -686,6 +723,15 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Name two songs the same thing: both get their own file. Give one a name
       full of `/ : * ?` — it saves, and keeps its real name in the app.
 - [ ] Quit and reopen the desktop app: it opens the song you were on.
+- [ ] Press 🎤, say something, press it again — a striped block appears, plays
+      back in time with the song, and a `.wav` turns up in the song's
+      `.recordings` folder.
+- [ ] Quit and reopen: the recording is still there and still sounds.
+- [ ] Rename the song — the recordings folder moves with it and the block still
+      plays. Delete the song — the folder goes too.
+- [ ] Export a song with a recording in it: the voice is in the file.
+- [ ] Refuse microphone permission, or record with the microphone muted: the app
+      says so plainly and adds no block.
 - [ ] Upgrade paths: seed `beatbox.autosave.v1` (oldest) or `beatbox.songs.v1`
       (browser shelf) and restart the desktop app — the songs become files, and
       the one that was open is the one that opens.
@@ -728,5 +774,5 @@ Melodic instruments (originally Phase 4) were brought forward and are now in, as
 are song sections & arrangement, a playable keyboard, and recording what's played
 into the song. Remaining, roughly following the brief: MIDI input through the
 same `noteOn`/`noteOff`, step sequencer & humanize, per-track effect sends,
-microphone recording, automation, and polish — more voices, accessibility.
+automation, and polish — more voices, accessibility.
 Autosave, the first-song walkthrough and per-note velocity are now in.

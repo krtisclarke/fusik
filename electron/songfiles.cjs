@@ -32,4 +32,18 @@ function uniqueFileName(name, exists, keepId) {
   return `${stem} ${Math.round(Math.random() * 1e9)}.${PROJECT_EXTENSION}`;
 }
 
-module.exports = { PROJECT_EXTENSION, fileNameFor, uniqueFileName };
+/**
+ * The folder holding a song's recordings, next to the song itself.
+ *
+ * Recordings can't live inside the .beatbox file: a minute of sound is a
+ * thousand times the size of the whole song describing it, and undo keeps a
+ * hundred copies of the song. Keeping them beside it — rather than in one
+ * shared pile — means a song folder is still the whole song, so copying it to
+ * another machine takes the voice with it.
+ */
+function recordingsDirFor(songFileName) {
+  const stem = String(songFileName || '').replace(/\.beatbox$/i, '');
+  return `${stem || 'My Song'}.recordings`;
+}
+
+module.exports = { PROJECT_EXTENSION, fileNameFor, uniqueFileName, recordingsDirFor };

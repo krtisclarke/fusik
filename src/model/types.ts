@@ -6,7 +6,7 @@
 // React, or the DOM — that separation is deliberate and load-bearing.
 
 /** Bumped whenever the on-disk shape changes in a non-backwards-compatible way. */
-export const PROJECT_FORMAT_VERSION = 2;
+export const PROJECT_FORMAT_VERSION = 3;
 
 export interface TimeSignature {
   /** Beats per bar (the top number). */
@@ -15,8 +15,16 @@ export interface TimeSignature {
   denominator: number;
 }
 
-/** Drum tracks trigger a fixed sound; instrument tracks play pitched notes. */
-export type TrackType = 'drum' | 'instrument';
+/**
+ * Drum tracks trigger a fixed sound; instrument tracks play pitched notes;
+ * audio tracks play back something the child recorded through the microphone.
+ *
+ * An audio track's blocks are ordinary `Note`s carrying a `clipId` instead of a
+ * pitch. That is deliberate: everything the timeline already does — placing,
+ * moving, selecting, deleting, undo, arranging into parts — keeps working
+ * without knowing that some blocks are recordings.
+ */
+export type TrackType = 'drum' | 'instrument' | 'audio';
 
 /**
  * A section ("part") of the song: its own mini-loop with its own notes and its
@@ -70,6 +78,19 @@ export interface Note {
    * same sound and the same length. Absent = not chained to anything.
    */
   groupId?: string;
+  /**
+   * A recording this block plays, on an audio track. The audio itself is *not*
+   * in the project file: it lives next to it as its own `.wav`, because a
+   * minute of sound is a thousand times the size of the entire song describing
+   * it, and undo keeps a hundred copies of the song.
+   */
+  clipId?: string;
+  /**
+   * How long that recording actually is, in seconds. `lengthBeats` is what the
+   * block occupies on the grid and follows the tempo; this doesn't, because a
+   * recording plays at the speed it was made.
+   */
+  clipSeconds?: number;
 }
 
 /**

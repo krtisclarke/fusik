@@ -25,7 +25,7 @@ const PROJECT_EXTENSION = 'beatbox';
 // machine up.
 
 const fsSync = require('node:fs');
-const { uniqueFileName } = require('./songfiles.cjs');
+const { uniqueFileName, recordingsDirFor } = require('./songfiles.cjs');
 const SONGS_DIR = () => path.join(app.getPath('documents'), 'Beatbox Studio');
 
 function ensureSongsDir() {
@@ -88,17 +88,67 @@ handleSongs('songs:write', ({ id, name, json }) => {
   fsSync.writeFileSync(path.join(dir, wanted), json, 'utf-8');
   if (current && current !== wanted && fsSync.existsSync(path.join(dir, current))) {
     fsSync.unlinkSync(path.join(dir, current));
+    // The recordings belong to the song, so they move with it. Missing this
+    // would leave a renamed song silently unable to find its own voice.
+    const from = path.join(dir, recordingsDirFor(current));
+    const to = path.join(dir, recordingsDirFor(wanted));
+    if (fsSync.existsSync(from) && !fsSync.existsSync(to)) fsSync.renameSync(from, to);
   }
   return { ok: true, id: wanted };
 });
 
 handleSongs('songs:delete', (id) => {
-  const full = path.join(ensureSongsDir(), path.basename(String(id || '')));
+  const dir = ensureSongsDir();
+  const name = path.basename(String(id || ''));
+  const full = path.join(dir, name);
   if (fsSync.existsSync(full)) fsSync.unlinkSync(full);
+  // Its recordings go too, or they would sit there for ever with nothing
+  // pointing at them and no way for anyone to know what they were.
+  const recordings = path.join(dir, recordingsDirFor(name));
+  if (name && fsSync.existsSync(recordings)) fsSync.rmSync(recordings, { recursive: true, force: true });
   return { ok: true };
 });
 
 handleSongs('songs:folder', () => ({ ok: true, path: ensureSongsDir() }));
+
+// ---- recordings ----------------------------------------------------------
+//
+// Asynchronous, unlike the song list: a clip can be megabytes, and nothing has
+// to wait for one before the app can draw. A block whose recording hasn't
+// loaded yet simply doesn't sound until it has.
+
+function clipPath(songId, clipId) {
+  const dir = path.join(ensureSongsDir(), recordingsDirFor(path.basename(String(songId || ''))));
+  return { dir, file: path.join(dir, `${path.basename(String(clipId || ''))}.wav`) };
+}
+
+ipcMain.handle('clips:write', async (_event, { songId, clipId, bytes }) => {
+  const { dir, file } = clipPath(songId, clipId);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(file, Buffer.from(bytes));
+  return { ok: true, path: file };
+});
+
+ipcMain.handle('clips:read', async (_event, { songId, clipId }) => {
+  const { file } = clipPath(songId, clipId);
+  try {
+    const data = await fs.readFile(file);
+    // A plain ArrayBuffer crosses the bridge; the renderer decodes it.
+    return { ok: true, bytes: data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) };
+  } catch {
+    return { ok: false };
+  }
+});
+
+ipcMain.handle('clips:delete', async (_event, { songId, clipId }) => {
+  const { file } = clipPath(songId, clipId);
+  try {
+    await fs.unlink(file);
+  } catch {
+    // Already gone. Nothing to put right.
+  }
+  return { ok: true };
+});
 
 /** @type {BrowserWindow | null} */
 let mainWindow = null;

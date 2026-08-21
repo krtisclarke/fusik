@@ -29,6 +29,12 @@ interface DesktopBridge {
     remove: (id: string) => { ok: boolean };
     folder: () => { ok: boolean; path?: string };
   };
+  /** A song's recordings, kept beside it on disk. */
+  clips?: {
+    write: (songId: string, clipId: string, bytes: Uint8Array) => Promise<{ ok: boolean }>;
+    read: (songId: string, clipId: string) => Promise<{ ok: boolean; bytes?: ArrayBuffer }>;
+    remove: (songId: string, clipId: string) => Promise<{ ok: boolean }>;
+  };
   onMenu: (channel: string, handler: () => void) => () => void;
 }
 

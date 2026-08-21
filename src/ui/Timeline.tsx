@@ -225,7 +225,7 @@ export function Timeline() {
       opacity: isDragging ? 0.8 : 1,
     };
 
-    let label = getVoice(track.instrument.voiceId)?.emoji ?? '●';
+    let label = note.clipId ? '🎤' : (getVoice(track.instrument.voiceId)?.emoji ?? '●');
     let pitched = false;
     const shownPitch = isDragging && drag!.previewPitch != null ? drag!.previewPitch : note.pitch;
     if (pitches && shownPitch != null) {
@@ -240,7 +240,7 @@ export function Timeline() {
     return (
       <div
         key={note.id}
-        className={`note ${pitched ? 'pitched' : ''} ${selected ? 'sel' : ''}`}
+        className={`note ${pitched ? 'pitched' : ''} ${note.clipId ? 'clip' : ''} ${selected ? 'sel' : ''}`}
         style={style}
         onPointerDown={(e) => onNotePointerDown(e, track, note)}
         onPointerMove={onNotePointerMove}
