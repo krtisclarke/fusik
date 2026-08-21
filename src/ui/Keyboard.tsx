@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
+import { strikeVelocity, TYPED_VELOCITY } from './velocity';
 import { engine } from '../audio/AudioEngine';
 import { pitchLadder, midiToName } from '../model/scales';
 import { VOICE_CATALOG, isPitched } from '../model/voices';
@@ -31,6 +32,8 @@ interface Sounding {
   handle: number;
   /** Where the transport was when the key went down, for recording. */
   startBeats: number;
+  /** How hard it was hit — heard live, and kept if it's being recorded. */
+  velocity: number;
   /** The instrument as it was at press time — switching voice mid-hold must
    *  not file the note under the instrument it wasn't played on. */
   voiceId: string;
@@ -92,7 +95,7 @@ export function Keyboard() {
   }, []);
 
   const pressNote = useCallback(
-    (source: string, midi: number) => {
+    (source: string, midi: number, velocity: number = TYPED_VELOCITY) => {
       if (sounding.current.has(source)) return; // already down (key auto-repeat)
       const pressId = nextPressId.current++;
       // Claim the slot before the engine answers, so the key lights up at once
@@ -103,11 +106,12 @@ export function Keyboard() {
         pressId,
         handle: 0,
         startBeats: engine.getPositionBeats(),
+        velocity,
         voiceId,
       });
       refreshLit();
       notePlayed(); // the walkthrough watches this; nothing else does
-      void engine.noteOn(voiceId, midi).then((handle) => {
+      void engine.noteOn(voiceId, midi, {}, velocity).then((handle) => {
         const live = sounding.current.get(source);
         // Still the same press? Keep the handle so releasing can stop it.
         // Otherwise this note belongs to a press that is already over.
@@ -133,7 +137,7 @@ export function Keyboard() {
         midi: live.midi,
         startBeats: live.startBeats,
         endBeats: engine.getPositionBeats(),
-        velocity: 0.85,
+        velocity: live.velocity,
       });
     },
     [refreshLit, recordPlayedNote],
@@ -242,7 +246,21 @@ export function Keyboard() {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
     activePointers.current.add(e.pointerId);
-    pressNote(pointerSource(e.pointerId), midi);
+    pressNote(pointerSource(e.pointerId), midi, strikeAt(e));
+  }
+
+    /**
+   * How hard this press counts as, from where on the key it landed.
+   *
+   * Measured against the key's own box, deliberately. The obvious `offsetY` is
+   * relative to whatever node the pointer actually hit — and every key has a
+   * note name and a shortcut label sitting inside it, so landing on one of
+   * those would report a depth into *the label* and read as a soft tap
+   * wherever on the key it happened.
+   */
+  function strikeAt(e: React.PointerEvent): number {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return strikeVelocity(e.clientY - rect.top, rect.height);
   }
 
   /** Sliding onto a key with that finger still down plays it. */
@@ -250,7 +268,9 @@ export function Keyboard() {
     if (!activePointers.current.has(e.pointerId)) return;
     const source = pointerSource(e.pointerId);
     releaseNote(source);
-    pressNote(source, midi);
+    // Slide along the near edge for a run of hard notes, along the far end for
+    // a soft one — the same rule as a single press, kept consistent.
+    pressNote(source, midi, strikeAt(e));
   }
 
   /** The computer key that plays this rung of the ladder, if any. */
@@ -303,6 +323,7 @@ export function Keyboard() {
               onPointerDown={(e) => onKeyPointerDown(e, midi)}
               onPointerEnter={(e) => onKeyPointerEnter(e, midi)}
               onContextMenu={(e) => e.preventDefault()}
+              title={`${midiToName(midi)} — hit low on the key for a loud note, high for a soft one`}
             >
               <span className="kb-note">{midiToName(midi)}</span>
               {shortcut && <span className="kb-shortcut">{shortcut}</span>}

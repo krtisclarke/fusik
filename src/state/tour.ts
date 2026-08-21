@@ -100,7 +100,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'keyboard',
     title: 'Play it yourself',
-    body: 'The keys along the bottom play your piano. Use the mouse, or the *z x c v b* keys on your keyboard.',
+    body: 'The keys along the bottom play your piano — try the *z x c v b* keys. Hit a key near the *bottom* for a loud note and near the *top* for a soft one.',
     target: 'keyboard',
     goal: (now, start) => moreThan(now.playedNotes, start.playedNotes, 3),
   },

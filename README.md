@@ -69,6 +69,9 @@ npm run package:mac   # build a macOS app bundle
   keys) or the computer keys — `z x c v b…` for the lower octave, `a s d f g…`
   for the upper. Pick Piano, Synth, Bells or Bass, or select a block on the
   timeline and the keyboard follows it. The 🎹 button hides it.
+- **Hit it hard or gently.** Where you land on a key decides how strong the note
+  is — near the bottom is a hard hit, near the top a soft one. Record a melody
+  and it keeps every light and heavy note exactly as you played it.
 - **Record what you play:** press ⏺ so it glows red, press play, and whatever you
   play on the keyboard is written into the song, tidied up to the grid. Press ⏺
   again to stop. One undo takes the whole take back.

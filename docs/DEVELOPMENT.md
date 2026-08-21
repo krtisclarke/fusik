@@ -232,6 +232,22 @@ hold, until `release()` closes it. Two consequences worth knowing:
 - Voices whose `sustain` is 0 (the piano plucks) would die away under a held
   key, so held notes put a floor under the sustain level.
 
+**How hard a key was hit.** A computer knows nothing about pressure: a keyboard
+key is on or off, and a mouse reports none worth the name. So the on-screen keys
+take their strength from *where* on the key the press lands — down at the near
+edge is a hard hit, up at the far end a gentle one, the convention GarageBand's
+on-screen keyboard uses. It is heard live and kept by the recorder, so a played
+melody arrives on the timeline with its light and heavy notes intact instead of
+forty identical ones. Computer keys have no position to read, so they play at a
+fixed comfortable strength (`ui/velocity.ts`).
+
+The depth is measured against the **key's own box**, not the event's `offsetY`.
+`offsetY` is relative to whatever node the pointer actually hit, and every key
+has a note name and a shortcut label inside it — landing on one of those would
+report a depth into the *label* and read as a soft tap wherever on the key it
+happened. That bug was live for about ten minutes and is exactly the kind that
+survives a reading of the code.
+
 **Recording a performance.** Arming captures a baseline of the project; every
 finished note is folded into the live project with `replacePresent` (so it
 appears on the timeline and is heard on the next pass) *without* touching the
@@ -431,7 +447,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (105 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (109 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -468,7 +484,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Place / remove / move notes | ✅ | Click to place, click to remove, drag to move in time. |
 | Drag sound from library | ✅ | Creates or reuses the voice's track. |
 | Per-track volume / mute / solo | ✅ | |
-| Velocity (visual) | 🟡 | Shown per note; per-note velocity **editing** is Phase 2. |
+| Per-note velocity | ✅ | Played and recorded notes keep how hard they were hit — where on the key you land sets it. Drawn on every block. Editing a block's strength by hand is a later nicety. |
 | Save / load (`.beatbox`) | ✅ | Native dialogs on desktop; download/upload in browser. |
 | First-song walkthrough | ✅ | Interactive: highlights the real control, advances when the child actually does it. Offers itself once; the **?** button replays it. |
 | Autosave & restore | ✅ | The song is kept in local storage as it's worked on and comes back on the next start. One slot, local only. **New** clears it. |
@@ -541,6 +557,11 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Finish it, reload: it doesn't come back. Press **?**: it does.
 - [ ] Press **?** on a song that already has plenty in it — it still asks for
       new beats rather than skipping ahead.
+- [ ] Play the same key near the bottom and near the top — the bottom is
+      noticeably louder. Hit the note *name* printed on the key near the bottom:
+      still loud.
+- [ ] Record a phrase played at different depths — the blocks come back with
+      different heights in their strength bar, not all identical.
 
 ---
 
@@ -562,9 +583,7 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 
 Melodic instruments (originally Phase 4) were brought forward and are now in, as
 are song sections & arrangement, a playable keyboard, and recording what's played
-into the song. Remaining, roughly following the brief: per-note velocity (so a
-performance keeps its light and heavy hits — the keyboard currently records every
-note at one strength), MIDI input through the same `noteOn`/`noteOff`, step
-sequencer & humanize, per-track effect sends, microphone recording, automation,
-and polish — more voices, accessibility. Autosave and the first-song
-walkthrough are now in.
+into the song. Remaining, roughly following the brief: MIDI input through the
+same `noteOn`/`noteOff`, step sequencer & humanize, per-track effect sends,
+microphone recording, automation, and polish — more voices, accessibility.
+Autosave, the first-song walkthrough and per-note velocity are now in.
