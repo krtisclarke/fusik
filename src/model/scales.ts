@@ -36,6 +36,82 @@ export function midiToLetter(midi: number): string {
   return NOTE_LETTERS[((midi % 12) + 12) % 12];
 }
 
+/** Kid-facing names for the scales, in the order they're offered. */
+export const SCALE_CHOICES: { id: string; label: string }[] = [
+  { id: 'majorPentatonic', label: 'Happy' },
+  { id: 'minorPentatonic', label: 'Sad' },
+  { id: 'major', label: 'Happy — more notes' },
+  { id: 'minor', label: 'Sad — more notes' },
+];
+
+/**
+ * The same note of a tune, rewritten into another scale.
+ *
+ * This maps by **scale degree**, not by nearest pitch, and the difference is
+ * the whole feature. Nearest-pitch looks reasonable and quietly destroys the
+ * melody: going from C major pentatonic to minor, both D and E are nearest to
+ * E flat, so "C D E G E D C" flattens to "C Eb Eb G Eb Eb C" — two different
+ * notes fused into one, the tune's shape gone, and pressing Happy again cannot
+ * bring it back because the information has been thrown away.
+ *
+ * By degree, the third note of the old scale becomes the third note of the new
+ * one. Distinct notes stay distinct, the tune keeps its shape, and between two
+ * scales of the same size — Happy and Sad, the two a child will actually swap
+ * between — it is exactly reversible.
+ *
+ * Where the scales are different sizes the degree is scaled across, keeping the
+ * octave and the order. Going to a bigger scale loses nothing; going to a
+ * smaller one can land two notes together, which is unavoidable when there are
+ * fewer notes to land on.
+ */
+export function mapPitchBetweenScales(
+  pitch: number,
+  scaleRoot: number,
+  fromScaleId: string,
+  toScaleId: string,
+): number {
+  const from = SCALES[fromScaleId] ?? SCALES[DEFAULT_SCALE_ID];
+  const to = SCALES[toScaleId] ?? SCALES[DEFAULT_SCALE_ID];
+  const root = ((scaleRoot % 12) + 12) % 12;
+
+  const relative = pitch - root;
+  let octave = Math.floor(relative / 12);
+  const semitones = relative - octave * 12; // 0..11
+
+  // Already a note of the scale we're moving to: leave it exactly where it is.
+  // The five-note scales are subsets of the seven-note ones, so this alone makes
+  // "more notes" and back completely lossless — only the notes that genuinely
+  // don't exist in the new scale have to move at all.
+  if (to.includes(semitones)) return pitch;
+
+  // Which note of the old scale this is. A pitch that isn't exactly on one —
+  // from a hand-edited file, or an earlier squeeze into a smaller scale — takes
+  // the closest.
+  let degree = 0;
+  let closest = Infinity;
+  from.forEach((offset, i) => {
+    const distance = Math.abs(offset - semitones);
+    if (distance < closest) {
+      closest = distance;
+      degree = i;
+    }
+  });
+  // Nearer to the root above than to anything in this octave: it belongs to the
+  // next one up, and calling it the top note of this one would drag it down.
+  if (12 - semitones < closest) {
+    octave += 1;
+    degree = 0;
+  }
+
+  const mappedDegree =
+    from.length === to.length
+      ? degree
+      : Math.min(to.length - 1, Math.round((degree * to.length) / from.length));
+
+  const mapped = root + octave * 12 + to[mappedDegree];
+  return Math.max(0, Math.min(127, mapped));
+}
+
 /**
  * The ladder of pitches an instrument offers: every note of the scale from a
  * starting octave upward, spanning `octaves` octaves, plus the closing root on

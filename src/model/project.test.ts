@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { SCALES } from './scales';
 import {
   createDefaultProject,
   createNote,
@@ -22,6 +23,9 @@ import {
   unchainNotes,
   expandChain,
   removeNotes,
+  setScale,
+  addTrack,
+  createTrackForVoice,
 } from './project';
 
 /** The default project's one starting section id. */
@@ -127,6 +131,46 @@ describe('note edits are immutable', () => {
     p = addNote(p, trackId, note);
     p = moveNote(p, trackId, note.id, trackId, 1);
     expect(p.tracks[0].notes[0].pitch).toBe(60);
+  });
+});
+
+describe('changing the song’s mood', () => {
+  it('brings the tune with it, every note landing in the new scale', () => {
+    let p = createDefaultProject();
+    const track = createTrackForVoice('piano');
+    p = addTrack(p, track);
+    // A tune in C major pentatonic: C D E G A.
+    for (const [i, pitch] of [60, 62, 64, 67, 69].entries()) {
+      p = addNote(p, track.id, createNote(sec(p), i, 1, 0.8, pitch));
+    }
+    const before = p.tracks.find((t) => t.id === track.id)!.notes.map((n) => n.pitch);
+
+    p = setScale(p, 0, 'minorPentatonic'); // C Eb F G Bb
+    const after = p.tracks.find((t) => t.id === track.id)!.notes.map((n) => n.pitch!);
+
+    expect(p.scaleId).toBe('minorPentatonic');
+    // Every note now belongs to the new scale...
+    for (const pitch of after) {
+      expect(SCALES.minorPentatonic).toContain(((pitch % 12) + 12) % 12);
+    }
+    // ...and none of them travelled far, so it is still the same tune.
+    after.forEach((pitch, i) => expect(Math.abs(pitch - before[i]!)).toBeLessThanOrEqual(2));
+    // It did actually change something — a test that passes either way is no test.
+    expect(after).not.toEqual(before);
+  });
+
+  it('leaves drums alone — they have no pitch to move', () => {
+    let p = createDefaultProject();
+    const kick = p.tracks[0].id;
+    p = addNote(p, kick, createNote(sec(p), 0));
+    p = setScale(p, 0, 'minor');
+    expect(p.tracks[0].notes[0].pitch).toBeUndefined();
+  });
+
+  it('does nothing at all for a scale it does not know, or the one already set', () => {
+    const p = createDefaultProject();
+    expect(setScale(p, 0, 'lydianBebopWhatever')).toBe(p);
+    expect(setScale(p, p.scaleRoot, p.scaleId)).toBe(p);
   });
 });
 

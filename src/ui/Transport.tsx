@@ -4,6 +4,7 @@ import { engine } from '../audio/AudioEngine';
 import { formatPosition } from '../model/time';
 import type { SnapId } from '../model/time';
 import { MAX_BARS, MAX_BPM, MIN_BARS, MIN_BPM } from '../model/project';
+import { SCALE_CHOICES } from '../model/scales';
 
 const SNAP_OPTIONS: { id: SnapId; label: string }[] = [
   { id: 'bar', label: 'Bar' },
@@ -88,6 +89,7 @@ export function Transport() {
     (s) => s.project.sections.find((x) => x.id === s.currentSectionId) ?? s.project.sections[0],
   );
   const snap = useStore((s) => s.snap);
+  const scaleId = useStore((s) => s.project.scaleId);
 
   const togglePlay = useStore((s) => s.togglePlay);
   const stop = useStore((s) => s.stop);
@@ -102,6 +104,7 @@ export function Transport() {
   const redo = useStore((s) => s.redo);
   const setBpm = useStore((s) => s.setBpm);
   const setSnap = useStore((s) => s.setSnap);
+  const setScale = useStore((s) => s.setScale);
   const saveCurrent = useStore((s) => s.saveCurrent);
   const openFromFile = useStore((s) => s.openFromFile);
   const newProject = useStore((s) => s.newProject);
@@ -208,6 +211,22 @@ export function Transport() {
             +
           </button>
         </div>
+      </div>
+
+      <div className="field">
+        <span className="lbl">Mood</span>
+        <select
+          className="snap"
+          value={scaleId}
+          onChange={(e) => setScale(e.target.value)}
+          title="The notes the whole song is built from. Change it and your tune comes with you."
+        >
+          {SCALE_CHOICES.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="field">

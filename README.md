@@ -78,6 +78,9 @@ npm run package:mac   # build a macOS app bundle
 - **Record what you play:** press ⏺ so it glows red, press play, and whatever you
   play on the keyboard is written into the song, tidied up to the grid. Press ⏺
   again to stop. One undo takes the whole take back.
+- **Change the mood.** The Mood box turns the whole song Happy or Sad — and your
+  tune comes with it, note for note, so it's still your tune in a new mood.
+  Switch back and you get exactly what you wrote.
 - Press **Space** to play/stop. The song loops by default.
 - Change the tempo, mute/solo/volume per track, and snap to a musical grid.
 - **Echo:** each row has a 🔁 slider. Turn it up and that sound repeats in time

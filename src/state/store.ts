@@ -106,6 +106,8 @@ export interface StoreState {
 
   // editing
   setBpm: (bpm: number) => void;
+  /** Change the song's mood. Every note already written moves with it. */
+  setScale: (scaleId: string) => void;
   addTrackForVoice: (voiceId: string) => string;
   removeTrack: (trackId: string) => void;
   setTrackGain: (trackId: string, gain: number) => void;
@@ -507,6 +509,11 @@ export const useStore = create<StoreState>((set, get) => {
 
     // ---- editing ---------------------------------------------------------
     setBpm: (bpm) => apply(P.setBpm(get().history.present, bpm)),
+
+    setScale: (scaleId) => {
+      const project = get().history.present;
+      apply(P.setScale(project, project.scaleRoot, scaleId));
+    },
 
     addTrackForVoice: (voiceId) => {
       const track = P.createTrackForVoice(voiceId);

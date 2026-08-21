@@ -10,7 +10,7 @@ import { newEntryId, newGroupId, newNoteId, newSectionId, newTrackId } from './i
 import type { Instrument, Note, Project, Section, TimeSignature, Track } from './types';
 import { PROJECT_FORMAT_VERSION } from './types';
 import { getVoice, isPitched } from './voices';
-import { DEFAULT_SCALE_ID, DEFAULT_SCALE_ROOT } from './scales';
+import { DEFAULT_SCALE_ID, DEFAULT_SCALE_ROOT, SCALES, mapPitchBetweenScales } from './scales';
 
 export const MIN_BPM = 20;
 export const MAX_BPM = 300;
@@ -328,6 +328,34 @@ export function moveNote(
 // stepper pressed at its limit, a rename to the current name). The store commits
 // whatever it is handed, so a fresh-but-identical object would otherwise land an
 // undo step that does nothing — and wipe the redo stack on the way.
+
+/**
+ * Change the song's scale — its mood — and bring every note already written
+ * along with it, each moved to the nearest note of the new scale.
+ *
+ * Leaving the notes where they are would be easier and wrong: they'd sit off
+ * the note-grid's rows, and the app's one promise to a child — that nothing on
+ * the grid can sound wrong — would quietly stop being true for the song they
+ * already had. Moving them keeps the tune recognisable *and* keeps the promise.
+ */
+export function setScale(project: Project, scaleRoot: number, scaleId: string): Project {
+  const root = clamp(Math.round(scaleRoot), 0, 11);
+  if (!SCALES[scaleId]) return project;
+  if (project.scaleRoot === root && project.scaleId === scaleId) return project;
+  return {
+    ...project,
+    scaleRoot: root,
+    scaleId,
+    tracks: project.tracks.map((track) => ({
+      ...track,
+      notes: track.notes.map((note) =>
+        note.pitch == null
+          ? note
+          : { ...note, pitch: mapPitchBetweenScales(note.pitch, root, project.scaleId, scaleId) },
+      ),
+    })),
+  };
+}
 
 export function setBpm(project: Project, bpm: number): Project {
   const next = clamp(Math.round(bpm), MIN_BPM, MAX_BPM);

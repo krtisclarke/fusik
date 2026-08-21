@@ -260,6 +260,29 @@ is what lets one take spill from the verse into the chorus and land correctly in
 both. Start and length are quantised to the current snap setting, so the Snap
 control doubles as the recording's "tidy up my timing" knob.
 
+**Changing the song's mood.** The four scales are offered in the toolbar under
+names a child can judge — Happy, Sad, and a "more notes" version of each — and
+changing one **brings the tune already written along with it**. Leaving the
+notes where they were would be easier and wrong: they would sit off the
+note-grid's rows, and the app's one promise, that nothing on the grid can sound
+wrong, would quietly stop holding for the song the child already had.
+
+The notes move **by scale degree, not by nearest pitch**, and that distinction
+is the whole feature. Nearest-pitch looks perfectly reasonable and destroys the
+melody: going from C major pentatonic to minor, both D and E are nearest to E
+flat, so *C D E G E D C* comes out as *C E♭ E♭ G E♭ E♭ C* — two notes fused into
+one, the shape gone, and pressing Happy again cannot undo it because the
+information is gone. By degree, the third note of the old scale becomes the
+third note of the new one; between two scales of the same size the change is
+exactly reversible, which is what a child flipping between Happy and Sad
+expects. A note that already exists in the scale being moved to doesn't move at
+all, and since the five-note scales sit inside the seven-note ones, adding notes
+to choose from disturbs nothing. Going the other way, to a scale with genuinely
+fewer notes, can land two notes together — unavoidable, and one undo away.
+
+That first mapping shipped as nearest-pitch and was caught by playing a tune
+through it in the browser, not by reading it.
+
 **Scale-snapping (the kid-friendly bit).** A melodic track doesn't offer all 12
 chromatic notes — only the notes of the project's scale (`model/scales.ts`),
 default C major pentatonic. The note-grid's rows *are* the scale, so a child
@@ -458,7 +481,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (118 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (128 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -510,6 +533,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Other per-track effects (reverb send, filter) | ⬜ | The per-track chain (`audio/trackChain.ts`) is the place to add them. |
 | Melodic instruments (piano, synth, bells, bass) | ✅ | Pitched subtractive synth: 2 oscillators, ADSR, low-pass filter. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
+| Change the song's mood | ✅ | Happy / Sad, each with a "more notes" version, from the toolbar. The tune already written moves with it, by scale degree, so it keeps its shape — and flipping between two scales of the same size is exactly reversible. |
 | Playable keyboard | ✅ | Play the scale live with mouse/touch (slide across the keys) or two rows of computer keys an octave apart, with an octave shift. Follows the selected melodic track, or pick a voice. |
 | Recording a performance | ✅ | Arm ⏺, press play, and what you play on the keyboard is written into the song — quantised to the snap setting, into whichever part is sounding, on the track for that instrument (created if needed). A whole take is one undo step. |
 | MIDI input | ⬜ | The keyboard is in; a real MIDI controller would feed the same `noteOn`/`noteOff` and record through the same path. |
@@ -532,6 +556,10 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Drag a piano block up and down — it changes note, follows the pointer as
       it goes, stops at the ends of the scale, and one undo puts it back.
 - [ ] Drag a *drum* block up and down — it stays put and keeps working.
+- [ ] Write a tune, switch **Mood** to Sad — the same tune comes back in a minor
+      key, every note still distinct. Switch back to Happy: it is exactly the
+      tune you wrote.
+- [ ] Switch to a "more notes" mood and back — the tune is untouched.
 - [ ] Change tempo while playing — song speeds up/slows smoothly.
 - [ ] Mute / solo / volume per track behave correctly.
 - [ ] Undo/redo across add, remove, move, tempo.
