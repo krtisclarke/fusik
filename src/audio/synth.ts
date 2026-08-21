@@ -139,15 +139,29 @@ function noiseBurst(
   opts: { type: BiquadFilterType; freq: number; Q?: number; decay: number; gain: number },
   vel: number,
 ) {
+  const noise = getNoise(ctx);
   const src = ctx.createBufferSource();
-  src.buffer = getNoise(ctx);
-  // Randomise the read offset so repeated hits don't sound mechanically identical.
+  src.buffer = noise;
   src.loop = true;
+  // Start somewhere different every hit. This used to claim to do so and
+  // didn't: every snare read the same samples from the same offset, so eight
+  // snares in a row were bit-for-bit identical — the machine-gun rattle that
+  // makes a drum machine sound cheap. Real repeated hits never match.
+  const offset = Math.random() * Math.max(0.001, noise.duration - opts.decay - 0.06);
 
   const filter = ctx.createBiquadFilter();
   filter.type = opts.type;
   filter.frequency.value = opts.freq;
   if (opts.Q != null) filter.Q.value = opts.Q;
+  // Skins and cymbals shed their high end as they ring down; holding the filter
+  // still is what makes a burst read as "noise" rather than as a drum.
+  if (opts.type !== 'highpass') {
+    filter.frequency.setValueAtTime(opts.freq * 1.6, time);
+    filter.frequency.exponentialRampToValueAtTime(
+      Math.max(120, opts.freq * 0.55),
+      time + opts.decay,
+    );
+  }
 
   const amp = ctx.createGain();
   const peak = Math.max(0.002, opts.gain * vel);
@@ -158,7 +172,7 @@ function noiseBurst(
   filter.connect(amp);
   amp.connect(dest);
 
-  src.start(time);
+  src.start(time, offset);
   src.stop(time + opts.decay + 0.05);
 }
 
@@ -211,18 +225,42 @@ function pitchedSynth(
   const sustain = Math.min(1, Math.max(0, p.sustain ?? 0.5));
   const release = Math.max(0.02, p.release ?? 0.2);
 
+  const detune = p.detune ?? 0;
+  // Spread the pair either side of the note rather than sitting one of them
+  // exactly on it: two voices a few cents apart beat gently against each other,
+  // which is most of what makes a synth sound like an instrument rather than a
+  // test tone. A hair of variation per note stops repeats phasing identically.
+  const drift = (Math.random() - 0.5) * 2;
   const osc1 = ctx.createOscillator();
   osc1.type = wave;
   osc1.frequency.value = freq;
+  osc1.detune.value = -detune / 2 + drift;
   const osc2 = ctx.createOscillator();
   osc2.type = wave;
   osc2.frequency.value = freq;
-  osc2.detune.value = p.detune ?? 0;
+  osc2.detune.value = detune / 2 - drift;
 
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
-  filter.frequency.value = p.cutoff ?? 4000;
-  filter.Q.value = 0.7;
+  filter.Q.value = 1.1;
+
+  // The filter envelope — the difference between a note and a tone.
+  //
+  // Without one, the harmonics present at the attack are still present at the
+  // end and the sound merely gets quieter. Measured, the old voice's brightness
+  // moved 52 Hz across a whole note: nothing at all. Every struck or plucked
+  // instrument sheds its high end far faster than its fundamental, and playing
+  // harder opens it up — so the cutoff starts high, settles as the note does,
+  // and how far it opens follows how hard the note was hit.
+  const cutoff = p.cutoff ?? 4000;
+  const bite = Math.max(0, Math.min(4, p.bite ?? 2));
+  const openTo = Math.min(16000, cutoff * (1 + bite * (0.35 + 0.65 * vel)));
+  const settleTo = Math.max(120, cutoff * (0.5 + 0.5 * vel));
+  filter.frequency.setValueAtTime(openTo, time);
+  filter.frequency.exponentialRampToValueAtTime(
+    settleTo,
+    time + Math.max(0.02, Math.min(decay * 1.4, 1.2)),
+  );
 
   const amp = ctx.createGain();
   const peak = Math.max(0.0002, (p.gain ?? 0.5) * vel);
@@ -275,18 +313,37 @@ export function startHeldNote(
   const sustain = Math.min(1, Math.max(0, p.sustain ?? 0.5));
   const release = Math.max(0.02, p.release ?? 0.2);
 
+  const detune = p.detune ?? 0;
+  // Spread the pair either side of the note rather than sitting one of them
+  // exactly on it: two voices a few cents apart beat gently against each other,
+  // which is most of what makes a synth sound like an instrument rather than a
+  // test tone. A hair of variation per note stops repeats phasing identically.
+  const drift = (Math.random() - 0.5) * 2;
   const osc1 = ctx.createOscillator();
   osc1.type = wave;
   osc1.frequency.value = freq;
+  osc1.detune.value = -detune / 2 + drift;
   const osc2 = ctx.createOscillator();
   osc2.type = wave;
   osc2.frequency.value = freq;
-  osc2.detune.value = p.detune ?? 0;
+  osc2.detune.value = detune / 2 - drift;
 
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
-  filter.frequency.value = p.cutoff ?? 4000;
-  filter.Q.value = 0.7;
+  filter.Q.value = 1.1;
+
+  // The same brightness sweep the timeline voice gets, so a note played by hand
+  // sounds like the one it writes.
+  const cutoff = p.cutoff ?? 4000;
+  const bite = Math.max(0, Math.min(4, p.bite ?? 2));
+  filter.frequency.setValueAtTime(
+    Math.min(16000, cutoff * (1 + bite * (0.35 + 0.65 * vel))),
+    time,
+  );
+  filter.frequency.exponentialRampToValueAtTime(
+    Math.max(120, cutoff * (0.5 + 0.5 * vel)),
+    time + Math.max(0.02, Math.min(decay * 1.4, 1.2)),
+  );
 
   const amp = ctx.createGain();
   const peak = Math.max(0.0002, (p.gain ?? 0.5) * vel);
@@ -357,8 +414,11 @@ function kickVoice(
   // Body: sine with a fast pitch drop, optionally saturated.
   const osc = ctx.createOscillator();
   osc.type = 'sine';
+  // The drop is the punch, and it has to be *fast*: a kick that takes a fifth of
+  // a second to arrive at its note reads as a soft thud rather than a hit. Real
+  // ones land in a few tens of milliseconds.
   osc.frequency.setValueAtTime(tune + pitchDrop, time);
-  osc.frequency.exponentialRampToValueAtTime(Math.max(20, tune), time + Math.min(0.16, decay * 0.6));
+  osc.frequency.exponentialRampToValueAtTime(Math.max(20, tune), time + Math.min(0.055, decay * 0.3));
   const amp = ctx.createGain();
   amp.gain.setValueAtTime(EPS, time);
   amp.gain.exponentialRampToValueAtTime(Math.max(0.002, gain), time + 0.005);
@@ -376,10 +436,12 @@ function kickVoice(
   osc.start(time);
   osc.stop(time + decay + 0.05);
 
-  // Sub layer: a low, steady sine for weight under the body.
+  // Sub layer: weight under the body. Kept above 45 Hz on purpose — lower than
+  // that is inaudible on a laptop or a tablet, so it would be energy the
+  // limiter has to make room for and nobody ever hears.
   const sub = ctx.createOscillator();
   sub.type = 'sine';
-  sub.frequency.value = Math.max(30, tune * 0.6);
+  sub.frequency.value = Math.max(45, tune * 0.75);
   const subAmp = ctx.createGain();
   subAmp.gain.setValueAtTime(EPS, time);
   subAmp.gain.exponentialRampToValueAtTime(Math.max(0.002, gain * 0.7), time + 0.01);
@@ -524,7 +586,29 @@ export const VOICE_SYNTHS: Record<string, TriggerFn> = {
   // their default parameters (waveform, envelope, filter) from the catalog.
   piano: pitchedSynth,
   synth: pitchedSynth,
-  bells: pitchedSynth,
+  bells: (ctx, dest, time, p, vel, note) => {
+    // A bell is not a filtered waveform, and no amount of filter envelope makes
+    // a sine into one. What makes a bell is *inharmonic* partials — overtones
+    // that aren't whole multiples of the note, ringing for different lengths —
+    // so it gets struck partials of its own on top of the shared voice.
+    pitchedSynth(ctx, dest, time, p, vel, note);
+    const midi = note?.midi ?? 60;
+    const base = midiToFreq(midi);
+    const decay = Math.max(0.05, p.decay ?? 0.9);
+    const level = (p.gain ?? 0.4) * vel;
+    // Ratios from a struck bar: the minor-third and the ring above it are what
+    // the ear hears as "bell" rather than "tone".
+    const partials: [number, number, number][] = [
+      [2.76, 0.5, 0.8],
+      [5.4, 0.28, 0.55],
+      [8.9, 0.14, 0.35],
+    ];
+    for (const [ratio, amp, ring] of partials) {
+      const freq = base * ratio;
+      if (freq > 16000) continue;
+      blip(ctx, dest, time, { freq, type: 'sine', decay: decay * ring, gain: level * amp }, vel);
+    }
+  },
   bass: pitchedSynth,
 };
 

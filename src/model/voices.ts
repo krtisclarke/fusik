@@ -142,7 +142,7 @@ export const VOICE_CATALOG: VoiceDef[] = [
     kind: 'pitched',
     baseMidi: 60,
     octaves: 2,
-    defaults: { wave: 1, attack: 0.005, decay: 0.5, sustain: 0.0, release: 0.3, cutoff: 6000, detune: 5, gain: 0.5 },
+    defaults: { wave: 2, attack: 0.004, decay: 0.45, sustain: 0.0, release: 0.32, cutoff: 900, bite: 3.4, detune: 9, gain: 0.34 },
   },
   {
     id: 'synth',
@@ -153,7 +153,7 @@ export const VOICE_CATALOG: VoiceDef[] = [
     kind: 'pitched',
     baseMidi: 60,
     octaves: 2,
-    defaults: { wave: 2, attack: 0.02, decay: 0.25, sustain: 0.6, release: 0.25, cutoff: 3500, detune: 9, gain: 0.42 },
+    defaults: { wave: 2, attack: 0.02, decay: 0.35, sustain: 0.55, release: 0.28, cutoff: 1400, bite: 2.4, detune: 14, gain: 0.42 },
   },
   {
     id: 'bells',
@@ -164,7 +164,7 @@ export const VOICE_CATALOG: VoiceDef[] = [
     kind: 'pitched',
     baseMidi: 72,
     octaves: 2,
-    defaults: { wave: 0, attack: 0.002, decay: 0.9, sustain: 0.0, release: 0.5, cutoff: 9000, detune: 0, gain: 0.4 },
+    defaults: { wave: 0, attack: 0.002, decay: 0.9, sustain: 0.0, release: 0.6, cutoff: 4200, bite: 3.2, detune: 6, gain: 0.4 },
   },
   {
     id: 'bass',
@@ -175,7 +175,7 @@ export const VOICE_CATALOG: VoiceDef[] = [
     kind: 'pitched',
     baseMidi: 36,
     octaves: 2,
-    defaults: { wave: 2, attack: 0.005, decay: 0.2, sustain: 0.5, release: 0.14, cutoff: 1500, detune: 4, gain: 0.55 },
+    defaults: { wave: 2, attack: 0.004, decay: 0.22, sustain: 0.45, release: 0.16, cutoff: 520, bite: 3.0, detune: 7, gain: 0.55 },
   },
 ];
 

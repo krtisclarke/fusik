@@ -215,9 +215,49 @@ parameters are what the Phase 3 sound editor will expose to the child.
 **Melodic instruments** (piano, synth, bells, bass) share one pitched voice
 (`pitchedSynth`): two detuned oscillators through a low-pass filter, shaped by a
 real ADSR envelope, so held notes sustain for their length and short notes
-pluck. They differ only by their default parameters (waveform, envelope, filter,
+pluck. They differ by their default parameters (waveform, envelope, filter,
 octave range). A note's MIDI pitch becomes the oscillator frequency; its length
 becomes the envelope gate.
+
+**Why they sounded flat, and what a filter envelope is for.** The first version
+held the filter cutoff *still*. That is the difference between a note and a
+tone: the harmonics present at the attack were still present at the end and the
+sound merely got quieter. Measured as spectral centroid over a whole note, the
+old piano moved 52 Hz — nothing. Every struck or plucked instrument sheds its
+high end far faster than its fundamental, so the cutoff now starts high and
+settles as the note does, and how far it opens follows how hard the note was
+hit. That is the `bite` parameter ("Twang" in the sound editor), and it applies
+to notes played by hand as well as notes on the timeline, so the keyboard sounds
+like what it writes.
+
+**A filter envelope needs something to bite on.** Sweeping a low-pass over a
+triangle or a sine does almost nothing, because there are barely any harmonics
+up there to remove — which is why adding the envelope alone left the piano and
+the bells exactly as flat as before, while the saw-based synth and bass came
+alive immediately. The piano moved to a sawtooth with a much lower cutoff, which
+is how a plucky, percussive sound is actually made subtractively.
+
+**A bell is not a filtered waveform.** No envelope turns a sine into one. What
+makes a bell is *inharmonic* partials — overtones at ratios like 2.76 and 5.4
+rather than whole multiples, each ringing for a different length — so the bells
+voice layers struck partials of its own on top of the shared one.
+
+Measured before and after, as spectral centroid spread across a note: piano
+52 Hz → 451, synth → 814, bass → 841, bells 1 Hz → 277. Playing harder now
+measurably brightens the tone as well as raising it.
+
+**Two things that made the drums sound cheap.** `noiseBurst` carried a comment
+saying it randomised its read offset so repeated hits wouldn't sound
+mechanically identical — and it didn't. Every snare read the same samples from
+the same place, so eight in a row were bit-for-bit identical: the machine-gun
+rattle that gives a drum machine away. It now starts at a different offset each
+hit, and two rendered snares differ by a measured 0.056 mean absolute sample.
+The filter was also static, so a burst read as *noise* rather than as a skin or
+a cymbal; it now sheds its high end as it decays, the way a real one does. The
+kick's pitch drop was taking up to a fifth of a second to arrive, which reads as
+a soft thud rather than a hit — it lands in 55 ms now — and its sub layer sat as
+low as 30 Hz, inaudible on a laptop or tablet while still costing headroom the
+limiter had to make room for.
 
 **Held notes (the keyboard).** A note on the timeline knows its length up front,
 so its whole envelope is scheduled in one go — that's what keeps it

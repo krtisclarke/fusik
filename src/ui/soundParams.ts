@@ -27,6 +27,7 @@ export const PARAM_SPECS: Record<string, ParamSpec> = {
   attack: { label: 'Attack', min: 0.001, max: 1, step: 0.001, simple: true, hint: 'How quickly the sound reaches full volume. Low = punchy, high = a slow swell.' },
   sustain: { label: 'Sustain', min: 0, max: 1, step: 0.01, simple: false, hint: 'The level a note holds while you keep it playing.' },
   release: { label: 'Release', min: 0.02, max: 2, step: 0.01, simple: true, hint: 'How long the sound fades away after a note ends.' },
+  bite: { label: 'Twang', min: 0, max: 4, step: 0.1, simple: true, hint: 'How much extra zing the sound has right at the start, before it settles. This is what stops a note sounding flat.' },
   detune: { label: 'Detune', min: 0, max: 30, step: 0.5, simple: false, hint: 'Spreads two copies of the sound slightly apart for a thicker feel.' },
 };
 
