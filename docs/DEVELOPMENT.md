@@ -112,6 +112,38 @@ transport.
 note added, moved, muted, or a tempo change is heard on the next ~100 ms window
 — the "change it, hear it" feedback that defines the app.
 
+### Per-track echo
+
+Sound lives on the blocks, but an echo is the *space* an instrument sits in
+rather than what the instrument is — so it belongs to the track, and
+`audio/trackChain.ts` gives every track its own:
+
+```
+voices → [ dry ─────────────────────────────────→ ] → master
+         [ send → delay → ↺ damp → DC-block → fb ] ↗
+```
+
+One kid-facing slider moves three things together — how loud the repeats are,
+how many there are, and (from the tempo) how far apart — so there is no way to
+set it to something unmusical. It takes a `BaseAudioContext` like the master
+chain does, so live playback and the offline render behind Export share one
+implementation and cannot drift apart.
+
+**Why there is a high-pass in the feedback loop.** A loop that feeds back into
+itself traps any DC offset the sound carries. The audible part of the echo dies
+away properly but the offset does not — it sits there as a constant, silent-
+but-not-silent lump that eats headroom from everything else and never leaves. A
+high-pass has no gain at all at 0 Hz, so one in the loop kills it at the source.
+
+**Where that DC came from (a real bug this uncovered).** A `WaveShaper` maps
+input −1 to the first point of its curve and +1 to the last, interpolating
+between them. Both shaping curves here were built with an *even* number of
+points, so there was no point at exactly input 0: silence landed halfway between
+the two either side of centre and came out as a small constant. Every kick left
+a permanent −0.0152 offset on the output, and the master saturator added its own
+on everything. Both curves now use an odd count, so silence in gives silence
+out — worth knowing if any new shaping curve is ever added.
+
 ### Master output & ear safety
 
 Everything sums into a master chain (`audio/master.ts`):
@@ -334,7 +366,8 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Per-block sound editor | ✅ | Every block has its own sound. Select one or several and shape live (volume, pitch, decay, brightness, ADSR, drive…): simple/advanced split, hover hints, one-undo-per-drag, reset. |
 | Chaining (link blocks) | ✅ | Multi-select (Shift-click, or a row's name for all) and **Link** blocks into a group that shares sound **and** length; edit or resize any member and the whole chain follows. Unlink to break. |
 | Block length / resize | ✅ | Drag a selected block's right edge to change its length (snaps to grid). |
-| Per-track effects rack (echo/delay/reverb sends) | ⬜ | Master reverb exists; per-sound effect chains are the next Phase-3 step. |
+| Per-track echo | ✅ | One slider per track, on the lane header. Tempo-synced (repeats land an eighth note apart at any tempo) and one control drives level, repeats and feedback together, so there's no way to set it to something unmusical. Same chain live and in Export. |
+| Other per-track effects (reverb send, filter) | ⬜ | The per-track chain (`audio/trackChain.ts`) is the place to add them. |
 | Melodic instruments (piano, synth, bells, bass) | ✅ | Pitched subtractive synth: 2 oscillators, ADSR, low-pass filter. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
 | Playable keyboard | ✅ | Play the scale live with mouse/touch (slide across the keys) or two rows of computer keys an octave apart, with an octave shift. Follows the selected melodic track, or pick a voice. |
@@ -379,6 +412,9 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       heard on the next pass round. One undo removes the whole take.
 - [ ] Record in Song mode across a part boundary — the notes land in both parts.
 - [ ] Arm ⏺ but don't press play: playing the keyboard writes nothing.
+- [ ] Turn a track's 🔁 echo up while the song plays — the repeats come in on
+      the beat, and turning it back down removes them.
+- [ ] Export a song with echo: the repeats are in the file and aren't cut off.
 
 ---
 

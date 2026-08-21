@@ -20,7 +20,7 @@
   --danger: #f87171;
   --radius: 10px;
   --radius-sm: 7px;
-  --row-h: 58px;
+  --row-h: 78px;
   --header-w: 176px;
   --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
   font-synthesis: none;
@@ -461,6 +461,9 @@ select.snap {
 .note {
   position: absolute;
   top: 8px;
+  /* Fills the lane. Anything shorter leaves a strip of bare grid under the
+     block, and a press there lands on the lane rather than the block — which
+     silently stacks a second, invisible note on top of the first. */
   height: calc(var(--row-h) - 17px);
   border-radius: 7px;
   cursor: grab;
@@ -1053,4 +1056,20 @@ select.snap {
 }
 .keyboard.recording .kb-title {
   color: var(--danger);
+}
+
+/* per-track echo control in the lane header */
+.lane-header .controls.echo-row {
+  margin-top: 3px;
+}
+.echo-lbl {
+  font-size: 11px;
+  filter: grayscale(1);
+  opacity: 0.5;
+  width: 18px;
+  text-align: center;
+}
+.echo-lbl.on {
+  filter: none;
+  opacity: 1;
 }

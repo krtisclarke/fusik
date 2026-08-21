@@ -127,6 +127,7 @@ function parseTrack(value: unknown, version: number): Track {
     gain: clamp(asNumber(v.gain, 0.85), 0, 1),
     muted: asBool(v.muted, false),
     solo: asBool(v.solo, false),
+    echo: clamp(asNumber(v.echo, 0), 0, 1),
   };
 }
 

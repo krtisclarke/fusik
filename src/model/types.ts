@@ -96,6 +96,14 @@ export interface Track {
   gain: number;
   muted: boolean;
   solo: boolean;
+  /**
+   * How much echo this track gets, 0..1 (0 = none). One control on purpose:
+   * it drives the repeats' loudness *and* how many there are together, and the
+   * delay time follows the song's tempo, so there is no way to set it to
+   * something unmusical. Sound lives on the blocks; echo is the space the whole
+   * instrument sits in, so it belongs to the track.
+   */
+  echo: number;
 }
 
 export interface Project {

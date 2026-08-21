@@ -12,7 +12,11 @@ function isTypingTarget(el: EventTarget | null): boolean {
   const node = el as HTMLElement | null;
   if (!node) return false;
   const tag = node.tagName;
-  return tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || node.isContentEditable;
+  // A slider keeps focus after you drag it, but you are not *typing* into it —
+  // treating it as a text field would quietly kill the spacebar and the
+  // keyboard's note keys until the child thought to click elsewhere.
+  if (tag === 'INPUT') return (node as HTMLInputElement).type !== 'range';
+  return tag === 'SELECT' || tag === 'TEXTAREA' || node.isContentEditable;
 }
 
 export function App() {

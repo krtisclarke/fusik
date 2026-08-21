@@ -46,7 +46,8 @@ export function Timeline() {
   const selectTrackNotes = useStore((s) => s.selectTrackNotes);
   const previewLength = useStore((s) => s.previewLength);
   const commitEdit = useStore((s) => s.commitEdit);
-  const setTrackGain = useStore((s) => s.setTrackGain);
+  const previewTrackGain = useStore((s) => s.previewTrackGain);
+  const previewTrackEcho = useStore((s) => s.previewTrackEcho);
   const toggleMute = useStore((s) => s.toggleMute);
   const toggleSolo = useStore((s) => s.toggleSolo);
   const removeTrack = useStore((s) => s.removeTrack);
@@ -326,7 +327,24 @@ export function Timeline() {
                       value={track.gain}
                       title="Volume"
                       onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => setTrackGain(track.id, Number(e.target.value))}
+                      onChange={(e) => previewTrackGain(track.id, Number(e.target.value))}
+                      onPointerUp={commitEdit}
+                      onKeyUp={commitEdit}
+                    />
+                  </div>
+                  <div className="controls echo-row">
+                    <span className={`echo-lbl ${track.echo > 0 ? 'on' : ''}`}>🔁</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={track.echo}
+                      title="Echo — how much this sound repeats. All the way left is off."
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => previewTrackEcho(track.id, Number(e.target.value))}
+                      onPointerUp={commitEdit}
+                      onKeyUp={commitEdit}
                     />
                   </div>
                 </div>

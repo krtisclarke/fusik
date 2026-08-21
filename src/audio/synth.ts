@@ -52,14 +52,32 @@ function getNoise(ctx: BaseAudioContext): AudioBuffer {
   return buffer;
 }
 
+/**
+ * Number of points in a shaping curve. **Odd on purpose.**
+ *
+ * A WaveShaper maps input -1 to the first point and +1 to the last, and
+ * interpolates between them. With an even count there is no point sitting
+ * exactly at input 0, so silence lands halfway between the two either side of
+ * the middle and comes out as a small *constant* — a DC offset that never goes
+ * away, because the node keeps producing it long after the sound has stopped.
+ * It eats headroom from everything else, and inside the echo's feedback loop it
+ * accumulates. An odd count puts a real point at dead centre, so silence in
+ * gives silence out.
+ */
+const CURVE_POINTS = 1025;
+
+/** Positions across a shaping curve, from -1 to +1 inclusive, 0 exactly in the middle. */
+function curveInput(i: number): number {
+  return (i * 2) / (CURVE_POINTS - 1) - 1;
+}
+
 function makeDistortionCurve(amount: number) {
   const k = amount * 100;
-  const n = 1024;
   // Back the array with an explicit ArrayBuffer so its type satisfies
   // WaveShaperNode.curve under newer TypeScript DOM lib typings.
-  const curve = new Float32Array(new ArrayBuffer(n * 4));
-  for (let i = 0; i < n; i++) {
-    const x = (i * 2) / n - 1;
+  const curve = new Float32Array(new ArrayBuffer(CURVE_POINTS * 4));
+  for (let i = 0; i < CURVE_POINTS; i++) {
+    const x = curveInput(i);
     curve[i] = ((1 + k) * x) / (1 + k * Math.abs(x));
   }
   return curve;

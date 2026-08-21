@@ -24,13 +24,16 @@ export function createReverbImpulse(ctx: BaseAudioContext, seconds = 1.3, decay 
   return buffer;
 }
 
-/** A gentle tanh saturation curve — warmth without obvious distortion. */
+/** A gentle tanh saturation curve — warmth without obvious distortion.
+ *  Odd number of points so silence in gives silence out: with an even count
+ *  input 0 lands between two samples and the node emits a small constant
+ *  forever, a DC offset on everything the app ever plays. */
 function createSaturationCurve(amount: number) {
-  const n = 1024;
+  const n = 1025;
   const curve = new Float32Array(new ArrayBuffer(n * 4));
   const drive = 1 + amount * 3;
   for (let i = 0; i < n; i++) {
-    const x = (i * 2) / n - 1;
+    const x = (i * 2) / (n - 1) - 1;
     curve[i] = Math.tanh(x * drive) / Math.tanh(drive);
   }
   return curve;

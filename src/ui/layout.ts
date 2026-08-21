@@ -2,7 +2,7 @@
 // sync with the matching values in styles.css (--row-h, --header-w).
 
 export const PX_PER_BEAT = 48;
-export const ROW_H = 58;
+export const ROW_H = 78; // fits the header's three rows: name, mute/solo/volume, echo
 export const HEADER_W = 176;
 /** Height of one pitch row inside an instrument track's note-grid. */
 export const PITCH_ROW_H = 20;

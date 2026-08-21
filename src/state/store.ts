@@ -96,6 +96,12 @@ export interface StoreState {
   setTrackGain: (trackId: string, gain: number) => void;
   toggleMute: (trackId: string) => void;
   toggleSolo: (trackId: string) => void;
+  /** How much echo the whole track gets, 0..1. */
+  setTrackEcho: (trackId: string, echo: number) => void;
+  /** Live-drag the echo slider; one undo step per drag via commitEdit. */
+  previewTrackEcho: (trackId: string, echo: number) => void;
+  /** Live-drag the volume slider; one undo step per drag via commitEdit. */
+  previewTrackGain: (trackId: string, gain: number) => void;
   dropVoiceAt: (voiceId: string, beat: number) => void;
   addNoteAt: (trackId: string, beat: number, opts?: { pitch?: number; velocity?: number }) => void;
   removeNote: (trackId: string, noteId: string) => void;
@@ -203,6 +209,35 @@ export const useStore = create<StoreState>((set, get) => {
       canUndo: canUndo(history),
       canRedo: canRedo(history),
     });
+  }
+
+  /**
+   * Fold everything since the baseline into a single undo entry. Used when a
+   * live gesture ends: a slider released, a block finished resizing, a recording
+   * take stopped.
+   */
+  function closeBaseline(): void {
+    if (!editBaseline) return;
+    const s = get();
+    const baseline = editBaseline;
+    editBaseline = null;
+    // Nothing actually happened between picking the thing up and putting it
+    // down: a record button armed and disarmed without playing, a slider
+    // dragged and returned to where it started. Committing that would spend an
+    // undo step that undoes nothing, so the child's *next* undo appears to do
+    // nothing and they have to press it twice to get their work back.
+    //
+    // Compared by value, not identity: a drag builds a new project object per
+    // step, so the one it ends on is always a different object even when it
+    // holds exactly the same song. A project is plain JSON by definition — it's
+    // the save format — so stringifying is a sound comparison, and this runs
+    // once when a gesture ends, not while it moves.
+    if (baseline === s.history.present) return;
+    if (JSON.stringify(baseline) === JSON.stringify(s.history.present)) return;
+    const past = [...s.history.past, baseline];
+    if (past.length > DEFAULT_HISTORY_LIMIT) past.shift();
+    const history = { past, present: s.history.present, future: [] };
+    set({ history, canUndo: canUndo(history), canRedo: canRedo(history) });
   }
 
   /** Point the timeline (and 'section' play mode) at a part. */
@@ -360,12 +395,12 @@ export const useStore = create<StoreState>((set, get) => {
       engine.pause();
       // Close the take when the music stops, so what was just played is one
       // undo step. Recording stays armed — pressing play again starts a new one.
-      if (get().isRecording) get().commitEdit();
+      if (get().isRecording) closeBaseline();
       set({ isPlaying: false });
     },
     stop: () => {
       engine.stop();
-      if (get().isRecording) get().commitEdit();
+      if (get().isRecording) closeBaseline();
       set({ isPlaying: false });
     },
     toggleLoop: () => {
@@ -429,6 +464,25 @@ export const useStore = create<StoreState>((set, get) => {
     setTrackGain: (trackId, gain) => apply(P.setTrackGain(get().history.present, trackId, gain)),
     toggleMute: (trackId) => apply(P.toggleTrackMuted(get().history.present, trackId)),
     toggleSolo: (trackId) => apply(P.toggleTrackSolo(get().history.present, trackId)),
+    setTrackEcho: (trackId, echo) => apply(P.setTrackEcho(get().history.present, trackId, echo)),
+
+    previewTrackGain: (trackId, gain) => {
+      const s = get();
+      const next = P.setTrackGain(s.history.present, trackId, gain);
+      if (next === s.history.present) return;
+      if (!editBaseline) editBaseline = s.history.present;
+      engine.setProject(next);
+      set({ history: replacePresent(s.history, next), project: next });
+    },
+
+    previewTrackEcho: (trackId, echo) => {
+      const s = get();
+      const next = P.setTrackEcho(s.history.present, trackId, echo);
+      if (next === s.history.present) return;
+      if (!editBaseline) editBaseline = s.history.present;
+      engine.setProject(next); // heard immediately, even mid-song
+      set({ history: replacePresent(s.history, next), project: next });
+    },
 
     previewParam: (key, value) => {
       const s = get();
@@ -451,20 +505,12 @@ export const useStore = create<StoreState>((set, get) => {
     },
 
     commitEdit: () => {
-      if (!editBaseline) return;
-      const s = get();
-      const baseline = editBaseline;
-      editBaseline = null;
-      // Nothing actually happened between picking the thing up and putting it
-      // down: a record button armed and disarmed without playing, a slider
-      // nudged back to where it started. Committing that would spend an undo
-      // step that undoes nothing, so the child's *next* undo appears to do
-      // nothing and they have to press it twice to get their work back.
-      if (baseline === s.history.present) return;
-      const past = [...s.history.past, baseline];
-      if (past.length > DEFAULT_HISTORY_LIMIT) past.shift();
-      const history = { past, present: s.history.present, future: [] };
-      set({ history, canUndo: canUndo(history), canRedo: canRedo(history) });
+      // Mid-take, everything the child does belongs to that take: it is all one
+      // undo step, closed when recording stops. A slider let go of in the middle
+      // must not close it early and split the take in two. Closing the take
+      // itself goes through closeBaseline() below, which has no such guard.
+      if (get().isRecording) return;
+      closeBaseline();
     },
 
     resetSelected: () => {
@@ -559,7 +605,7 @@ export const useStore = create<StoreState>((set, get) => {
     toggleRecording: () => {
       const wasRecording = get().isRecording;
       if (wasRecording) {
-        get().commitEdit(); // close the take into a single undo step
+        closeBaseline(); // close the take into a single undo step
         set({ isRecording: false, status: 'Recording stopped' });
         return;
       }

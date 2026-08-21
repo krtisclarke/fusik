@@ -23,6 +23,7 @@ import { resolveParams } from '../model/voices';
 import { getTrigger, startHeldNote, type HeldNote } from './synth';
 import { getVoice, isPitched } from '../model/voices';
 import { createMasterChain } from './master';
+import { createTrackChain, type TrackChain } from './trackChain';
 
 const LOOK_AHEAD_S = 0.1; // how far ahead we schedule
 const TICK_MS = 25; // how often the scheduler wakes up
@@ -44,7 +45,7 @@ export interface TransportSnapshot {
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
-  private trackNodes = new Map<string, GainNode>();
+  private trackNodes = new Map<string, TrackChain>();
 
   private project: Project | null = null;
 
@@ -120,27 +121,27 @@ export class AudioEngine {
     return this.playMode;
   }
 
-  /** Ensure one gain node per track and apply volume/mute/solo. */
+  /** Ensure one chain per track and apply volume/mute/solo and echo. */
   private syncTrackNodes(project: Project): void {
     const ctx = this.ctx;
     const master = this.masterGain;
     if (!ctx || !master) return;
 
     const liveIds = new Set(project.tracks.map((t) => t.id));
-    for (const [id, node] of this.trackNodes) {
+    for (const [id, chain] of this.trackNodes) {
       if (!liveIds.has(id)) {
-        node.disconnect();
+        chain.disconnect();
         this.trackNodes.delete(id);
       }
     }
     for (const track of project.tracks) {
-      let node = this.trackNodes.get(track.id);
-      if (!node) {
-        node = ctx.createGain();
-        node.connect(master);
-        this.trackNodes.set(track.id, node);
+      let chain = this.trackNodes.get(track.id);
+      if (!chain) {
+        chain = createTrackChain(ctx, master);
+        this.trackNodes.set(track.id, chain);
       }
-      node.gain.value = this.effectiveGain(track, project.tracks);
+      chain.gain.value = this.effectiveGain(track, project.tracks);
+      chain.setEcho(track.echo, project.bpm);
     }
   }
 
@@ -361,10 +362,10 @@ export class AudioEngine {
     const period = this.looping ? len : Infinity;
 
     for (const track of project.tracks) {
-      const node = this.trackNodes.get(track.id);
-      if (!node) continue;
+      const chain = this.trackNodes.get(track.id);
+      if (!chain) continue;
       // Re-apply gain each tick so mute/solo/volume edits take effect live.
-      node.gain.setTargetAtTime(this.effectiveGain(track, project.tracks), now, 0.01);
+      chain.gain.setTargetAtTime(this.effectiveGain(track, project.tracks), now, 0.01);
       if (this.effectiveGain(track, project.tracks) <= 0) continue;
 
       const trigger = getTrigger(track.instrument.voiceId);
@@ -375,7 +376,7 @@ export class AudioEngine {
         const durationSec = beatsToSeconds(note.lengthBeats, bpm);
         for (const absBeat of beatOccurrencesInWindow(lo, hi, baseBeat, period)) {
           const when = this.timeAtBeat(absBeat, bpm);
-          trigger(ctx, node, Math.max(when, now), params, note.velocity, {
+          trigger(ctx, chain.input, Math.max(when, now), params, note.velocity, {
             midi: note.pitch,
             durationSec,
           });
@@ -397,6 +398,20 @@ export class AudioEngine {
   private nextHeldId = 1;
 
   /**
+   * Where a hand-played note should go: the chain of the track that owns this
+   * voice, so playing a Piano with the Piano row's echo turned up sounds like
+   * the Piano row — with its echo, its volume, its mute. Falling straight to the
+   * master would make the Echo slider look broken for the most direct "play it
+   * and hear it" thing in the app, and would mean a recorded take sounded dry
+   * while playing and drenched the moment it came round again.
+   */
+  private destinationForVoice(voiceId: string): AudioNode | null {
+    const track = this.project?.tracks.find((t) => t.instrument.voiceId === voiceId);
+    const chain = track ? this.trackNodes.get(track.id) : undefined;
+    return chain?.input ?? this.masterGain;
+  }
+
+  /**
    * Start a note now and keep it sounding. Returns a handle to pass to
    * `noteOff`. Safe to call before any audio exists — it starts the context.
    */
@@ -407,17 +422,18 @@ export class AudioEngine {
     velocity = 0.85,
   ): Promise<number> {
     const ctx = await this.ensureRunning();
-    if (!this.masterGain) return 0;
+    const dest = this.destinationForVoice(voiceId);
+    if (!dest) return 0;
     const params = resolveParams(voiceId, overrides);
     const id = this.nextHeldId++;
 
     if (!isPitched(getVoice(voiceId))) {
-      getTrigger(voiceId)(ctx, this.masterGain, ctx.currentTime, params, velocity, {
+      getTrigger(voiceId)(ctx, dest, ctx.currentTime, params, velocity, {
         durationSec: 0.5,
       });
       return id; // nothing to hold; noteOff is a no-op for this id
     }
-    this.held.set(id, startHeldNote(ctx, this.masterGain, ctx.currentTime, params, velocity, midi));
+    this.held.set(id, startHeldNote(ctx, dest, ctx.currentTime, params, velocity, midi));
     return id;
   }
 
@@ -444,10 +460,11 @@ export class AudioEngine {
     midi?: number,
   ): Promise<void> {
     const ctx = await this.ensureRunning();
-    if (!this.masterGain) return;
+    const dest = this.destinationForVoice(voiceId);
+    if (!dest) return;
     const trigger = getTrigger(voiceId);
     const params = resolveParams(voiceId, overrides);
-    trigger(ctx, this.masterGain, ctx.currentTime + 0.02, params, velocity, { midi, durationSec: 0.5 });
+    trigger(ctx, dest, ctx.currentTime + 0.02, params, velocity, { midi, durationSec: 0.5 });
   }
 
   dispose(): void {

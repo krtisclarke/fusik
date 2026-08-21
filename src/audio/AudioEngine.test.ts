@@ -23,12 +23,17 @@ vi.mock('./master', () => ({
   createMasterChain: () => ({ input: fakeNode(), output: fakeNode() }),
 }));
 
-function fakeNode() {
-  return {
-    connect: () => undefined,
+function fakeNode(): any {
+  const node: any = {
+    connect: (next: unknown) => next,
     disconnect: () => undefined,
     gain: { value: 1, setTargetAtTime: () => undefined },
+    // The per-track echo chain builds a delay and a filter too.
+    delayTime: { value: 0 },
+    frequency: { value: 0 },
+    type: '',
   };
+  return node;
 }
 
 /** A stand-in AudioContext whose clock we advance by hand. */
@@ -37,6 +42,8 @@ class FakeAudioContext {
   state = 'running';
   destination = fakeNode();
   createGain = () => fakeNode();
+  createDelay = () => fakeNode();
+  createBiquadFilter = () => fakeNode();
   resume = async () => undefined;
   close = async () => undefined;
 }

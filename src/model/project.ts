@@ -73,6 +73,7 @@ export function createTrackForVoice(voiceId: string): Track {
     gain: pitched ? 0.7 : 0.85,
     muted: false,
     solo: false,
+    echo: 0,
   };
 }
 
@@ -133,7 +134,10 @@ function mapTrack(project: Project, trackId: string, fn: (t: Track) => Track): P
 }
 
 export function setTrackGain(project: Project, trackId: string, gain: number): Project {
-  return mapTrack(project, trackId, (t) => ({ ...t, gain: clamp(gain, 0, 1) }));
+  const value = clamp(gain, 0, 1);
+  const track = project.tracks.find((t) => t.id === trackId);
+  if (!track || track.gain === value) return project;
+  return mapTrack(project, trackId, (t) => ({ ...t, gain: value }));
 }
 
 export function setTrackMuted(project: Project, trackId: string, muted: boolean): Project {
@@ -146,6 +150,14 @@ export function toggleTrackMuted(project: Project, trackId: string): Project {
 
 export function toggleTrackSolo(project: Project, trackId: string): Project {
   return mapTrack(project, trackId, (t) => ({ ...t, solo: !t.solo }));
+}
+
+/** How much echo the whole track gets, 0..1. 0 turns it off entirely. */
+export function setTrackEcho(project: Project, trackId: string, echo: number): Project {
+  const value = clamp(echo, 0, 1);
+  const track = project.tracks.find((t) => t.id === trackId);
+  if (!track || track.echo === value) return project;
+  return mapTrack(project, trackId, (t) => ({ ...t, echo: value }));
 }
 
 export function renameTrack(project: Project, trackId: string, name: string): Project {
