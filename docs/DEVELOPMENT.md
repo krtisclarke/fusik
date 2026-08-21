@@ -403,9 +403,35 @@ log and no errors. Check with
 (take the hash from `curl -s http://127.0.0.1:5173/src/main.tsx`). The fix is to
 restart the dev server, which re-optimizes the dependencies.
 
+### The first-song walkthrough
+
+`state/tour.ts` holds the steps as plain data and pure functions; `ui/Tutorial.tsx`
+draws them. Two rules shape it, and both are load-bearing:
+
+- **It never blocks.** The overlay ignores the mouse entirely (`pointer-events:
+  none`) apart from its own card, so the child is always working the real
+  controls rather than a pretend copy of them. Nothing is modal, and Escape or
+  Close ends it at any point.
+- **It advances on what they do**, not on a Next button: beats placed, play
+  pressed, keys played. The thing being taught and the thing being done are the
+  same thing. Moving on without doing the step stays possible but is styled
+  quietly — a big bright *Skip* is an invitation to press it instead.
+
+Every goal is measured against a snapshot taken **when that step began**, never
+against zero. Otherwise replaying it later (the **?** button) on a song that
+already has forty blocks in it would tick six steps off instantly and teach
+nothing. The snapshot is tied to its step index so a stale one can't complete
+the next step the moment it opens.
+
+It offers itself once, to a child opening the app with no song to come back to,
+and is remembered as seen in local storage (`platform/prefs.ts`). Steps point at
+controls by `data-tour` attribute rather than by CSS class, so restyling a
+button can't silently leave the walkthrough pointing at nothing — and when a
+target genuinely isn't there, the card centres itself instead of vanishing.
+
 ### Testing approach
 
-- **Automated (99 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (105 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -418,6 +444,10 @@ restart the dev server, which re-optimizes the dependencies.
   a note never scheduled twice, a part appearing once per slot it occupies, the
   playhead surviving a length change mid-play, and a starved scheduler declining
   to fire everything it missed at once.
+- **The walkthrough** is tested through its pure step functions: that a step
+  completes on the right amount of new work, that read-only steps never complete
+  themselves, and — the one that matters — that replaying it on a song already
+  full of blocks still asks for new work rather than racing to the end.
 - **Audio:** verified by offline-rendering each voice and asserting non-silent
   output (done interactively via the dev console; see the debug handle exposed
   on `window.beatbox` in development builds).
@@ -440,6 +470,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Per-track volume / mute / solo | ✅ | |
 | Velocity (visual) | 🟡 | Shown per note; per-note velocity **editing** is Phase 2. |
 | Save / load (`.beatbox`) | ✅ | Native dialogs on desktop; download/upload in browser. |
+| First-song walkthrough | ✅ | Interactive: highlights the real control, advances when the child actually does it. Offers itself once; the **?** button replays it. |
 | Autosave & restore | ✅ | The song is kept in local storage as it's worked on and comes back on the next start. One slot, local only. **New** clears it. |
 | Undo / redo | ✅ | Snapshot-based; keyboard + buttons + menu. |
 | Master limiter (ear safety) | ✅ | |
@@ -504,6 +535,12 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] After **New**, reload — the empty song stays empty, not the old one.
 - [ ] Press **New** while the song is playing and leave the question on screen
       for a few seconds, then Cancel — the song picks up quietly, with no burst.
+- [ ] Open the app with no saved song: the walkthrough offers itself. Work
+      through it — each step ticks off when you do the thing, not when you press
+      a button, and the app stays fully usable underneath the card.
+- [ ] Finish it, reload: it doesn't come back. Press **?**: it does.
+- [ ] Press **?** on a song that already has plenty in it — it still asks for
+      new beats rather than skipping ahead.
 
 ---
 
@@ -529,4 +566,5 @@ into the song. Remaining, roughly following the brief: per-note velocity (so a
 performance keeps its light and heavy hits — the keyboard currently records every
 note at one strength), MIDI input through the same `noteOn`/`noteOff`, step
 sequencer & humanize, per-track effect sends, microphone recording, automation,
-and polish — onboarding, more voices, accessibility. Autosave is now in.
+and polish — more voices, accessibility. Autosave and the first-song
+walkthrough are now in.

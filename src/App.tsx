@@ -6,6 +6,7 @@ import { SectionStrip } from './ui/SectionStrip';
 import { Timeline } from './ui/Timeline';
 import { SoundEditor } from './ui/SoundEditor';
 import { Keyboard } from './ui/Keyboard';
+import { Tutorial } from './ui/Tutorial';
 import { getDesktop } from './platform/files';
 import { startAutosave } from './state/autosave';
 
@@ -113,6 +114,7 @@ export function App() {
       <SoundEditor />
       {showKeyboard && <Keyboard />}
       {status && <div className="toast">{status}</div>}
+      <Tutorial />
     </div>
   );
 }

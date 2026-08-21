@@ -105,6 +105,7 @@ export function Transport() {
   const saveCurrent = useStore((s) => s.saveCurrent);
   const openFromFile = useStore((s) => s.openFromFile);
   const newProject = useStore((s) => s.newProject);
+  const startTour = useStore((s) => s.startTour);
   const exportSong = useStore((s) => s.exportSong);
 
   return (
@@ -121,7 +122,12 @@ export function Transport() {
       <div className="divider" />
 
       <div className="tgroup">
-        <button className="tbtn play primary" onClick={togglePlay} title="Play / Pause (Space)">
+        <button
+          className="tbtn play primary"
+          data-tour="play"
+          onClick={togglePlay}
+          title="Play / Pause (Space)"
+        >
           {isPlaying ? '⏸' : '▶'}
         </button>
         <button className="tbtn" onClick={stop} title="Stop">
@@ -244,6 +250,14 @@ export function Transport() {
       <div className="spacer" />
 
       <div className="tgroup">
+        <button
+          className="tbtn"
+          onClick={startTour}
+          title="Show me how to make a song"
+          aria-label="Show me how to make a song"
+        >
+          ?
+        </button>
         <button className="tbtn" onClick={newProject} title="New song (Ctrl/Cmd+N)">
           New
         </button>

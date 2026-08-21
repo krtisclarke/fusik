@@ -1073,3 +1073,157 @@ select.snap {
   filter: none;
   opacity: 1;
 }
+
+/* ---- the first-song walkthrough -------------------------------------------
+   Drawn over the app, but deliberately not *in the way*: the layer ignores the
+   mouse entirely so every click still lands on the real control underneath.
+   Only the card itself takes pointer events. */
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.tour-ring {
+  position: fixed;
+  border: 2px solid var(--accent-2);
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 0 3px rgba(34, 211, 238, 0.18),
+    0 0 22px rgba(34, 211, 238, 0.35);
+  transition: opacity 0.15s ease;
+  animation: tour-breathe 2s ease-in-out infinite;
+  pointer-events: none;
+}
+.tour-ring.done {
+  border-color: var(--good);
+  box-shadow:
+    0 0 0 3px rgba(52, 211, 153, 0.2),
+    0 0 22px rgba(52, 211, 153, 0.4);
+  animation: none;
+}
+@keyframes tour-breathe {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.16), 0 0 18px rgba(34, 211, 238, 0.28); }
+  50% { box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.05), 0 0 28px rgba(34, 211, 238, 0.45); }
+}
+
+.tour-card {
+  position: fixed;
+  pointer-events: auto;
+  background: var(--bg-elev);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px 12px;
+  animation: tour-pop 0.18s ease-out;
+}
+.tour-card.done {
+  border-color: var(--good);
+}
+@keyframes tour-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.tour-dots {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 9px;
+}
+.tour-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+.tour-dot.past {
+  background: var(--good);
+}
+.tour-dot.on {
+  background: var(--accent-2);
+  transform: scale(1.35);
+}
+
+.tour-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+.tour-body {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  min-height: 40px;
+}
+.tour-body b {
+  color: var(--text);
+  font-weight: 600;
+}
+.tour-card.done .tour-body {
+  font-size: 26px;
+  text-align: center;
+}
+
+.tour-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.tour-remaining {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  margin-left: auto;
+}
+.tour-actions .tour-next {
+  margin-left: auto;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  padding: 6px 13px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.tour-remaining + .tour-next {
+  margin-left: 0;
+}
+.tour-actions .tour-next:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.tour-actions .tour-skip {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 6px 2px;
+}
+.tour-actions .tour-skip:hover {
+  color: var(--text-dim);
+}
+/* Moving on without doing the step: available, but never the loud option. */
+.tour-actions .tour-later {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--line-strong);
+  color: var(--text-dim);
+  border-radius: var(--radius-sm);
+  padding: 5px 11px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.tour-remaining + .tour-later {
+  margin-left: 0;
+}
+.tour-actions .tour-later:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+.tour-actions .tour-later:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

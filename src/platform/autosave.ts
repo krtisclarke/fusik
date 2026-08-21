@@ -16,6 +16,7 @@
 
 import { parseProject, serializeProject } from '../model/serialization';
 import type { Project } from '../model/types';
+import { browserStorage } from './storage';
 
 /** Versioned so a future change of shape can't be misread as this one. */
 export const AUTOSAVE_KEY = 'beatbox.autosave.v1';
@@ -25,27 +26,6 @@ interface AutosaveSlot {
   savedAt: number;
   name: string;
   json: string;
-}
-
-/** The bit of the Storage interface we use — so tests can hand in a fake. */
-export interface StorageLike {
-  getItem: (key: string) => string | null;
-  setItem: (key: string, value: string) => void;
-  removeItem: (key: string) => void;
-}
-
-/**
- * The browser's local storage, or null where there isn't one. Merely *reading*
- * `localStorage` throws in some privacy modes, so even that is guarded — the
- * app has to keep working without a place to autosave.
- */
-export function browserStorage(): StorageLike | null {
-  try {
-    if (typeof localStorage === 'undefined') return null;
-    return localStorage;
-  } catch {
-    return null;
-  }
 }
 
 export type WriteResult = 'ok' | 'full' | 'unavailable';

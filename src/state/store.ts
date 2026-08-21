@@ -28,6 +28,8 @@ import {
 } from './history';
 import { openProjectFromFile, saveProjectToFile, saveAudioFile } from '../platform/files';
 import { clearAutosave, readAutosave } from '../platform/autosave';
+import { hasSeenTutorial, markTutorialSeen } from '../platform/prefs';
+import { TOUR_STEPS } from './tour';
 import { renderProject } from '../audio/render';
 import { encodeWav } from '../audio/wav';
 
@@ -57,6 +59,18 @@ export interface StoreState {
   showKeyboard: boolean;
   /** Recording is armed: anything played while the song runs is kept. */
   isRecording: boolean;
+  /**
+   * Which step of the first-song walkthrough is showing, or null when it isn't
+   * running. See state/tour.ts.
+   */
+  tourStep: number | null;
+  /**
+   * How many notes have been played by hand on the keyboard since the app
+   * opened. The walkthrough watches this to know the child has actually played
+   * something; nothing else uses it, and it is deliberately not part of the
+   * song.
+   */
+  playedNotes: number;
 
   // lifecycle
   newProject: () => void;
@@ -144,6 +158,16 @@ export interface StoreState {
   audition: (voiceId: string) => void;
   setStatus: (status: string | null) => void;
   toggleKeyboard: () => void;
+
+  // the first-song walkthrough
+  /** Start it from the beginning (the ? button, or first run). */
+  startTour: () => void;
+  /** Move on a step; past the last one it finishes. */
+  nextTourStep: () => void;
+  /** Close it, and don't offer it again on its own. */
+  endTour: () => void;
+  /** A key was pressed on the playable keyboard. */
+  notePlayed: () => void;
 }
 
 // The project state captured at the start of a live drag (slider or resize), so
@@ -272,6 +296,11 @@ export const useStore = create<StoreState>((set, get) => {
     status: restored ? 'Picked up where you left off' : null,
     showKeyboard: true,
     isRecording: false,
+    // Offered once, unasked, to a child opening the app for the first time —
+    // and only when there is no song to come back to, so it can never appear
+    // over work already in progress.
+    tourStep: restored || hasSeenTutorial() ? null : 0,
+    playedNotes: 0,
 
     // ---- lifecycle -------------------------------------------------------
     newProject: () => {
@@ -712,6 +741,22 @@ export const useStore = create<StoreState>((set, get) => {
       void engine.audition(voiceId, {}, 0.9, middlePitch(voiceId, get().history.present));
     },
     setStatus: (status) => set({ status }),
+    startTour: () => set({ tourStep: 0 }),
+    nextTourStep: () => {
+      const step = get().tourStep;
+      if (step == null) return;
+      if (step + 1 >= TOUR_STEPS.length) {
+        get().endTour();
+        return;
+      }
+      set({ tourStep: step + 1 });
+    },
+    endTour: () => {
+      markTutorialSeen();
+      set({ tourStep: null });
+    },
+    notePlayed: () => set({ playedNotes: get().playedNotes + 1 }),
+
     toggleKeyboard: () => {
       const next = !get().showKeyboard;
       if (!next) engine.releaseAllHeld(); // don't leave a note ringing behind it

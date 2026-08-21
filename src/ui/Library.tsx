@@ -22,7 +22,7 @@ export function Library() {
   const groups = groupByCategory();
 
   return (
-    <div className="library">
+    <div className="library" data-tour="library">
       <h2>Sounds</h2>
       <p className="lib-hint">
         Drag a sound onto the timeline, or click it to hear it. Drums drop beats; Piano, Synth and

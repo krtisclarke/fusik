@@ -7,7 +7,8 @@ app (Windows and macOS) using web technology wrapped in Electron.
 > **Status:** Working timeline, transport, a synthesized drum kit **and melodic
 > instruments** (piano, synth, bells, bass) with scale-snapped melodies, **song
 > parts you can arrange** (verse/chorus-style, A A B A), per-block sound
-> editing, WAV export, plus save/load, **autosave** and undo/redo. See
+> editing, WAV export, plus save/load, **autosave**, an **interactive
+> walkthrough** for first-timers, and undo/redo. See
 > [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the full picture and roadmap.
 
 ## Run it (development)
@@ -47,6 +48,12 @@ npm run package:mac   # build a macOS app bundle
 ```
 
 ## What you can do right now
+
+- **Never used it before?** It shows you. The first time you open it, a short
+  walkthrough takes you through making a real song — a drum beat, a tune, playing
+  it yourself, and a second part — and each step ticks off when you actually do
+  it, not when you press Next. The **?** button in the toolbar starts it again
+  any time.
 
 - **Drums:** click an empty spot in a track row to drop a beat; click a beat to remove it.
 - **Instruments:** drop a Piano, Synth, Bells or Bass in, then click its note-grid to

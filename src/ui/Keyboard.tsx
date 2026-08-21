@@ -44,6 +44,7 @@ export function Keyboard() {
   const selectedTrackId = useStore((s) => s.selection.trackId);
   const recordPlayedNote = useStore((s) => s.recordPlayedNote);
   const isRecording = useStore((s) => s.isRecording);
+  const notePlayed = useStore((s) => s.notePlayed);
 
   // The picker is the single source of truth for which instrument the keys
   // play. Selecting a melodic track on the timeline *moves* the picker, rather
@@ -105,6 +106,7 @@ export function Keyboard() {
         voiceId,
       });
       refreshLit();
+      notePlayed(); // the walkthrough watches this; nothing else does
       void engine.noteOn(voiceId, midi).then((handle) => {
         const live = sounding.current.get(source);
         // Still the same press? Keep the handle so releasing can stop it.
@@ -113,7 +115,7 @@ export function Keyboard() {
         else engine.noteOff(handle);
       });
     },
-    [voiceId, refreshLit],
+    [voiceId, refreshLit, notePlayed],
   );
 
   const releaseNote = useCallback(
@@ -258,7 +260,8 @@ export function Keyboard() {
   };
 
   return (
-    <div className={`keyboard ${isRecording ? 'recording' : ''}`}>
+    <div className={`keyboard ${isRecording ? 'recording' : ''}`}
+      data-tour="keyboard">
       <div className="kb-side">
         <span className="kb-title">{isRecording ? '● Rec' : 'Play'}</span>
         <div className="kb-voices">

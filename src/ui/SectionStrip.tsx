@@ -184,7 +184,7 @@ export function SectionStrip() {
           );
         })}
       </div>
-      <div className="strip-actions">
+      <div className="strip-actions" data-tour="parts">
         <button className="tbtn" onClick={addPart} title="Add a new empty part to the song">
           ＋ New part
         </button>

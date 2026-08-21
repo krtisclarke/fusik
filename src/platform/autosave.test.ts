@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AUTOSAVE_KEY, clearAutosave, readAutosave, writeAutosave } from './autosave';
-import type { StorageLike } from './autosave';
+import type { StorageLike } from './storage';
 import { createDefaultProject, createNote, addNote } from '../model/project';
 
 /** A stand-in for localStorage — the tests run in Node, where there isn't one. */

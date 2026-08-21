@@ -266,6 +266,7 @@ export function Timeline() {
         {/* lanes */}
         <div
           className="lanes"
+          data-tour="lanes"
           ref={lanesRef}
           onDragOver={(e) => {
             e.preventDefault();
