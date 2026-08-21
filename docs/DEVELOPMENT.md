@@ -387,6 +387,22 @@ npm run package:win # NSIS installer (run on Windows or CI)
 npm run package:mac # macOS app bundle
 ```
 
+### A blank Electron window is almost always a stale dependency cache
+
+Vite pre-bundles dependencies into `node_modules/.vite/deps` and serves them
+with hashed, immutable URLs. Rebuild `node_modules` while a dev server is
+running and that folder goes with it: the server keeps handing out the old
+hashed URLs, which now 504. A browser tab that already has them cached carries
+on working, which is what makes this so confusing — a fresh Electron window has
+an empty cache, fails to fetch React, and renders nothing at all, with no error
+in the renderer console (a module that never loads throws nowhere).
+
+Symptom: an empty window, `#root` with zero children, `[vite] connected` in the
+log and no errors. Check with
+`curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:5173/node_modules/.vite/deps/react.js?v=<hash>"`
+(take the hash from `curl -s http://127.0.0.1:5173/src/main.tsx`). The fix is to
+restart the dev server, which re-optimizes the dependencies.
+
 ### Testing approach
 
 - **Automated (99 tests):** timing/beat math, snapping, scheduling windows,
