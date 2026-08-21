@@ -257,8 +257,9 @@ worked out from the transport position taken at key-down: in Part mode that's
 already a position in the part being edited, and in Song mode it's an absolute
 beat traced back through `songPositionAt` to whichever slot was sounding — which
 is what lets one take spill from the verse into the chorus and land correctly in
-both. Start and length are quantised to the current snap setting, so the Snap
-control doubles as the recording's "tidy up my timing" knob.
+both. Start and length are quantised whenever **Timing** is set to Tidy, so the
+one toggle covers both where blocks land when they're placed and how a
+performance is straightened out after it's played.
 
 **Playing a row on a different instrument.** A row's name in the lane header is
 a picker: change it and the whole row — blocks and all — plays on the new
@@ -453,6 +454,20 @@ log and no errors. Check with
 (take the hash from `curl -s http://127.0.0.1:5173/src/main.tsx`). The fix is to
 restart the dev server, which re-optimizes the dependencies.
 
+### One decision a child can actually make
+
+The timeline's grid resolution used to be a seven-way menu — Bar, Beat, ½, ¼,
+⅛, 1/16, Off. That is studio vocabulary an eight-year-old has no way to judge,
+and it was not decorative: it decided where blocks land when they're placed
+*and* how a recorded performance is straightened out. A child who idly moved it
+to "Bar" would find their beats jumping to places they hadn't clicked, with
+nothing on screen connecting cause to effect.
+
+It is now one toggle — **Tidy** or **Free** — and the underlying `SnapId` keeps
+its full range for the model and the tests. The general rule this stands for:
+where a control's options can't be judged by the person using it, the app should
+make the choice and offer only the one that changes what they get.
+
 ### The first-song walkthrough
 
 `state/tour.ts` holds the steps as plain data and pure functions; `ui/Tutorial.tsx`
@@ -523,7 +538,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Area | Status | Notes |
 | --- | --- | --- |
 | Electron desktop shell | ✅ | Window, native menu, Save/Open dialogs. |
-| Timeline (bars/beats/grid, snapping) | ✅ | Snap bar→1/16, or off. |
+| Timeline (bars/beats/grid, snapping) | ✅ | One **Timing** toggle: Tidy (a 1/16 grid) or Free. The finer resolutions still exist in `model/time.ts` and are tested — they just aren't a choice a child is asked to make. |
 | Transport (play/pause/stop/loop, BPM, position) | ✅ | Two-clock scheduler; live tempo change. |
 | Synthesized drum kit (12 voices) | ✅ | Membrane / noise / blip primitives. |
 | Place / remove / move notes | ✅ | Click to place, click to remove, drag sideways to move in time and up/down to change the note. A dragged note lands on the scale, so it can't be dropped on a wrong one. |
@@ -547,7 +562,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
 | Change the song's mood | ✅ | Happy / Sad, each with a "more notes" version, from the toolbar. The tune already written moves with it, by scale degree, so it keeps its shape — and flipping between two scales of the same size is exactly reversible. |
 | Playable keyboard | ✅ | Play the scale live with mouse/touch (slide across the keys) or two rows of computer keys an octave apart, with an octave shift. Follows the selected melodic track, or pick a voice. |
-| Recording a performance | ✅ | Arm ⏺, press play, and what you play on the keyboard is written into the song — quantised to the snap setting, into whichever part is sounding, on the track for that instrument (created if needed). A whole take is one undo step. |
+| Recording a performance | ✅ | Arm ⏺, press play, and what you play on the keyboard is written into the song — tidied to the grid when **Timing** is Tidy, into whichever part is sounding, on the track for that instrument (created if needed). A whole take is one undo step. |
 | MIDI input | ⬜ | The keyboard is in; a real MIDI controller would feed the same `noteOn`/`noteOff` and record through the same path. |
 | Song sections & arrangement | ✅ | Parts (A/B/…) with their own notes and lengths; a strip of chips shows the running order — click to edit, drag to rearrange, repeat/copy/rename/remove. Song vs. Part play modes. |
 | Automation | ⬜ | Phase 6. |
@@ -580,7 +595,8 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Mute / solo / volume per track behave correctly.
 - [ ] Undo/redo across add, remove, move, tempo.
 - [ ] Save a song, start a new one, reopen the saved file — it returns identical.
-- [ ] Change snap resolution; placement follows it.
+- [ ] Switch **Timing** to Free and place a block between two grid lines — it
+      stays exactly where you put it. Switch back to Tidy and it lines up again.
 - [ ] Loop toggle; song wraps at the end of the last bar.
 - [ ] Add a part, put a different beat in it, and switch between parts — each
       shows only its own blocks.

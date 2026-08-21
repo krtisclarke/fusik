@@ -2,19 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { engine } from '../audio/AudioEngine';
 import { formatPosition } from '../model/time';
-import type { SnapId } from '../model/time';
 import { MAX_BARS, MAX_BPM, MIN_BARS, MIN_BPM } from '../model/project';
 import { SCALE_CHOICES } from '../model/scales';
-
-const SNAP_OPTIONS: { id: SnapId; label: string }[] = [
-  { id: 'bar', label: 'Bar' },
-  { id: 'beat', label: 'Beat' },
-  { id: 'half', label: '½ beat' },
-  { id: 'quarter', label: '¼ beat' },
-  { id: 'eighth', label: '⅛ beat' },
-  { id: 'sixteenth', label: '1/16' },
-  { id: 'off', label: 'Off' },
-];
 
 /**
  * A number box that only reports a value when the child has finished typing one
@@ -88,7 +77,7 @@ export function Transport() {
   const currentSection = useStore(
     (s) => s.project.sections.find((x) => x.id === s.currentSectionId) ?? s.project.sections[0],
   );
-  const snap = useStore((s) => s.snap);
+  const tidyTiming = useStore((s) => s.snap !== 'off');
   const scaleId = useStore((s) => s.project.scaleId);
 
   const togglePlay = useStore((s) => s.togglePlay);
@@ -103,7 +92,7 @@ export function Transport() {
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
   const setBpm = useStore((s) => s.setBpm);
-  const setSnap = useStore((s) => s.setSnap);
+  const setTidyTiming = useStore((s) => s.setTidyTiming);
   const setScale = useStore((s) => s.setScale);
   const saveCurrent = useStore((s) => s.saveCurrent);
   const openFromFile = useStore((s) => s.openFromFile);
@@ -230,18 +219,18 @@ export function Transport() {
       </div>
 
       <div className="field">
-        <span className="lbl">Snap to</span>
-        <select
-          className="snap"
-          value={snap}
-          onChange={(e) => setSnap(e.target.value as SnapId)}
+        <span className="lbl">Timing</span>
+        <button
+          className={`tbtn wide ${tidyTiming ? 'on' : ''}`}
+          onClick={() => setTidyTiming(!tidyTiming)}
+          title={
+            tidyTiming
+              ? 'Blocks line up with the beat, and what you play is tidied up. Click for free timing.'
+              : 'Blocks go exactly where you put them. Click to line everything up with the beat.'
+          }
         >
-          {SNAP_OPTIONS.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          {tidyTiming ? 'Tidy' : 'Free'}
+        </button>
       </div>
 
       <div className="field">

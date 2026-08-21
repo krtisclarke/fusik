@@ -1250,3 +1250,12 @@ select.tname:focus {
   background: var(--bg-panel-2);
   outline: none;
 }
+
+/* A toggle that carries a word rather than an icon, so it needs a little room. */
+.tbtn.wide {
+  width: auto;
+  min-width: 62px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+}

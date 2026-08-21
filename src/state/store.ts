@@ -12,6 +12,10 @@ import * as P from '../model/project';
 import type { Project } from '../model/types';
 import type { SnapId } from '../model/time';
 import { snapBeat, snapStepInBeats } from '../model/time';
+
+/** How fine the grid is when lining-up is on. Fine enough to feel free, coarse
+ *  enough that everything lands in time. */
+const DEFAULT_SNAP: SnapId = 'sixteenth';
 import { songPositionAt } from '../model/arrange';
 import { getVoice, isPitched } from '../model/voices';
 import { pitchLadder } from '../model/scales';
@@ -162,7 +166,13 @@ export interface StoreState {
   }) => void;
 
   // ui / selection
-  setSnap: (snap: SnapId) => void;
+  /**
+   * Turn lining-up on or off. `snap` keeps the full range of resolutions
+   * underneath, because the model and the tests use them — but a child is only
+   * ever offered the choice they can actually judge: tidy, or free. A 1/16 grid
+   * is fine enough that a coarser one is never the thing they wanted.
+   */
+  setTidyTiming: (on: boolean) => void;
   select: (trackId: string | null, noteId?: string | null) => void;
   toggleNoteSelection: (trackId: string, noteId: string) => void;
   selectTrackNotes: (trackId: string) => void;
@@ -302,7 +312,7 @@ export const useStore = create<StoreState>((set, get) => {
     isLooping: engine.isLoopingOn(),
     playMode: engine.getPlayMode(),
     currentSectionId: initialSectionId,
-    snap: 'sixteenth',
+    snap: DEFAULT_SNAP,
     selection: { trackId: null, noteIds: [] },
     status: restored ? 'Picked up where you left off' : null,
     showKeyboard: true,
@@ -739,7 +749,7 @@ export const useStore = create<StoreState>((set, get) => {
     },
 
     // ---- ui / selection --------------------------------------------------
-    setSnap: (snap) => set({ snap }),
+    setTidyTiming: (on) => set({ snap: on ? DEFAULT_SNAP : 'off' }),
     select: (trackId, noteId = null) =>
       set({ selection: { trackId, noteIds: noteId ? [noteId] : [] } }),
     toggleNoteSelection: (trackId, noteId) => {

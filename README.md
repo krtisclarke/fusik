@@ -85,7 +85,10 @@ npm run package:mac   # build a macOS app bundle
   tune comes with it, note for note, so it's still your tune in a new mood.
   Switch back and you get exactly what you wrote.
 - Press **Space** to play/stop. The song loops by default.
-- Change the tempo, mute/solo/volume per track, and snap to a musical grid.
+- Change the tempo, and mute/solo/volume per track.
+- **Timing** is either **Tidy** — blocks line up with the beat and what you play
+  gets straightened out — or **Free**, where everything lands exactly where you
+  put it.
 - **Echo:** each row has a 🔁 slider. Turn it up and that sound repeats in time
   with the song — great on a hi-hat or a bass note. All the way left is off.
 - **Your song keeps itself.** Close the tab or shut the laptop and it's there
