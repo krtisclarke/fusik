@@ -33,6 +33,7 @@ import {
 import { openProjectFromFile, saveProjectToFile, saveAudioFile } from '../platform/files';
 import {
   deleteSong as deleteSongSlot,
+  importBrowserShelf,
   importLegacyAutosave,
   listSongs,
   readCurrentSongId,
@@ -72,8 +73,11 @@ export interface StoreState {
   showKeyboard: boolean;
   /** Recording is armed: anything played while the song runs is kept. */
   isRecording: boolean;
-  /** Which shelf slot the song on screen belongs to. */
+  /** Which shelf slot the song on screen belongs to. On the desktop this is the
+   *  song's file name, so it changes when the song is renamed. */
   currentSongId: string;
+  /** Autosave reports back here when a rename moved the song to a new file. */
+  songSavedAs: (id: string) => void;
   /** Every song kept on this computer, most recent first. */
   songs: SongSummary[];
   /** Whether the songs list is open. */
@@ -321,8 +325,13 @@ export const useStore = create<StoreState>((set, get) => {
   // swallow a song in progress), then the song that was open last time, then the
   // most recent one on the shelf. Anything unreadable simply means a fresh song
   // — the app must never fail to open.
+  // Two upgrades, oldest first, and the order matters: the very first version
+  // kept one song in a single slot, the next kept several in browser storage,
+  // and the desktop app now keeps them as files. The single slot lands in
+  // browser storage, and the sweep below carries it the rest of the way.
   const migratedId = importLegacyAutosave(newSongId());
-  const startId = migratedId ?? readCurrentSongId() ?? listSongs()[0]?.id ?? null;
+  const shelfId = importBrowserShelf();
+  const startId = shelfId ?? migratedId ?? readCurrentSongId() ?? listSongs()[0]?.id ?? null;
   const restoredProject = startId ? readSong(startId) : null;
   const initialSongId = restoredProject && startId ? startId : newSongId();
   const restored = restoredProject != null;
@@ -450,6 +459,13 @@ export const useStore = create<StoreState>((set, get) => {
     },
 
     refreshSongs: () => set({ songs: listSongs() }),
+
+    songSavedAs: (id) => {
+      if (id === get().currentSongId) return;
+      writeCurrentSongId(id);
+      set({ currentSongId: id });
+    },
+
     toggleSongs: () => set({ showSongs: !get().showSongs }),
 
     saveCurrent: async () => {

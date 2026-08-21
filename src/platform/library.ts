@@ -16,6 +16,7 @@
 
 import { parseProject, serializeProject } from '../model/serialization';
 import type { Project } from '../model/types';
+import { getDesktop } from './files';
 import { browserStorage, type StorageLike } from './storage';
 
 const INDEX_KEY = 'beatbox.songs.v1';
@@ -68,8 +69,26 @@ function writeIndex(storage: StorageLike, songs: SongSummary[]): WriteResult {
   }
 }
 
+/**
+ * The desktop app's songs folder, when we're running in the desktop app.
+ *
+ * On the desktop a song is a real file a grown-up can find, copy and back up,
+ * with no few-megabyte browser allowance in the way — which is what makes room
+ * for recordings. In a plain browser (development) there is no such folder, and
+ * everything below falls back to local storage. Tests pass a fake storage in
+ * explicitly and so never take this path.
+ */
+function desktopSongs() {
+  return getDesktop()?.songs;
+}
+
 /** Every song on the shelf, most recently worked on first. */
 export function listSongs(storage: StorageLike | null = browserStorage()): SongSummary[] {
+  const files = desktopSongs();
+  if (files) {
+    const result = files.list();
+    return (result.ok && result.songs ? result.songs : []).sort((a, b) => b.savedAt - a.savedAt);
+  }
   if (!storage) return [];
   return readIndex(storage).sort((a, b) => b.savedAt - a.savedAt);
 }
@@ -85,6 +104,15 @@ export function readSong(
   id: string,
   storage: StorageLike | null = browserStorage(),
 ): Project | null {
+  const files = desktopSongs();
+  if (files) {
+    try {
+      const result = files.read(id);
+      return result.ok && result.json ? parseProject(result.json) : null;
+    } catch {
+      return null;
+    }
+  }
   if (!storage) return null;
   try {
     const raw = storage.getItem(slotKey(id));
@@ -93,6 +121,34 @@ export function readSong(
   } catch {
     return null; // corrupt, or from a newer format than this build understands
   }
+}
+
+/**
+ * On the desktop a song's id *is* its file name, so renaming the song renames
+ * the file and the id moves with it. Callers hold the id, so writing hands the
+ * new one back.
+ */
+export interface WriteOutcome {
+  result: WriteResult;
+  id: string;
+}
+
+/** Write, and report the id the song now lives under. */
+export function saveSong(
+  id: string,
+  project: Project,
+  storage: StorageLike | null = browserStorage(),
+): WriteOutcome {
+  const files = desktopSongs();
+  if (files) {
+    try {
+      const written = files.write(id, project.name, serializeProject(project));
+      return written.ok ? { result: 'ok', id: written.id ?? id } : { result: 'full', id };
+    } catch {
+      return { result: 'full', id };
+    }
+  }
+  return { result: writeSong(id, project, storage), id };
 }
 
 /** Put a song on the shelf under `id`, replacing whatever was there. */
@@ -116,6 +172,15 @@ export function writeSong(
 
 /** Take a song off the shelf for good. */
 export function deleteSong(id: string, storage: StorageLike | null = browserStorage()): void {
+  const files = desktopSongs();
+  if (files) {
+    try {
+      files.remove(id);
+    } catch {
+      // Already gone, or the folder is unreachable; nothing else to undo.
+    }
+    return;
+  }
   if (!storage) return;
   try {
     storage.removeItem(slotKey(id));
@@ -131,13 +196,16 @@ export function deleteSong(id: string, storage: StorageLike | null = browserStor
 /** Which song the app was last in, if that song is still on the shelf. */
 export function readCurrentSongId(storage: StorageLike | null = browserStorage()): string | null {
   if (!storage) return null;
+  let id: string | null;
   try {
-    const id = storage.getItem(CURRENT_KEY);
-    if (!id) return null;
-    return readIndex(storage).some((s) => s.id === id) ? id : null;
+    id = storage.getItem(CURRENT_KEY);
   } catch {
     return null;
   }
+  if (!id) return null;
+  // Only if that song is still there. Which shelf it lives on doesn't matter;
+  // this pointer is about this machine, not about anyone's work.
+  return listSongs(storage).some((s) => s.id === id) ? id : null;
 }
 
 export function writeCurrentSongId(
@@ -150,6 +218,58 @@ export function writeCurrentSongId(
   } catch {
     // Worst case the app opens the most recent song instead of this one.
   }
+}
+
+/**
+ * Move songs that were kept in browser storage into the desktop's folder, once.
+ *
+ * The first version of the shelf lived in local storage even in the desktop
+ * app. Anyone who used it has songs there, and switching to real files must not
+ * look like the app forgot them. Each song is copied across and then removed
+ * from storage — but only after the copy is on disk, so a failure leaves the
+ * original exactly where it was.
+ *
+ * Returns the new id of the song that was open, if it was one of them.
+ */
+export function importBrowserShelf(
+  storage: StorageLike | null = browserStorage(),
+): string | null {
+  const files = desktopSongs();
+  if (!files || !storage) return null;
+
+  // Read the "which song was open" pointer straight from storage. The public
+  // reader checks it against the songs that exist, and at this moment none of
+  // them do — they are all still in storage, which is the thing being emptied.
+  // Going through it would hand back null and lose the child's place.
+  let currentId: string | null = null;
+  try {
+    currentId = storage.getItem(CURRENT_KEY);
+  } catch {
+    currentId = null;
+  }
+
+  let movedCurrentTo: string | null = null;
+  for (const summary of readIndex(storage)) {
+    let project: Project;
+    try {
+      const raw = storage.getItem(slotKey(summary.id));
+      if (!raw) continue;
+      project = parseProject(raw);
+    } catch {
+      continue; // unreadable: leave it alone rather than destroying it
+    }
+    const written = saveSong(summary.id, project, storage);
+    if (written.result !== 'ok') continue;
+    if (summary.id === currentId) movedCurrentTo = written.id;
+    try {
+      storage.removeItem(slotKey(summary.id));
+    } catch {
+      // Left behind; harmless, since the index below is what's read.
+    }
+  }
+  writeIndex(storage, []);
+  if (movedCurrentTo) writeCurrentSongId(movedCurrentTo, storage);
+  return movedCurrentTo;
 }
 
 /**
@@ -182,6 +302,11 @@ export function importLegacyAutosave(
   }
 
   if (writeSong(newId, project, storage) !== 'ok') return null;
+  // Mark it as the song that was open. Without this the child lands on a blank
+  // song after updating — their work is safely on the shelf, but nothing says
+  // so, which looks exactly like having lost it. It also lets the desktop's
+  // sweep below carry their place across to the folder.
+  writeCurrentSongId(newId, storage);
   try {
     storage.removeItem(LEGACY_SLOT_KEY);
   } catch {

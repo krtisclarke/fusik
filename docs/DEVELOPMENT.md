@@ -386,9 +386,35 @@ Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v2):
 
 ### Keeping songs between visits (the shelf)
 
-A child does not think to save. So the app keeps its own copies in the browser's
-local storage (`platform/library.ts`) — an index of songs plus one slot each —
-and opens the last one at the next start. Local only, nothing leaves the machine.
+A child does not think to save. So the app keeps its own copies and opens the
+last one at the next start. Local only, nothing leaves the machine.
+
+**On the desktop those copies are real files**, in `~/Documents/Beatbox Studio/`,
+one `.beatbox` file per song, named after the song. That is the whole point of
+shipping a desktop app rather than a web page: a song is a thing a grown-up can
+find, copy to another machine and back up, and there is no few-megabyte browser
+allowance in the way — which is what makes room for the recordings still to
+come. Documents rather than a hidden application-support folder, precisely so
+they can be found. `electron/main.cjs` owns the folder and answers four
+questions about it — list, read, write, delete.
+
+Those answers are **synchronous** (`ipcRenderer.sendSync`), which is unusual
+enough to explain. The renderer needs the song list and the song it was last in
+before it can draw anything, and the alternative — draw an empty song, then
+swap it out a moment later — is worse than blocking for the millisecond it takes
+to read a few kilobytes. Song files are kept small by design; when recordings
+arrive they will live beside the song as their own files, so this stays cheap.
+
+A song's **id is its file name**, so renaming the song renames the file and the
+id moves with it — `saveSong` hands the new id back and the store follows it.
+Names are cleaned up for the file system and made unique (`electron/songfiles.cjs`,
+tested on its own): two songs called "Dinosaur Disco" get their own files, and a
+song called `AC/DC: best*song?` gets a file a file system will accept while
+keeping its real name inside.
+
+In a plain browser — development, and the app's other life — there is no such
+folder, and everything falls back to local storage: an index of songs plus one
+slot each (`platform/library.ts`).
 
 It started as a **single** slot, which is enough right up until a child makes
 something they like and then starts a new one; at that point the first was gone
@@ -404,11 +430,19 @@ hand-mangled slot can only ever mean "that song isn't there" — never a broken
 app. Reading never throws and never deletes: opening a song must not be the thing
 that destroys one it merely couldn't read today.
 
-**The upgrade path is the risky part.** Anyone already using the app has a song
-in the old single slot, and losing it on an update is precisely what autosave
-exists to prevent. `importLegacyAutosave` moves it onto the shelf once, under a
-new id, and clears the old key **only after** the copy is safely stored — a
-failed write leaves the original exactly where it was.
+**The upgrade path is the risky part, and there are two of them.** The first
+version kept one song in a single slot; the next kept several in browser
+storage; the desktop app now keeps them as files. Both hops run at startup,
+oldest first: `importLegacyAutosave` brings the single slot into storage, and
+`importBrowserShelf` sweeps storage into the folder. Each clears the old copy
+**only after** the new one is safely written, so a failure leaves the original
+where it was.
+
+Both hops also carry the *pointer to the song that was open*, which is easy to
+miss and looks like data loss when it's missed: the work is safely on the shelf,
+but the child lands on a blank song and has no way to know that. Two separate
+bugs of exactly that shape turned up here, and both only appeared by running the
+real upgrade in the real app — the code read fine.
 
 **When it writes** (`state/autosave.ts`) is the part with a bug in it if you get
 it wrong. Dragging a sound slider changes the project on every pointer move, and
@@ -527,7 +561,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (141 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (149 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -568,7 +602,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Save / load (`.beatbox`) | ✅ | Native dialogs on desktop; download/upload in browser. |
 | First-song walkthrough | ✅ | Interactive: highlights the real control, advances when the child actually does it. Offers itself once; the **?** button replays it. |
 | Autosave & restore | ✅ | Songs are kept in local storage as they're worked on and the last one comes back at the next start. Local only. |
-| Several songs, named | ✅ | The song has a name you can type over, and 🎵 Songs lists everything kept on this computer — click one to open it. **New** keeps the one you were on rather than replacing it. |
+| Several songs, named | ✅ | The song has a name you can type over, and 🎵 Songs lists everything kept on this computer — click one to open it. **New** keeps the one you were on rather than replacing it. On the desktop each song is a real file in `~/Documents/Beatbox Studio/`. |
 | Undo / redo | ✅ | Snapshot-based; keyboard + buttons + menu. |
 | Master limiter (ear safety) | ✅ | |
 | Microphone recording | ⬜ | Button present but disabled (Phase 5). |
@@ -646,8 +680,15 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Delete a song you are *not* in: it goes, yours is untouched. Delete the one
       you *are* in: the screen clears to a fresh song and the deleted one stays
       deleted (it must not reappear a second later).
-- [ ] Upgrade path: put a song in the old `beatbox.autosave.v1` key, reload —
-      it appears on the shelf and the old key is gone.
+- [ ] In the desktop app: name a song, and a `.beatbox` file of that name
+      appears in `~/Documents/Beatbox Studio/`. Rename it — the file moves
+      rather than a second one appearing.
+- [ ] Name two songs the same thing: both get their own file. Give one a name
+      full of `/ : * ?` — it saves, and keeps its real name in the app.
+- [ ] Quit and reopen the desktop app: it opens the song you were on.
+- [ ] Upgrade paths: seed `beatbox.autosave.v1` (oldest) or `beatbox.songs.v1`
+      (browser shelf) and restart the desktop app — the songs become files, and
+      the one that was open is the one that opens.
 - [ ] Press **New** while the song is playing and leave the question on screen
       for a few seconds, then Cancel — the song picks up quietly, with no burst.
 - [ ] Open the app with no saved song: the walkthrough offers itself. Work

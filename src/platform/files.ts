@@ -21,6 +21,14 @@ interface DesktopBridge {
     suggestedName: string,
     bytes: Uint8Array<ArrayBuffer>,
   ) => Promise<{ ok: boolean; canceled?: boolean; path?: string }>;
+  /** The songs folder. Synchronous — see the handlers in electron/main.cjs. */
+  songs?: {
+    list: () => { ok: boolean; songs?: { id: string; name: string; savedAt: number }[] };
+    read: (id: string) => { ok: boolean; json?: string };
+    write: (id: string, name: string, json: string) => { ok: boolean; id?: string };
+    remove: (id: string) => { ok: boolean };
+    folder: () => { ok: boolean; path?: string };
+  };
   onMenu: (channel: string, handler: () => void) => () => void;
 }
 

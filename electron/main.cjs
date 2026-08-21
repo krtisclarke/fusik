@@ -12,6 +12,94 @@ const fs = require('node:fs/promises');
 const DEV_SERVER_URL = 'http://127.0.0.1:5173';
 const PROJECT_EXTENSION = 'beatbox';
 
+// ---- where songs live ----------------------------------------------------
+//
+// Real files in a real folder, not tucked inside the browser storage the
+// renderer happens to have. The desktop app is the actual product: a child's
+// songs should be things a grown-up can find, copy to another machine and back
+// up, and they should not be capped by a browser's few-megabyte allowance —
+// which matters most for the recordings that are coming.
+//
+// Documents rather than a hidden application-support folder, for exactly that
+// findability, and because on a Mac it is already covered by whatever backs the
+// machine up.
+
+const fsSync = require('node:fs');
+const { uniqueFileName } = require('./songfiles.cjs');
+const SONGS_DIR = () => path.join(app.getPath('documents'), 'Beatbox Studio');
+
+function ensureSongsDir() {
+  const dir = SONGS_DIR();
+  fsSync.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+/**
+ * These are answered synchronously. The renderer needs the song list and the
+ * song it was last in *before* it can draw anything, and the alternative — draw
+ * an empty song, then swap it out a moment later — is worse than blocking for
+ * the millisecond it takes to read a few kilobytes of text. Song files stay
+ * small by design: recordings will live beside them as their own files, so this
+ * stays cheap even once there is audio in a song.
+ */
+function handleSongs(channel, handler) {
+  ipcMain.on(channel, (event, arg) => {
+    try {
+      event.returnValue = handler(arg);
+    } catch (err) {
+      event.returnValue = { ok: false, error: String((err && err.message) || err) };
+    }
+  });
+}
+
+handleSongs('songs:list', () => {
+  const dir = ensureSongsDir();
+  const songs = [];
+  for (const entry of fsSync.readdirSync(dir)) {
+    if (!entry.endsWith(`.${PROJECT_EXTENSION}`)) continue;
+    const full = path.join(dir, entry);
+    let name = entry.slice(0, -(PROJECT_EXTENSION.length + 1));
+    try {
+      // The name inside the file wins: it is what the app round-trips, and the
+      // file may have been renamed from outside.
+      const parsed = JSON.parse(fsSync.readFileSync(full, 'utf-8'));
+      if (parsed && typeof parsed.name === 'string' && parsed.name.trim()) name = parsed.name;
+    } catch {
+      // Unreadable or not a song. It still gets listed under its file name
+      // rather than vanishing — a child can see it and delete it.
+    }
+    songs.push({ id: entry, name, savedAt: fsSync.statSync(full).mtimeMs });
+  }
+  return { ok: true, songs };
+});
+
+handleSongs('songs:read', (id) => {
+  const full = path.join(ensureSongsDir(), path.basename(String(id || '')));
+  if (!fsSync.existsSync(full)) return { ok: false };
+  return { ok: true, json: fsSync.readFileSync(full, 'utf-8') };
+});
+
+handleSongs('songs:write', ({ id, name, json }) => {
+  const dir = ensureSongsDir();
+  const current = path.basename(String(id || ''));
+  // Renaming the song renames its file, so the folder always reads like the
+  // list in the app. The id follows the file.
+  const wanted = uniqueFileName(name, (f) => fsSync.existsSync(path.join(dir, f)), current);
+  fsSync.writeFileSync(path.join(dir, wanted), json, 'utf-8');
+  if (current && current !== wanted && fsSync.existsSync(path.join(dir, current))) {
+    fsSync.unlinkSync(path.join(dir, current));
+  }
+  return { ok: true, id: wanted };
+});
+
+handleSongs('songs:delete', (id) => {
+  const full = path.join(ensureSongsDir(), path.basename(String(id || '')));
+  if (fsSync.existsSync(full)) fsSync.unlinkSync(full);
+  return { ok: true };
+});
+
+handleSongs('songs:folder', () => ({ ok: true, path: ensureSongsDir() }));
+
 /** @type {BrowserWindow | null} */
 let mainWindow = null;
 

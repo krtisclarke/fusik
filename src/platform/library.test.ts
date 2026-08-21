@@ -159,6 +159,14 @@ describe('upgrading from the single-slot autosave', () => {
     expect(listSongs(storage).map((s) => s.id)).toEqual(['s1']);
   });
 
+  // Without this the child lands on a blank song after updating: the work is
+  // safely on the shelf, but nothing opens it, which looks just like losing it.
+  it('opens the song it rescued, rather than a blank one', () => {
+    const storage = fakeStorage(legacy());
+    importLegacyAutosave('s1', storage);
+    expect(readCurrentSongId(storage)).toBe('s1');
+  });
+
   it('clears the old slot once, so it can never come back over newer work', () => {
     const storage = fakeStorage(legacy());
     importLegacyAutosave('s1', storage);

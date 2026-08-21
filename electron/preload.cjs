@@ -20,6 +20,19 @@ contextBridge.exposeInMainWorld('desktop', {
   /** Save rendered WAV bytes via a native dialog. */
   saveAudio: (suggestedName, bytes) => ipcRenderer.invoke('audio:save', { suggestedName, bytes }),
 
+  /**
+   * The songs folder on this machine. Answered synchronously because the app
+   * needs the list and the last song open before it draws anything; see the
+   * handlers in main.cjs.
+   */
+  songs: {
+    list: () => ipcRenderer.sendSync('songs:list'),
+    read: (id) => ipcRenderer.sendSync('songs:read', id),
+    write: (id, name, json) => ipcRenderer.sendSync('songs:write', { id, name, json }),
+    remove: (id) => ipcRenderer.sendSync('songs:delete', id),
+    folder: () => ipcRenderer.sendSync('songs:folder'),
+  },
+
   /** Subscribe to native menu commands. Returns an unsubscribe function. */
   onMenu: (channel, handler) => {
     const allowed = ['menu:new', 'menu:open', 'menu:save', 'menu:undo', 'menu:redo'];

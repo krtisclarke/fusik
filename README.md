@@ -96,6 +96,9 @@ npm run package:mac   # build a macOS app bundle
   the top, and **🎵 Songs** lists everything you've made: click one to open it.
   Starting a new song doesn't lose the old one. **Save to a file** still puts a
   copy somewhere you choose, to keep or to share.
+- **Where your songs live.** In the desktop app they're ordinary files in
+  `Documents/Beatbox Studio` — one per song, named after it. You can copy them,
+  back them up, or move them to another computer.
 - **Ctrl/Cmd+Z** to undo, **Ctrl/Cmd+S** to save, **Ctrl/Cmd+O** to open.
 - **Export** turns the song into a `.wav` audio file you can play or share anywhere.
 

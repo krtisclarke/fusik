@@ -13,7 +13,7 @@
 
 import type { StoreApi, UseBoundStore } from 'zustand';
 import type { Project } from '../model/types';
-import { writeSong } from '../platform/library';
+import { saveSong } from '../platform/library';
 import type { StoreState } from './store';
 
 export const AUTOSAVE_DELAY_MS = 1000;
@@ -78,13 +78,19 @@ export function startAutosave(store: UseBoundStore<StoreApi<StoreState>>): () =>
 
   const autosaver = createAutosaver((project) => {
     const state = store.getState();
-    const result = writeSong(state.currentSongId, project);
-    // The shelf's index changed, so the songs list has to follow — otherwise a
-    // song renamed or freshly started shows a stale name until the next reload.
-    if (result === 'ok') state.refreshSongs();
+    const { result, id } = saveSong(state.currentSongId, project);
+    // On the desktop a song's file is named after the song, so renaming moves
+    // it. The store has to follow, or the next write would create a second file
+    // under the old name.
+    if (result === 'ok') {
+      state.songSavedAs(id);
+      // The shelf changed, so the songs list has to follow — otherwise a song
+      // renamed or freshly started shows a stale name until the next reload.
+      state.refreshSongs();
+    }
     if (result === 'full' && !warnedFull) {
       warnedFull = true;
-      store.getState().setStatus("This song is too big to keep by itself — press Save to keep it in a file.");
+      store.getState().setStatus("Your songs can't be saved right now — there may be no room left.");
     }
   });
 
