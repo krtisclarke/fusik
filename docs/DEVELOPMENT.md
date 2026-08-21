@@ -260,6 +260,17 @@ is what lets one take spill from the verse into the chorus and land correctly in
 both. Start and length are quantised to the current snap setting, so the Snap
 control doubles as the recording's "tidy up my timing" knob.
 
+**Playing a row on a different instrument.** A row's name in the lane header is
+a picker: change it and the whole row — blocks and all — plays on the new
+instrument. The notes cross over **by their position on the note-grid, not by
+their raw pitch**, because instruments sit in different registers. The Bass
+lives two octaves below the Piano, so keeping the pitches would draw the tune on
+one row of the grid and play it somewhere else entirely; carrying the ladder
+position lands it in the new instrument's own range, which is what "play my tune
+on the bass" means. A drum row can only become another drum and a melodic row
+another melodic one, enforced in `setTrackVoice` rather than in the dropdown, so
+no future caller can produce a drum block carrying a pitch nothing can draw.
+
 **Changing the song's mood.** The four scales are offered in the toolbar under
 names a child can judge — Happy, Sad, and a "more notes" version of each — and
 changing one **brings the tune already written along with it**. Leaving the
@@ -481,7 +492,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (128 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (134 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -532,6 +543,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Per-track echo | ✅ | One slider per track, on the lane header. Tempo-synced (repeats land an eighth note apart at any tempo) and one control drives level, repeats and feedback together, so there's no way to set it to something unmusical. Same chain live and in Export. |
 | Other per-track effects (reverb send, filter) | ⬜ | The per-track chain (`audio/trackChain.ts`) is the place to add them. |
 | Melodic instruments (piano, synth, bells, bass) | ✅ | Pitched subtractive synth: 2 oscillators, ADSR, low-pass filter. |
+| Swap a row's instrument | ✅ | The row's name is a picker. The tune comes with it, landing in the new instrument's own range. Drums stay drums. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
 | Change the song's mood | ✅ | Happy / Sad, each with a "more notes" version, from the toolbar. The tune already written moves with it, by scale degree, so it keeps its shape — and flipping between two scales of the same size is exactly reversible. |
 | Playable keyboard | ✅ | Play the scale live with mouse/touch (slide across the keys) or two rows of computer keys an octave apart, with an octave shift. Follows the selected melodic track, or pick a voice. |
@@ -560,6 +572,10 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       key, every note still distinct. Switch back to Happy: it is exactly the
       tune you wrote.
 - [ ] Switch to a "more notes" mood and back — the tune is untouched.
+- [ ] Write a tune on the Piano row, then change that row's name box to Bass —
+      the same tune plays two octaves down, and the row turns the bass's colour.
+- [ ] A drum row's picker offers only drums; a melodic row's offers only
+      instruments.
 - [ ] Change tempo while playing — song speeds up/slows smoothly.
 - [ ] Mute / solo / volume per track behave correctly.
 - [ ] Undo/redo across add, remove, move, tempo.
@@ -610,11 +626,11 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 ## 9. Known limitations
 
 - Blocks can be moved in **time**, dragged up and down to change the note, and
-  resized (right edge) — but not dragged **between tracks**, so a tune written
-  on the Piano can't be handed to the Bells without writing it again. The model
-  already supports it (`moveNote` takes a destination track); what's missing is
-  the interaction, and the decisions that come with it — a drum block has no
-  pitch to land on, and a chained block would have to take its chain with it.
+  resized (right edge) — but not dragged **between tracks**. Handing a whole
+  tune to another instrument is covered by the row's instrument picker; what's
+  still missing is moving *one* block across, along with the decisions that come
+  with it — a drum block has no pitch to land on, and a chained block would have
+  to take its chain with it.
 - Multi-select uses Shift/Cmd/Ctrl-click (or a row's name for all of a row).
   A more touch/kid-friendly select (lasso, link-mode) is a candidate follow-up.
 - Packaging a signed Windows installer requires a Windows machine or CI; the app

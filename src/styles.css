@@ -1227,3 +1227,26 @@ select.snap {
   opacity: 0.45;
   cursor: default;
 }
+
+/* The row's instrument picker. It replaced a plain label, so it keeps looking
+   like one until you go near it — a row of dropdowns would shout for attention
+   the timeline needs for the blocks. */
+select.tname {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  padding: 1px 4px;
+  cursor: pointer;
+}
+select.tname:hover,
+select.tname:focus {
+  border-color: var(--line-strong);
+  background: var(--bg-panel-2);
+  outline: none;
+}

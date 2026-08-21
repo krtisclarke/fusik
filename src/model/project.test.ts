@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { SCALES } from './scales';
+import { SCALES, pitchLadder } from './scales';
+import { getVoice } from './voices';
 import {
   createDefaultProject,
   createNote,
@@ -24,6 +25,7 @@ import {
   expandChain,
   removeNotes,
   setScale,
+  setTrackVoice,
   addTrack,
   createTrackForVoice,
 } from './project';
@@ -131,6 +133,94 @@ describe('note edits are immutable', () => {
     p = addNote(p, trackId, note);
     p = moveNote(p, trackId, note.id, trackId, 1);
     expect(p.tracks[0].notes[0].pitch).toBe(60);
+  });
+});
+
+describe('playing a row on another instrument', () => {
+  it('carries the tune into the new instrument’s range', () => {
+    let p = createDefaultProject();
+    const piano = createTrackForVoice('piano');
+    p = addTrack(p, piano);
+    const ladder = pitchLadder(60, 2, p.scaleRoot, p.scaleId);
+    // the first, middle and last rungs of the piano's grid
+    for (const [i, idx] of [0, 5, ladder.length - 1].entries()) {
+      p = addNote(p, piano.id, createNote(sec(p), i, 1, 0.8, ladder[idx]));
+    }
+
+    p = setTrackVoice(p, piano.id, 'bass');
+    const track = p.tracks.find((t) => t.id === piano.id)!;
+    expect(track.instrument.voiceId).toBe('bass');
+    expect(track.name).toBe('Bass');
+
+    // Same rungs, on the bass's own ladder — so it is the same tune, played low.
+    const bassLadder = pitchLadder(getVoice('bass')!.baseMidi!, getVoice('bass')!.octaves!, p.scaleRoot, p.scaleId);
+    const pitches = track.notes.map((n) => n.pitch!);
+    expect(pitches[0]).toBe(bassLadder[0]);
+    expect(pitches[1]).toBe(bassLadder[5]);
+    // ...and it really did move, rather than staying where the piano had it.
+    expect(pitches[0]).toBeLessThan(ladder[0]);
+  });
+
+  it('keeps the shape of the tune — the order of the notes is untouched', () => {
+    let p = createDefaultProject();
+    const piano = createTrackForVoice('piano');
+    p = addTrack(p, piano);
+    const ladder = pitchLadder(60, 2, p.scaleRoot, p.scaleId);
+    for (const [i, idx] of [0, 3, 1, 6, 2].entries()) {
+      p = addNote(p, piano.id, createNote(sec(p), i, 1, 0.8, ladder[idx]));
+    }
+    const before = p.tracks.find((t) => t.id === piano.id)!.notes.map((n) => n.pitch!);
+    p = setTrackVoice(p, piano.id, 'bells');
+    const after = p.tracks.find((t) => t.id === piano.id)!.notes.map((n) => n.pitch!);
+    // every rise stays a rise and every fall a fall
+    for (let i = 1; i < after.length; i++) {
+      expect(Math.sign(after[i] - after[i - 1])).toBe(Math.sign(before[i] - before[i - 1]));
+    }
+  });
+
+  it('keeps everything else about the blocks', () => {
+    let p = createDefaultProject();
+    const piano = createTrackForVoice('piano');
+    p = addTrack(p, piano);
+    const note = { ...createNote(sec(p), 2, 1.5, 0.42, 72), groupId: 'grp_1', params: { cutoff: 900 } };
+    p = addNote(p, piano.id, note);
+    p = setTrackVoice(p, piano.id, 'synth');
+    const moved = p.tracks.find((t) => t.id === piano.id)!.notes[0];
+    expect(moved.id).toBe(note.id);
+    expect(moved.startBeat).toBe(2);
+    expect(moved.lengthBeats).toBe(1.5);
+    expect(moved.velocity).toBe(0.42);
+    expect(moved.groupId).toBe('grp_1');
+    expect(moved.params).toEqual({ cutoff: 900 });
+  });
+
+  it('refuses to turn a drum row into a tune, or the other way', () => {
+    let p = createDefaultProject();
+    const drumId = p.tracks[0].id; // kick
+    expect(setTrackVoice(p, drumId, 'piano')).toBe(p);
+
+    const piano = createTrackForVoice('piano');
+    p = addTrack(p, piano);
+    expect(setTrackVoice(p, piano.id, 'kick')).toBe(p);
+  });
+
+  it('does nothing for an unknown voice, a missing row, or the voice already on it', () => {
+    const p = createDefaultProject();
+    expect(setTrackVoice(p, p.tracks[0].id, 'kazoo')).toBe(p);
+    expect(setTrackVoice(p, 'trk_nope', 'snare')).toBe(p);
+    expect(setTrackVoice(p, p.tracks[0].id, p.tracks[0].instrument.voiceId)).toBe(p);
+  });
+
+  it('swaps one drum for another, blocks and all', () => {
+    let p = createDefaultProject();
+    const kick = p.tracks[0].id;
+    p = addNote(p, kick, createNote(sec(p), 0));
+    p = addNote(p, kick, createNote(sec(p), 2));
+    p = setTrackVoice(p, kick, 'tom');
+    const track = p.tracks[0];
+    expect(track.instrument.voiceId).toBe('tom');
+    expect(track.notes).toHaveLength(2);
+    expect(track.notes.every((n) => n.pitch == null)).toBe(true);
   });
 });
 

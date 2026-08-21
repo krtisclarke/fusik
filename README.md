@@ -78,6 +78,9 @@ npm run package:mac   # build a macOS app bundle
 - **Record what you play:** press ⏺ so it glows red, press play, and whatever you
   play on the keyboard is written into the song, tidied up to the grid. Press ⏺
   again to stop. One undo takes the whole take back.
+- **Try it on something else.** Click a row's name and pick a different
+  instrument — your tune moves over as it is, so the melody you wrote on the
+  piano comes out on the bells, or way down low on the bass.
 - **Change the mood.** The Mood box turns the whole song Happy or Sad — and your
   tune comes with it, note for note, so it's still your tune in a new mood.
   Switch back and you get exactly what you wrote.

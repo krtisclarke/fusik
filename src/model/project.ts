@@ -10,7 +10,14 @@ import { newEntryId, newGroupId, newNoteId, newSectionId, newTrackId } from './i
 import type { Instrument, Note, Project, Section, TimeSignature, Track } from './types';
 import { PROJECT_FORMAT_VERSION } from './types';
 import { getVoice, isPitched } from './voices';
-import { DEFAULT_SCALE_ID, DEFAULT_SCALE_ROOT, SCALES, mapPitchBetweenScales } from './scales';
+import {
+  DEFAULT_SCALE_ID,
+  DEFAULT_SCALE_ROOT,
+  SCALES,
+  mapPitchBetweenScales,
+  nearestLadderIndex,
+  pitchLadder,
+} from './scales';
 
 export const MIN_BPM = 20;
 export const MAX_BPM = 300;
@@ -338,6 +345,56 @@ export function moveNote(
  * the grid can sound wrong — would quietly stop being true for the song they
  * already had. Moving them keeps the tune recognisable *and* keeps the promise.
  */
+/**
+ * Play this row on a different instrument, tune and all.
+ *
+ * A child who writes a melody on the Piano and wants to hear it on the Bells
+ * should not have to write it again. The notes come across by their place on
+ * the note-grid rather than by their raw pitch, because instruments sit in
+ * different registers — the Bass lives two octaves below the Piano, so keeping
+ * the pitches would draw the tune on one row and play it somewhere else
+ * entirely. Carrying the ladder position over lands it in the new instrument's
+ * own range, sounding like the tune played *there*.
+ *
+ * A drum row can only become another drum, and a melodic row another melodic
+ * one. Swapping across would leave every block carrying a pitch the drum voices
+ * ignore and the grid has no row for — and this is enforced here, not in the
+ * dropdown, so no future caller can get it wrong.
+ */
+export function setTrackVoice(project: Project, trackId: string, voiceId: string): Project {
+  const voice = getVoice(voiceId);
+  const track = project.tracks.find((t) => t.id === trackId);
+  if (!voice || !track) return project;
+  if (track.instrument.voiceId === voiceId) return project;
+  const pitched = isPitched(voice);
+  if (pitched !== (track.type === 'instrument')) return project;
+
+  let notes = track.notes;
+  if (pitched) {
+    const previous = getVoice(track.instrument.voiceId);
+    const from = pitchLadder(
+      previous?.baseMidi ?? 60,
+      previous?.octaves ?? 2,
+      project.scaleRoot,
+      project.scaleId,
+    );
+    const to = pitchLadder(voice.baseMidi ?? 60, voice.octaves ?? 2, project.scaleRoot, project.scaleId);
+    notes = notes.map((note) =>
+      note.pitch == null
+        ? note
+        : { ...note, pitch: to[clamp(nearestLadderIndex(from, note.pitch), 0, to.length - 1)] },
+    );
+  }
+
+  return mapTrack(project, trackId, (t) => ({
+    ...t,
+    name: voice.label,
+    color: voice.color,
+    instrument: { ...t.instrument, voiceId },
+    notes,
+  }));
+}
+
 export function setScale(project: Project, scaleRoot: number, scaleId: string): Project {
   const root = clamp(Math.round(scaleRoot), 0, 11);
   if (!SCALES[scaleId]) return project;

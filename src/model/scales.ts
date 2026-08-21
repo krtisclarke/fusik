@@ -113,6 +113,25 @@ export function mapPitchBetweenScales(
 }
 
 /**
+ * Where in a ladder a pitch sits — the index of the closest rung.
+ *
+ * Used to draw a loaded note on the right row, to step a dragged one through
+ * the scale, and to carry a tune across to another instrument's range.
+ */
+export function nearestLadderIndex(ladder: number[], pitch: number): number {
+  let best = 0;
+  let bestDistance = Infinity;
+  for (let i = 0; i < ladder.length; i++) {
+    const distance = Math.abs(ladder[i] - pitch);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = i;
+    }
+  }
+  return best;
+}
+
+/**
  * The ladder of pitches an instrument offers: every note of the scale from a
  * starting octave upward, spanning `octaves` octaves, plus the closing root on
  * top. Returned ascending (lowest first).

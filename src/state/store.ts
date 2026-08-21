@@ -110,6 +110,8 @@ export interface StoreState {
   setScale: (scaleId: string) => void;
   addTrackForVoice: (voiceId: string) => string;
   removeTrack: (trackId: string) => void;
+  /** Play a whole row on a different instrument; the tune comes with it. */
+  setTrackVoice: (trackId: string, voiceId: string) => void;
   setTrackGain: (trackId: string, gain: number) => void;
   toggleMute: (trackId: string) => void;
   toggleSolo: (trackId: string) => void;
@@ -522,6 +524,15 @@ export const useStore = create<StoreState>((set, get) => {
     },
 
     removeTrack: (trackId) => apply(P.removeTrack(get().history.present, trackId)),
+
+    setTrackVoice: (trackId, voiceId) => {
+      apply(P.setTrackVoice(get().history.present, trackId, voiceId));
+      const track = get().history.present.tracks.find((t) => t.id === trackId);
+      // Hear what it turned into, the way clicking a sound in the library does.
+      if (track) {
+        void engine.audition(voiceId, {}, 0.9, middlePitch(voiceId, get().history.present));
+      }
+    },
     setTrackGain: (trackId, gain) => apply(P.setTrackGain(get().history.present, trackId, gain)),
     toggleMute: (trackId) => apply(P.toggleTrackMuted(get().history.present, trackId)),
     toggleSolo: (trackId) => apply(P.toggleTrackSolo(get().history.present, trackId)),

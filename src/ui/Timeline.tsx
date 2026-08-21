@@ -2,8 +2,8 @@ import { Fragment, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import type { Note, Track } from '../model/types';
 import { beatsPerBar, snapBeat, snapStepInBeats } from '../model/time';
-import { getVoice } from '../model/voices';
-import { pitchLadder, midiToLetter } from '../model/scales';
+import { getVoice, isPitched, VOICE_CATALOG } from '../model/voices';
+import { pitchLadder, midiToLetter, nearestLadderIndex } from '../model/scales';
 import { clamp } from '../model/project';
 import { PX_PER_BEAT, ROW_H, PITCH_ROW_H, HEADER_W, beatToX, xToBeat } from './layout';
 import { Playhead } from './Playhead';
@@ -25,20 +25,6 @@ interface DragState {
   previewPitch: number | null;
 }
 
-/** Index of the ladder pitch closest to `pitch` (for laying out loaded notes). */
-function nearestIndex(pitches: number[], pitch: number): number {
-  let best = 0;
-  let bestDist = Infinity;
-  for (let i = 0; i < pitches.length; i++) {
-    const d = Math.abs(pitches[i] - pitch);
-    if (d < bestDist) {
-      bestDist = d;
-      best = i;
-    }
-  }
-  return best;
-}
-
 export function Timeline() {
   const project = useStore((s) => s.project);
   const currentSectionId = useStore((s) => s.currentSectionId);
@@ -58,6 +44,7 @@ export function Timeline() {
   const toggleMute = useStore((s) => s.toggleMute);
   const toggleSolo = useStore((s) => s.toggleSolo);
   const removeTrack = useStore((s) => s.removeTrack);
+  const setTrackVoice = useStore((s) => s.setTrackVoice);
 
   const lanesRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -156,7 +143,7 @@ export function Timeline() {
       // Measured from where the drag started, never from the last preview —
       // otherwise every move event would step again from the step before and
       // the note would run away up the scale.
-      const origRow = pitches.length - 1 - nearestIndex(pitches, origPitch);
+      const origRow = pitches.length - 1 - nearestLadderIndex(pitches, origPitch);
       const row = clamp(origRow + Math.round(dy / PITCH_ROW_H), 0, pitches.length - 1);
       previewPitch = pitches[pitches.length - 1 - row];
     }
@@ -243,7 +230,7 @@ export function Timeline() {
     const shownPitch = isDragging && drag!.previewPitch != null ? drag!.previewPitch : note.pitch;
     if (pitches && shownPitch != null) {
       pitched = true;
-      const idx = nearestIndex(pitches, shownPitch);
+      const idx = nearestLadderIndex(pitches, shownPitch);
       const rowFromTop = pitches.length - 1 - idx;
       style.top = rowFromTop * PITCH_ROW_H + 1;
       style.height = PITCH_ROW_H - 2;
@@ -336,7 +323,24 @@ export function Timeline() {
                 >
                   <div className="top">
                     <span className="swatch" style={{ background: track.color }} />
-                    <span className="tname">{track.name}</span>
+                    <select
+                      className="tname"
+                      value={track.instrument.voiceId}
+                      title="Play this whole row on a different instrument — your tune comes with it"
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setTrackVoice(track.id, e.target.value);
+                      }}
+                    >
+                      {VOICE_CATALOG.filter(
+                        (v) => isPitched(v) === (track.type === 'instrument'),
+                      ).map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.emoji} {v.label}
+                        </option>
+                      ))}
+                    </select>
                     <button
                       className="mini del"
                       title="Delete track"
