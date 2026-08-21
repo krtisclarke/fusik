@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { TOUR_STEPS, isStepDone, remainingLabel, type TourContext } from './tour';
+import {
+  TOUR_STEPS,
+  isStepDone,
+  nextCelebration,
+  remainingLabel,
+  type TourContext,
+} from './tour';
 
 const EMPTY: TourContext = {
   drumNotes: 0,
@@ -89,5 +95,48 @@ describe('the first-song walkthrough', () => {
       expect(s.body.length).toBeGreaterThan(0);
     }
     expect(new Set(TOUR_STEPS.map((s) => s.id)).size).toBe(TOUR_STEPS.length);
+  });
+});
+
+describe('the tick between steps', () => {
+  it('starts when the step is done, and not before', () => {
+    expect(nextCelebration(null, 2, false)).toBeNull();
+    expect(nextCelebration(null, 2, true)).toBe(2);
+  });
+
+  // The bug this exists for. On "Hear it" a child presses play, sees the tick,
+  // and presses play again to stop — inside the same second. If the tick were
+  // tied to the goal still being met, that second press would cancel it along
+  // with the timer that moves the walkthrough on, and the card would sit on
+  // "Nice one!" with its buttons disabled for ever, because nothing would ever
+  // complete that step again.
+  it('does not stop when the child undoes the thing they just did', () => {
+    let c = nextCelebration(null, 3, true);
+    expect(c).toBe(3);
+    c = nextCelebration(c, 3, false); // pressed stop again
+    expect(c).toBe(3);
+    c = nextCelebration(c, 3, false);
+    expect(c).toBe(3);
+  });
+
+  it('ends when the walkthrough moves on', () => {
+    let c = nextCelebration(null, 3, true);
+    c = nextCelebration(c, 4, false); // the next step opened
+    expect(c).toBeNull();
+  });
+
+  it('ends when the walkthrough is closed, whatever it was doing', () => {
+    // Closing mid-tick used to strand the tick, so pressing ? later reopened a
+    // dead card: "Nice one!" with a greyed-out Start, for the rest of the session.
+    const mid = nextCelebration(null, 3, true);
+    expect(nextCelebration(mid, null, true)).toBeNull();
+    expect(nextCelebration(mid, null, false)).toBeNull();
+  });
+
+  it('lets a reopened walkthrough celebrate again', () => {
+    const closed = nextCelebration(nextCelebration(null, 3, true), null, false);
+    expect(closed).toBeNull();
+    expect(nextCelebration(closed, 0, false)).toBeNull(); // welcome has nothing to do
+    expect(nextCelebration(closed, 1, true)).toBe(1);
   });
 });

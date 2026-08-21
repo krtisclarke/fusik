@@ -126,6 +126,35 @@ export function isStepDone(step: TourStep, now: TourContext, start: TourContext)
   return done >= total;
 }
 
+/**
+ * Which step's "Nice one!" should be showing, given what was showing a moment
+ * ago. The walkthrough pauses on a tick before moving on, and this decides when
+ * that tick is up.
+ *
+ * The important word is **latched**. A celebration belongs to the step that
+ * earned it, not to the goal still being met right now — because plenty of
+ * goals can un-complete. A child on "Hear it" presses play, sees the tick, and
+ * presses play again to stop it, all inside the same second; a beat placed can
+ * be deleted; a new part can be undone. If the tick were tied to the goal, that
+ * second press would cancel the celebration mid-flight, taking the timer that
+ * moves the walkthrough on with it and leaving the card frozen on "Nice one!"
+ * with its buttons disabled — stuck for good, since nothing would ever complete
+ * that step again.
+ *
+ * So: once a step is celebrating it keeps celebrating until the step itself
+ * changes, and a closed walkthrough is never celebrating anything.
+ */
+export function nextCelebration(
+  current: number | null,
+  stepIndex: number | null,
+  done: boolean,
+): number | null {
+  if (stepIndex == null) return null; // the walkthrough is closed
+  if (current === stepIndex) return current; // latched to the step that earned it
+  if (current != null) return null; // the tick belonged to a step we've left
+  return done ? stepIndex : null;
+}
+
 /** "2 to go" — or null when there is nothing to count. */
 export function remainingLabel(step: TourStep, now: TourContext, start: TourContext): string | null {
   if (!step.goal) return null;

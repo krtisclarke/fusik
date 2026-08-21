@@ -433,6 +433,17 @@ draws them. Two rules shape it, and both are load-bearing:
   same thing. Moving on without doing the step stays possible but is styled
   quietly — a big bright *Skip* is an invitation to press it instead.
 
+The "Nice one!" tick between steps is **latched to the step that earned it**,
+not to the goal still being met. That distinction is load-bearing: plenty of
+goals can un-complete — a child on "Hear it" presses play, sees the tick, and
+presses play again to stop, all inside the same second. Tying the tick to the
+live goal cancelled it mid-flight along with the timer that moves the
+walkthrough on, and left the card frozen on "Nice one!" with its buttons
+disabled, permanently, because nothing would ever complete that step again.
+Closing the card in that state stranded it for the whole session: pressing **?**
+later reopened a dead card with a greyed-out Start. `nextCelebration` in
+`state/tour.ts` is that rule, and it is tested directly.
+
 Every goal is measured against a snapshot taken **when that step began**, never
 against zero. Otherwise replaying it later (the **?** button) on a song that
 already has forty blocks in it would tick six steps off instantly and teach
@@ -447,7 +458,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (109 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (114 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version

@@ -9,7 +9,13 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
-import { TOUR_STEPS, isStepDone, remainingLabel, type TourContext } from '../state/tour';
+import {
+  TOUR_STEPS,
+  isStepDone,
+  nextCelebration,
+  remainingLabel,
+  type TourContext,
+} from '../state/tour';
 
 /** How long the tick stays up before moving on. Long enough to notice. */
 const CELEBRATE_MS = 800;
@@ -160,19 +166,24 @@ export function Tutorial() {
     else setBaseline({ step: stepIndex, ctx: ctxRef.current });
   }, [stepIndex]);
 
-  const [celebrating, setCelebrating] = useState(false);
   const ready = baseline != null && stepIndex != null && baseline.step === stepIndex;
   const done = ready && step ? isStepDone(step, ctx, baseline.ctx) : false;
 
+  // Which step is showing its tick. Held as the step's own number rather than a
+  // yes/no flag, so it is impossible for a celebration to outlive the step that
+  // earned it — see nextCelebration for why that mattered.
+  const [celebratingStep, setCelebratingStep] = useState<number | null>(null);
+  const celebrating = celebratingStep != null && celebratingStep === stepIndex;
+
   useEffect(() => {
-    if (!done) return;
-    setCelebrating(true);
-    const id = setTimeout(() => {
-      setCelebrating(false);
-      nextTourStep();
-    }, CELEBRATE_MS);
+    setCelebratingStep((current) => nextCelebration(current, stepIndex, done));
+  }, [stepIndex, done]);
+
+  useEffect(() => {
+    if (celebratingStep == null) return;
+    const id = setTimeout(nextTourStep, CELEBRATE_MS);
     return () => clearTimeout(id);
-  }, [done, nextTourStep]);
+  }, [celebratingStep, nextTourStep]);
 
   useEffect(() => {
     if (stepIndex == null) return;
