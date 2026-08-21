@@ -8,6 +8,8 @@
 // punchy without the click of a truly instantaneous jump.
 
 import { midiToFreq } from '../model/scales';
+import { getVoice, isPitched } from '../model/voices';
+import { startHeldSample, triggerSample } from './sampler';
 
 const EPS = 0.0001;
 
@@ -610,9 +612,65 @@ export const VOICE_SYNTHS: Record<string, TriggerFn> = {
     }
   },
   bass: pitchedSynth,
+
+  // Voices that exist only as recordings still need something to fall back to
+  // for the moment before those recordings arrive.
+  bassdrum: (ctx, dest, time, p, vel) => kickVoice(ctx, dest, time, { ...p, tune: 45, pitchDrop: 60, decay: 0.6 }, vel),
+  tomlow: (ctx, dest, time, p, vel) => membrane(ctx, dest, time, { tune: 80, pitchDrop: 50, decay: 0.5, ...p }, vel),
 };
 
-/** Look up a voice's trigger, falling back to a plain blip for unknown ids. */
+/**
+ * How to play a voice — the one place that decides between a recording and a
+ * built sound, so live playback and the offline render behind Export can't
+ * drift apart.
+ *
+ * A sampled voice falls back to its synthesized version if its recordings
+ * haven't arrived yet. That should never happen in practice — they are fetched
+ * before any audio can start — but silence would be the worst possible failure
+ * here, and a plain drum for a moment is not.
+ */
 export function getTrigger(voiceId: string): TriggerFn {
-  return VOICE_SYNTHS[voiceId] ?? VOICE_SYNTHS.perc;
+  const voice = getVoice(voiceId);
+  const synth = VOICE_SYNTHS[voiceId] ?? VOICE_SYNTHS.perc;
+  const setId = voice?.sampleSet;
+  if (!setId) return synth;
+  const pitched = isPitched(voice);
+  return (ctx, dest, time, params, velocity, note) => {
+    if (triggerSample(setId, pitched, ctx, dest, time, params, velocity, note)) return;
+    synth(ctx, dest, time, standInParams(params), velocity, note);
+  };
+}
+
+/**
+ * Parameters for the synthesized stand-in a sampled voice falls back to.
+ *
+ * A sampled voice's Volume sits higher than a synthesized one's, because a
+ * levelled recording peaks well below full scale and a built waveform does not.
+ * Handing that number straight to the stand-in makes it several times louder
+ * than the sound it stands in for — the piano's 1.6 against the 0.34 its
+ * synthesized version was tuned to. Both fallback paths go through here, so the
+ * cap can't be applied on one and forgotten on the other, which is exactly what
+ * happened: clicking Piano in the library was quiet and playing the same note on
+ * the keyboard was five times louder.
+ */
+function standInParams(p: Record<string, number>): Record<string, number> {
+  return { ...p, gain: Math.min(p.gain ?? 0.5, 0.5) };
+}
+
+/** The same choice, for a note played by hand and held until the key comes up. */
+export function startVoiceNote(
+  voiceId: string,
+  ctx: BaseAudioContext,
+  dest: AudioNode,
+  time: number,
+  p: Record<string, number>,
+  vel: number,
+  midi: number,
+): HeldNote {
+  const setId = getVoice(voiceId)?.sampleSet;
+  if (setId) {
+    const held = startHeldSample(setId, ctx, dest, time, p, vel, midi);
+    if (held) return held;
+  }
+  return startHeldNote(ctx, dest, time, setId ? standInParams(p) : p, vel, midi);
 }

@@ -31,6 +31,7 @@ import type {
   TrackType,
 } from './types';
 import { PROJECT_FORMAT_VERSION } from './types';
+import { migrateBlockVolume } from './voices';
 import { DEFAULT_SCALE_ID, DEFAULT_SCALE_ROOT } from './scales';
 
 export class ProjectLoadError extends Error {
@@ -123,6 +124,20 @@ function parseTrack(value: unknown, version: number): Track {
   if (version < 2 && Object.keys(instrument.params).length > 0) {
     notes = notes.map((n) =>
       Object.keys(n.params).length === 0 ? { ...n, params: { ...instrument.params } } : n,
+    );
+  }
+  // Migration: format-3 files were written when most instruments were built
+  // rather than recorded, and a recording sits at a different Volume from the
+  // synthesized voice it replaced. A block's Volume is stored as an absolute
+  // number, so without this a block a child had nudged comes back wildly out of
+  // step with the untouched ones beside it — the piano's level moved by a factor
+  // of nearly five. Only blocks that carry a Volume of their own are touched;
+  // one that doesn't is already saying "however loud this voice normally is".
+  if (version < 4) {
+    notes = notes.map((n) =>
+      typeof n.params.gain === 'number'
+        ? { ...n, params: { ...n.params, gain: migrateBlockVolume(instrument.voiceId, n.params.gain) } }
+        : n,
     );
   }
   return {

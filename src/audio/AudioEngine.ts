@@ -20,7 +20,7 @@ import type { Project, Track } from '../model/types';
 import { secondsToBeats, beatsToSeconds, beatOccurrencesInWindow } from '../model/time';
 import { resolveArrangement, sectionBeats, sectionById, songPositionAt } from '../model/arrange';
 import { resolveParams } from '../model/voices';
-import { getTrigger, startHeldNote, type HeldNote } from './synth';
+import { getTrigger, startVoiceNote, type HeldNote } from './synth';
 import { getVoice, isPitched } from '../model/voices';
 import { createMasterChain } from './master';
 import { createTrackChain, type TrackChain } from './trackChain';
@@ -541,7 +541,7 @@ export class AudioEngine {
       });
       return id; // nothing to hold; noteOff is a no-op for this id
     }
-    this.held.set(id, startHeldNote(ctx, dest, ctx.currentTime, params, velocity, midi));
+    this.held.set(id, startVoiceNote(voiceId, ctx, dest, ctx.currentTime, params, velocity, midi));
     return id;
   }
 

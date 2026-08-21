@@ -1,0 +1,1385 @@
+{
+  "generatedBy": "tools/build-samples.mjs",
+  "library": {
+    "name": "Versilian Community Sample Library (VCSL)",
+    "publisher": "Versilian Studios LLC",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Versilian Community Sample Library by Versilian Studios LLC (CC0 1.0 — no attribution required)",
+    "url": "https://github.com/sgossner/VCSL",
+    "commit": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+    "mapCommit": "dfcf4a4918771eee884b96ad4493de82ef84daf6",
+    "licenseTextSha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+  },
+  "sets": [
+    {
+      "id": "piano",
+      "instrument": "Grand Piano, Kawai",
+      "sourceMap": "Chordophones/Zithers/Grand Piano, Kawai.sfz",
+      "files": [
+        {
+          "file": "public/samples/piano/45_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A1_v1_rr1_Player.wav",
+          "sourceSha256": "a1e432f8ca90168e957b59d1777c0dcdadeef61ae4344843b1592f89d140a7cb",
+          "sha256": "d8dd8cfac9b231a4c88fa619be6b60097d307ab8910a39b4becdf481c365d674",
+          "bytes": 71568,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/45_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A1_v3_rr1_Player.wav",
+          "sourceSha256": "cf7e30be0e31707723e471d306947ae1ae42adcec2c78dcf36f1c28178be0b7c",
+          "sha256": "2f78aaca85cd7b6024eac2a3f86ade04b3e101727ce8d1f8ddce03981e9eee60",
+          "bytes": 52646,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/45_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A1_v4_rr1_Player.wav",
+          "sourceSha256": "ffec1c33090c624e4261a7cb1596fc1abe98cbcffad09b86058d5c70ef804b44",
+          "sha256": "45081598c3cadf06dddc8c3304ecda314ef3e5069426bed28232deef24273932",
+          "bytes": 43461,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/48_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C2_v1_rr1_Player.wav",
+          "sourceSha256": "eba9adfb3977605a494830081d4e9e4ff0a4efd017439fe402a208aca9f11d7a",
+          "sha256": "15f846dc36d52fd2fce164d7b0281d56c85c455137e3533855facfeeade5be55",
+          "bytes": 72188,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/48_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C2_v3_rr1_Player.wav",
+          "sourceSha256": "5d22de6d71e3accb05e2dea5c5208856ac2361c45e26079bffac7b1a98e9360d",
+          "sha256": "2d28e0337cb140a9bf185652eddb239bdc5a2686b59249fbd32d3ab99a719136",
+          "bytes": 56579,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/48_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C2_v4_rr1_Player.wav",
+          "sourceSha256": "ca51988ad4bcdbd8819e95d68fa9cc66fa273a685dbe4de9be7ba9a16effdb60",
+          "sha256": "64b4417ddb337dd2d83550f4dba33fd6d54c344779e1aad6858bc8e1d118b43e",
+          "bytes": 52908,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/50_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D2_v1_rr1_Player.wav",
+          "sourceSha256": "b573344ccba8ac6a0b7717f865da6d30df40a0574bb5884d9292206209316b79",
+          "sha256": "0bdf816583a3a9cfc80ec38201448c276614de5247acc4856a7fd9e3dbd06368",
+          "bytes": 71305,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/50_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D2_v3_rr1_Player.wav",
+          "sourceSha256": "2ea71684722787ed958e5449e742289f3aa7b6e4ebe6938c3b54efb07d3acc85",
+          "sha256": "60a04bd52e71a72179e897451a690d698e9a6824ee23505b87bf6e1405b2ad61",
+          "bytes": 55320,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/50_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D2_v4_rr1_Player.wav",
+          "sourceSha256": "08e64735b517466215700f9555e590bffd06b4d202feb44b4a93fa93390c6d9f",
+          "sha256": "623440e4f284529b45a58048025097a51c8d1f86597f2943c1223a4382450ecc",
+          "bytes": 45448,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/52_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E2_v1_rr1_Player.wav",
+          "sourceSha256": "9fca1df9661fc3ea3cc32b5e5e605672a7d63bea56d5f04ca33e1d2eebf34b89",
+          "sha256": "388b04fa4e9a60a9a04b17464e20e0700fa5525906f5aca40b4dd4f3b97da53a",
+          "bytes": 71163,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/52_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E2_v3_rr1_Player.wav",
+          "sourceSha256": "1b054cbefb4d04ea2956620b6c7eedf34e3b4000d75c3bd4358cc71415c097b9",
+          "sha256": "ed1d391db455ede6b87780074ca7b17f152fc11423075216f27481e732d232e3",
+          "bytes": 50421,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/52_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E2_v4_rr1_Player.wav",
+          "sourceSha256": "eb4fe437966f666a3e6b0455b71fd922e20263bd7af618b2c112e2cedee00317",
+          "sha256": "266add7d39685a5447ed4fe5700ee1b55fbf0e6fed69abe4906544915599c72f",
+          "bytes": 42720,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/54_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#2_v1_rr1_Player.wav",
+          "sourceSha256": "b2f0d5b6e58a9e05879cf2da90240cd3aa4e8c565e488d77ed5718d430cb59b6",
+          "sha256": "c48c16b53871485b9b4f30662a73b458bb4916e532be3a547b9922e6f5ad45c4",
+          "bytes": 71644,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/54_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#2_v3_rr1_Player.wav",
+          "sourceSha256": "05eb81ba1f540dc7735e4ccb5ddacebeacb4acf4eb088176962db97246f30bac",
+          "sha256": "193b7bc88262123def069872548b0b68076bc4e2f09e5e81463c243e2efb3b6e",
+          "bytes": 58391,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/54_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#2_v4_rr1_Player.wav",
+          "sourceSha256": "edf51fc43d932f03ae0b888a3ff88c6273a0528f9bf170b02ad8ce4de438f84c",
+          "sha256": "96e5c8d27e642de29688f75f9dd5da8a7446a14f4d1e75b017bf4c014f94a3dd",
+          "bytes": 53246,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/56_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#2_v1_rr1_Player.wav",
+          "sourceSha256": "053d5e2e25cbff8b3c65905963d1aa184003a1a44268f4ca5cce45e412789296",
+          "sha256": "7e967cb7fd75d64e0930537c7ee32a756ea7e5ae7cdc503a577a1efba309cac7",
+          "bytes": 72711,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/56_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#2_v3_rr1_Player.wav",
+          "sourceSha256": "6d63d6d6872cd6432f372aa5871cfa5d205a75facc40e8b8a3339d612a9a3b48",
+          "sha256": "1003d05684b73962a4413e03ae769727f314a6b3f1df66581d0137216529566a",
+          "bytes": 61004,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/56_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#2_v4_rr1_Player.wav",
+          "sourceSha256": "13e19eaad8fc5ca13813ef9a9e65164beb17391e3e781859a2c0702e81403a86",
+          "sha256": "a125e2de15a1de17dec54eadad626ae945a76b56290e198dbea1c111b1196f2a",
+          "bytes": 56753,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/58_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#2_v1_rr1_Player.wav",
+          "sourceSha256": "6653569508248cff83cffb5ab5448a37ada4e007036d947eaaf6c562c719db8b",
+          "sha256": "2c39ab5853c326710471a6b100ee5c0c242d45d6eb1cad4d9d17bf78706da061",
+          "bytes": 72001,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/58_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#2_v3_rr1_Player.wav",
+          "sourceSha256": "98b5f4f241e200457c57457a3752380f76949c53cffbf19f43cca3cd629a45f1",
+          "sha256": "7e10f6f695896cbfe22a3553610ccf2dc81c25c801aaa0edab7912e5b0289298",
+          "bytes": 59900,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/58_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#2_v4_rr1_Player.wav",
+          "sourceSha256": "b8272374198315c90eb240d70642fcaf742a70f084aa82d3f1efb857accaecf7",
+          "sha256": "e0ce79463c1f81dc61c573f40ce46729650f87213cc24c232bb1f8c77abfd93d",
+          "bytes": 54513,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/60_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C3_v1_rr1_Player.wav",
+          "sourceSha256": "eb52431464cc160cb7c3576d5087b6cc67326fd903b620088c0874f6bcff4a8e",
+          "sha256": "bb5f3d865d80659927a21837ea5246d2cf1a4f265d8baa11a97684da0f7c0c84",
+          "bytes": 73169,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/60_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C3_v3_rr1_Player.wav",
+          "sourceSha256": "98496ea0d77ba1a753bc390b499267e9dc0b9015f9f928ab6f26bff39daef9a4",
+          "sha256": "fe8c55e27b3035630b2974ee84cf05a2c44b01f40ba0c261cfc733a26d7dde99",
+          "bytes": 59916,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/60_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C3_v4_rr1_Player.wav",
+          "sourceSha256": "00b44abb888e6d56e7f628fc17aff3c93d87f500485ba2ab19100af090f75022",
+          "sha256": "0688b856c84bed0cd80ecc4989edc6e31050f7fd162e0cfae9ba3b1f57811732",
+          "bytes": 50078,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/62_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D3_v1_rr1_Player.wav",
+          "sourceSha256": "af2195a00925e777ce32ede7e5fba4f4ea617fa6e7bf9147ba0ab8726f44e195",
+          "sha256": "0255f53696b7a7cbad8d3a7c193d3e346dbbfa27f4c2f0249f8bf3ea38e484bf",
+          "bytes": 72477,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/62_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D3_v3_rr1_Player.wav",
+          "sourceSha256": "ae308ead0da0713400e388d87949091c79189a1318c9b99ef437e563f9bba1e5",
+          "sha256": "18f1f188f2fbeae3c832b10651b000dd802dfff5b7e6f7f1b2574ecdb194b849",
+          "bytes": 62551,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/62_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D3_v4_rr1_Player.wav",
+          "sourceSha256": "c4bde5ab596a125eaa9a8d8bd01732559a57c88e069582e546ce664e9efc72cc",
+          "sha256": "57c89973d27a67b2b4d95db68bfe08f3481a89c62e4ad7bbfa9ffa9da5d706c5",
+          "bytes": 59733,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/64_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E3_v1_rr1_Player.wav",
+          "sourceSha256": "3986177d766ad67acaeb8d0d53114c4380dea65bc1632938dc597006e5123771",
+          "sha256": "85533674769988de15ae84bf97eff1df40c24e8108677ce57e336a15ec871353",
+          "bytes": 75091,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/64_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E3_v3_rr1_Player.wav",
+          "sourceSha256": "6001665682547238ecddd1b26c91f2f44363d381300e04b3a39dae14e6ffbda6",
+          "sha256": "a3a5197fcde8b85c1879b72a82d4b394961b9f4b44e310b1053e38e4321416d6",
+          "bytes": 54636,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/64_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E3_v4_rr1_Player.wav",
+          "sourceSha256": "9d50d6fe016967f4c5f4af0946c80f3ef215df30b72f1f90fd604244aac1f70e",
+          "sha256": "697e0fbbe4061d812cbdbffcde0ffc10e49d9b95623712c4b1b406fa220a8c81",
+          "bytes": 46285,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/66_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#3_v1_rr1_Player.wav",
+          "sourceSha256": "087e5826a7868cc3c923e6628869cc516ad690a4cbe69a8b4019be91f14b3a9b",
+          "sha256": "73f36bb54d662121a088fa490dbf24879201384949b89788bb1ceb3fcf48f41a",
+          "bytes": 73129,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/66_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#3_v3_rr1_Player.wav",
+          "sourceSha256": "bd82fc521e035f1f50410968a6f753bf91fe2c629ea061ec9db4a0ce45430de5",
+          "sha256": "b9ad2a292cecaf52d896a163c09f24ec9342d0a8d2e23b082991b015a4b2cebe",
+          "bytes": 56937,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/66_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#3_v4_rr1_Player.wav",
+          "sourceSha256": "98f5bd554e7a65624fc4c18ec21e43b3b04ec6aa128f159430eddcd5e6259373",
+          "sha256": "0df630ffbe07a19ea7186ce904e6cca9ded2a5bea06b028944acfdc245117105",
+          "bytes": 38640,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/68_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#3_v1_rr1_Player.wav",
+          "sourceSha256": "a812c31c7f474ee603a7a3eb83e6e285ee87878344ce9a372bd00730281852c5",
+          "sha256": "3c785ecafad92f64fbc89f738069d34f3ff56d7af460bb9652e9e9ca86ea5bdd",
+          "bytes": 73382,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/68_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#3_v3_rr1_Player.wav",
+          "sourceSha256": "e28aebba2f2995ea1d5443a8f7eeaac8f81a342317d54c4c6781ae482b355f20",
+          "sha256": "450343fbfb3f3fb7e65379cd03c53558a75308010431742dc222993137a95e91",
+          "bytes": 55741,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/68_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#3_v4_rr1_Player.wav",
+          "sourceSha256": "eb00e5e65439e59080cbd6e9ca47d74927817cf0ea0df7abe3315dcbc38edbe2",
+          "sha256": "0a0456fdbc90bd96138184852e9dac7a487ee48f1db2713a226df7d27b6915e1",
+          "bytes": 40283,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/70_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#3_v1_rr1_Player.wav",
+          "sourceSha256": "d6b6618419031245603e88c3245f1f8a4442e39981b103a8fbe5eb5fd5cdd2c3",
+          "sha256": "f87b6403c93c2d4614a3775bf9b76877623f70c0e9166e1517c537c1ae29d983",
+          "bytes": 74595,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/70_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#3_v3_rr1_Player.wav",
+          "sourceSha256": "2148d254dc414ff1ca7f31519aa1caf9205c8fcdf32e962953ac8bd99f89c6ab",
+          "sha256": "5016a5b7690eee00647d13d2220fb77bf296691b35ba92501fdf704c88e26dd8",
+          "bytes": 59401,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/70_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#3_v4_rr1_Player.wav",
+          "sourceSha256": "a95543ac266e6e8fac4bc3dc448e884d6d9a00a8848d6f469f3bc0e24b7ccc5c",
+          "sha256": "f5e9dd86c950303055baa1eafb0b6ca7ff75cb1a9aa8821cacb63c82fe5928a8",
+          "bytes": 47339,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/72_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C4_v1_rr1_Player.wav",
+          "sourceSha256": "f921d4737ee847ecb55ce251a94e1841069b70e206b00342676954992ea7d0dc",
+          "sha256": "baec80f52604045ea6a717af44f72d0ca2608c04c50e9d1faa57db988f8a3f3e",
+          "bytes": 75249,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/72_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C4_v3_rr1_Player.wav",
+          "sourceSha256": "eb5faca3331cd32f15f6a2302dba69b073a2ca600fed606bf456e60260d06e5b",
+          "sha256": "1c94e4ecb9511695c5274526e7369601082f1a588724dd9fdcc7900328ea4df1",
+          "bytes": 53987,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/72_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C4_v4_rr1_Player.wav",
+          "sourceSha256": "bc110204577a7541984e231774efb24458234fad43dcf6b7d51bdfc13b65c520",
+          "sha256": "570baa103c078e20a21dd616aef5052dfd7014633aaeb33124b4f5fcd3c0eb1b",
+          "bytes": 37485,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/74_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D4_v1_rr1_Player.wav",
+          "sourceSha256": "1cff98cc70bbc9fdfc284cd30cc55450ed68a0cd6fc383b254f6c471fac1914e",
+          "sha256": "28396da7364c360405b7a306f3cb0b36ffd6f966520f61cc5aa95802d7381ab6",
+          "bytes": 73987,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/74_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D4_v3_rr1_Player.wav",
+          "sourceSha256": "5dfc7dc6ad859e5c593c9726f803c96e98f8fb33f2e4ca2691f66d3aa213a8ac",
+          "sha256": "fb5f999149d654353b35eeadcb64cd7809f6f89e6a16b963eb2df6a615c18091",
+          "bytes": 49280,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/74_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D4_v4_rr1_Player.wav",
+          "sourceSha256": "bb7a183ff0948e60bb0b8162c6ffd0cc59110877880a217c224cc20dfc40688c",
+          "sha256": "4d3cad9c5b14d99578501d6bc0e893fb884fe111855734f484d44625ea229af1",
+          "bytes": 34034,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/76_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E4_v1_rr1_Player.wav",
+          "sourceSha256": "2bbea3d9e280e7b87605eaa01853b9e81c8ce21eae1db61cfb6fa33b94ca449f",
+          "sha256": "ffe48771f3e8858ec74156e5142900677d3b56866e7269c66d61cf101e5341d9",
+          "bytes": 72595,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/76_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E4_v3_rr1_Player.wav",
+          "sourceSha256": "7f54f4483fa263ecde249dd20804394862acdb49ab879f0d20f09ad03586c0da",
+          "sha256": "dc54f803700c94933684530ecd8ff5e99eef54c0da813fad2f9c7d4b633fb586",
+          "bytes": 56472,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/76_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E4_v4_rr1_Player.wav",
+          "sourceSha256": "abaa09dccebfb3cf59420ee5ab438fea2ca68ce2a1d327fb62fccee5ef99a643",
+          "sha256": "07795e7b4e0321110de03fb283f440df1eeb36947b61595f269e0fadbff3cca2",
+          "bytes": 35612,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/78_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#4_v1_rr1_Player.wav",
+          "sourceSha256": "252a182b6030b9e23b5b4702b6e9d38cd90e980d4e179809bd874f3e8c699c1b",
+          "sha256": "e178b0182dcbeb229374a2722ff6a840a50f1006ca6b03b36f59fa22ce4eae1e",
+          "bytes": 74068,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/78_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#4_v3_rr1_Player.wav",
+          "sourceSha256": "d46018561d9a4f3cb3511e024de5c6b6a0b03a720796e6e85b190e33b6541e3e",
+          "sha256": "c44ba8d15095d37e45ec9119b05334ade2946ed4f3a8e87156a69edc1a866a1a",
+          "bytes": 58365,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/78_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#4_v4_rr1_Player.wav",
+          "sourceSha256": "04ff7c8fa39a62583b915e015be04563c57db6439b553f25d772981b23818baf",
+          "sha256": "632fbc43e93c8addb65477165211d36f4c973740d9352888223881a92b4dcb09",
+          "bytes": 35394,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/80_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#4_v1_rr1_Player.wav",
+          "sourceSha256": "09f8fc60ff5fde5ca7bc80f189885c2678df7405adf27a251139eae8c39c6390",
+          "sha256": "817e777d83707ef8055ee68d326471f7d3bee909cf631e2fdedcef5ca7cc9e06",
+          "bytes": 75364,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/80_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#4_v3_rr1_Player.wav",
+          "sourceSha256": "438eda14b4d10be6f46ef38dcd0080d10e5979b065e5bee0d2bb9b98d7817d8a",
+          "sha256": "fd28d8c478e014ac34f04eb2190c6c4f8ad1e7d025a46aecdc4ebf2b3e71bee5",
+          "bytes": 62631,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/80_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#4_v4_rr1_Player.wav",
+          "sourceSha256": "7c3119a517392dcded59fe7c7a43598aea8e4326c76987daf83d742553737016",
+          "sha256": "ca763868db275b41177b5ad7b61ffec60db08c5520c70bcc8ec6120609c683bc",
+          "bytes": 54451,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/82_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#4_v1_rr1_Player.wav",
+          "sourceSha256": "d126e50d8f9118fe962af3d55e529f5fc0ecde81d8d9882ecd82db235589e121",
+          "sha256": "c2b23fc1bcb6260b7400d6790649fd0cb1535d93662cdf0c6922fa3adfd76145",
+          "bytes": 75333,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/82_66_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#4_v2_rr1_Player.wav",
+          "sourceSha256": "5fdd61e4eafa7ee90325ac6a7380c87f4115d30d88f722f3f8a0b9fbd39e0b6e",
+          "sha256": "ec5cdf1f2fd67bc4b4aa10cc417099c97a4de6299c7e9bfef5fc229f061f2073",
+          "bytes": 72965,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/82_100_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#4_v3_rr1_Player.wav",
+          "sourceSha256": "67e919e7cca87fa9dcf8756b56d4c0b15f8023a9a0ceaaa640c9063016047af3",
+          "sha256": "36471485e3a35868a19039f269ecf360d8a9f600515082d9ca882b9cdbc6d45e",
+          "bytes": 61219,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/84_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C5_v1_rr1_Player.wav",
+          "sourceSha256": "94186af4a11f4a5aa4a550615bd923ff12bdc2db22ea0cbfd24a58bca77308c0",
+          "sha256": "25bf2d9ecfe7263a1d3998e219f248a66f75d0490c0c622a0fc909a548b09e28",
+          "bytes": 73899,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/84_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C5_v3_rr1_Player.wav",
+          "sourceSha256": "3cbb54ef6b504b2de8bd18c553001b974d5c5d3898e2a8c5a42d2e15cfcf9853",
+          "sha256": "f2bded897debec3ffe2819b56cd975f6d80ceef547a4062d392c842b0b4c0805",
+          "bytes": 52098,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/84_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C5_v4_rr1_Player.wav",
+          "sourceSha256": "07186b0ce733a10cc540fc37623cc7cf79d3557a119fea5b79d6b3eba379b930",
+          "sha256": "6f6314d8933c9608f9e4b08e492c803ff2059a428c6f0db1b5c6ddd5c9de22dc",
+          "bytes": 33405,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/87_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D#5_v2_rr1_Player.wav",
+          "sourceSha256": "abfcf351629a78007bb80c086e67ce634e38a5f96393907c480f2c2648ced1ce",
+          "sha256": "1082ce8015361b66cdfb6680ba6b68c64210f21900c79c464918afc10cf9af93",
+          "bytes": 53966,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/87_84_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D#5_v3_rr1_Player.wav",
+          "sourceSha256": "0ea2acab4d0893b2bb5744814fa1ade064188221f9f85cdceedc28f02c4c94bb",
+          "sha256": "7ee8f02d61b5a58208a2ce61cbaaf306e5fd7e6fb8fa226c369d59e9d71611d8",
+          "bytes": 62025,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/87_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D#5_v4_rr1_Player.wav",
+          "sourceSha256": "74ed3dc81bdca4b068bcf3452d476a6c680efff49048e569897f13277144118b",
+          "sha256": "9435b288ffac2381cc5fa7e58d9cbf11ff3ea655b1fb7272e353b1e19918eed8",
+          "bytes": 53989,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/90_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#5_v2_rr1_Player.wav",
+          "sourceSha256": "12235267e757ee9ced77756cb705ca1dfbdeba42a4996e7a88c5a0e81843b038",
+          "sha256": "8ed767374b9d28d9582013f2420ee56727e33195b935f107111a0e0ace8f94d2",
+          "bytes": 55048,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/90_84_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#5_v3_rr1_Player.wav",
+          "sourceSha256": "75f2e9411888439c13d111c0965481da96099a385578f903161d6de79afb5ddb",
+          "sha256": "295bc6a05b47828b0b230f7a08ac4a92b610e79de1d05ab77b9b5c96530fcfc4",
+          "bytes": 58651,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/90_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#5_v4_rr1_Player.wav",
+          "sourceSha256": "e6aca36c8028ec1580f6e848c640fdbaf45b3421898238c8eeb4cdbf80d8cb3d",
+          "sha256": "08fa142d85df1a39616325e49e23eeee7ac6ec2bad76d181e94f6f49bc858af9",
+          "bytes": 38838,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/93_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A5_v2_rr1_Player.wav",
+          "sourceSha256": "754e99753db108b131970fb840b712f81a1893b0c2ad6e6771f61f1793620d3c",
+          "sha256": "fb8cad340f48dd6523554627c14bac5ab403ee78ea7304b2b075751c75992ced",
+          "bytes": 44394,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/93_84_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A5_v3_rr1_Player.wav",
+          "sourceSha256": "b668befa5fe6f9b547523de070955148f8367c64315eac5f327744fe34761f16",
+          "sha256": "6b11c11cd0db78a087970537c10035d19d5e48f03ff6b8105645d09508fc8813",
+          "bytes": 59177,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/93_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A5_v4_rr1_Player.wav",
+          "sourceSha256": "3a4c548dfd763f179a393d3e460add15ad7c3054c0423e3b0859832f1ea016a9",
+          "sha256": "c6c433a758d9540039014971eb41716d602062dfe7629d89c3edc639ab976ad8",
+          "bytes": 39098,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/96_0_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C6_v1_rr1_Player.wav",
+          "sourceSha256": "3441f01103d79e1fcc4047a2ea4125aa475d6a6688d25e10f193a2f3a6349080",
+          "sha256": "96f8ba9bc4599ebf6a470fdf28dbd178438ef0d70f5fac73c82b6a7fbc7efa12",
+          "bytes": 55143,
+          "seconds": 2.991
+        },
+        {
+          "file": "public/samples/piano/96_55_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C6_v3_rr1_Player.wav",
+          "sourceSha256": "ed4edce9bad4b285b0f35be28029b29f16fc74de4cf336e29cca1b2a8b24acaf",
+          "sha256": "5605b41d458db9ef3531fabe4dbe4aa33664affc61d2d8fe9cba8d9be1f10441",
+          "bytes": 54939,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/piano/96_107_1.m4a",
+          "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C6_v4_rr1_Player.wav",
+          "sourceSha256": "2f7546ff72597b34816041cf4d172ad9a7feb8590c0af547784b2427f3c651ff",
+          "sha256": "6ea1937365c26e4b3b7eb256836f6a12df277de083776a0bb15c3accf06057c2",
+          "bytes": 39940,
+          "seconds": 4
+        }
+      ]
+    },
+    {
+      "id": "bells",
+      "instrument": "Glockenspiel",
+      "sourceMap": "Idiophones/Struck Idiophones/Glockenspiel.sfz",
+      "files": [
+        {
+          "file": "public/samples/bells/79_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_soft_G4_01.wav",
+          "sourceSha256": "cd92f9402c28d3e951dc8d575ce61f0a550b7e316cb6427b1b455ac3aab09000",
+          "sha256": "f7bb2bc353cafbce7710e9fef412470f44a6cbfbee3d4bb404e6005b2c86bd4e",
+          "bytes": 70213,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/79_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_medium_G4_01.wav",
+          "sourceSha256": "6c4649b13e24fa01e4634edad8fe8edf18aef33facc5d49fe53097b376bac4da",
+          "sha256": "7e13de0f6ee81ace9e58c68943fd8af46a1fd43407f895c55e81361e9508f877",
+          "bytes": 60449,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/79_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_loud_G4_01.wav",
+          "sourceSha256": "be0bf94731720c0094276fea5646e75ff3a8a646b3c828258e9aaab6a8ef6c49",
+          "sha256": "5fc4189969c9241908c8aed702d0aac963b18cc723de15c9371d4e12bd285f11",
+          "bytes": 57544,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/84_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_soft_C5_02.wav",
+          "sourceSha256": "4fa149e6f224557df5fab98ad660a8f192bc6fbf2556077dd1089509bf4424e2",
+          "sha256": "c19687bb666af22b0f45c4001ea15bf086eb326d711c4f53a3700c8b2d64091f",
+          "bytes": 66619,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/84_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_medium_C5_01.wav",
+          "sourceSha256": "635f898e0bcb6975b96b18efd9c896f6f1b97ff12174a339ada4814e49675660",
+          "sha256": "51eb75996fb19f374cd6da4471a707192f46e7cba2321e222a056d995778a6ac",
+          "bytes": 54983,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/84_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_loud_C5_01.wav",
+          "sourceSha256": "b28baea01b6028e061e5cc978fca70f9062af6a59d155b0fe55e54ec89f42c07",
+          "sha256": "22fded0fb2f7f0a3405508e05900de10b952cf7b5b2dbc516c86df4bf12e52c1",
+          "bytes": 56361,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/91_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_soft_G5_01.wav",
+          "sourceSha256": "73f6a6de89291d0292b303d641444de5e6e1561881f09f6cf20d77f245f7bec3",
+          "sha256": "5b914a4091d5e3e12cfce31af16552a62a117e7468d35f611bd07647f94b64df",
+          "bytes": 63205,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/91_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_medium_G5_01.wav",
+          "sourceSha256": "7045c0ef7260e2f1ad11a64406cf7575ed898d1207a91104d33d78caefac63e4",
+          "sha256": "68073c768f88aff7acf15e6b3b961b894823a823d6f9caa936f5b69563e05734",
+          "bytes": 58284,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/91_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_loud_G5_01.wav",
+          "sourceSha256": "8aaf97481ef2582c14ef0382ec54c17c1b0a2f901a42976c332bac20fadd74a2",
+          "sha256": "7b47fba063556b4b5faafd0141258b11f367538693536b29965eaf169318c811",
+          "bytes": 54593,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/96_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_soft_C6_01.wav",
+          "sourceSha256": "e0fdb3a134ee828530c654db7f94b04f94272984938875b0d5535ec40c658324",
+          "sha256": "a4a76ba6eac5a8e6f65bfb1861446e6a57a6d26ca798573fa10457d23fb1a6c5",
+          "bytes": 64617,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/96_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_medium_C6_01.wav",
+          "sourceSha256": "e942cbf502cf6731df2925945fe3234c876cb63f047d91007b6929887f9e4904",
+          "sha256": "12aea75ef01f10afbb404dcfa0354c814d814b6b761c3aa73926e9de86122a76",
+          "bytes": 54227,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/96_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_loud_C6_01.wav",
+          "sourceSha256": "7ca228de549d54770f90bb125e23edcd1dc06cec2b9e1f452661720262f0ecd0",
+          "sha256": "b523c2a4bd19f4223d34020f769a355fc2a7d036539833bd9fcb6067273087d7",
+          "bytes": 48185,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/103_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_soft_G6_01.wav",
+          "sourceSha256": "b4407b60c2dff43a3a80fe5231beed95caad4d9b8f3f9cdbd80a27642207f35d",
+          "sha256": "6180f2a7008458dd5734727bb97ce1498cd6fafad573bc02f747eb309dd0e393",
+          "bytes": 48603,
+          "seconds": 3.322
+        },
+        {
+          "file": "public/samples/bells/103_65_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_medium_G6_01.wav",
+          "sourceSha256": "a2ba94e59119cd5272c1161fc8b8fbfb94c7b44de45a9a6cc5973b1c332103af",
+          "sha256": "4369d20d9bb4594509d0db69343587eed915b34a7f1a9e60926ad6446a5586fa",
+          "bytes": 54863,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/108_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_soft_C7_03.wav",
+          "sourceSha256": "68d823a0deffef138d4ed583bd027b9932643a630064274e73d67a644385be4c",
+          "sha256": "1503e92abc7b2844a42a187f7ce447bd6ad4234131c00883c2fe9325621d42ba",
+          "bytes": 53670,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/108_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_medium_C7_01.wav",
+          "sourceSha256": "b2ecbe0e60c983bbfaa49a1f45f8a11559f7dba27b8c8a032eb2cb7366a36910",
+          "sha256": "0fc0baef80a5e8657a4d27cd328b218a4ea0ca96cd3e72caaf0f0b805160ed1f",
+          "bytes": 33470,
+          "seconds": 2.791
+        },
+        {
+          "file": "public/samples/bells/108_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Glockenspiel/glock_loud_C7_01.wav",
+          "sourceSha256": "d9410b4cd52c1b5eb458098d9f8e7685d6dc12d512ee32db378f19d04f2b1f4b",
+          "sha256": "0003b3b868e388776008b1f1fdd8e29ac0cc3b71c880a709b62a60b134d498fe",
+          "bytes": 43989,
+          "seconds": 2.634
+        }
+      ]
+    },
+    {
+      "id": "kick",
+      "instrument": "Bass Drum 1 (concert)",
+      "sourceMap": "Membranophones/Struck Membranophones/Bass Drum 1.sfz",
+      "files": [
+        {
+          "file": "public/samples/kick/60_0_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v2_rr1_Sum.wav",
+          "sourceSha256": "56827fe9b55f282a0db851e242bc24660d339a0e358b182966aea047240c1136",
+          "sha256": "3933b647a943a7cb06f66c9378ef7211c2921077fba9c5c66dff2d8fdc4484f4",
+          "bytes": 25094,
+          "seconds": 1.596
+        },
+        {
+          "file": "public/samples/kick/60_0_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v2_rr2_Sum.wav",
+          "sourceSha256": "f1f8979de26f8efe278fe778da7bdce2a39fbfb9f2cbf345e38ce8c66f171b59",
+          "sha256": "dd98fb59483c2b93892ce227c52e7a42e7d31e6c714b652ebb55f7493e2e34fc",
+          "bytes": 27060,
+          "seconds": 1.714
+        },
+        {
+          "file": "public/samples/kick/60_55_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v3_rr1_Sum.wav",
+          "sourceSha256": "a2d8829e8b2b59e8afb12fa396b01758827059339c2a84ad066d17b36c82d1ff",
+          "sha256": "6822bfc79ce95c4dae21a08bd2fa8875ff18b5b8714f17fa5a11e8b9f150e7f1",
+          "bytes": 29782,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/kick/60_55_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v3_rr2_Sum.wav",
+          "sourceSha256": "036c6c5fcfbcca845d92dbcdcef075ee6e0ae01636374a2f7dd1a696a7ba33f8",
+          "sha256": "18e0e51ac9ecb25c989c412ba85a771fd631d3fb7ce09c9e80973c122cb95822",
+          "bytes": 29299,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/kick/60_84_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v5_rr1_Sum.wav",
+          "sourceSha256": "642aaf3375eaff1307973f7de3ccbf74d18e71fb3cf9412e021b08fc3bf1981c",
+          "sha256": "a1fe381a7dc7cc27416e2ac91e393408a6b923aa0630431013c84fec2c704803",
+          "bytes": 26320,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/kick/60_84_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v5_rr2_Sum.wav",
+          "sourceSha256": "a83943f8125ae39469ef5dab1d0be2fe3145c6842c0621b27be5d86aa44b325d",
+          "sha256": "71dcf9e20a11ff9c50ae74e963ab46198ebd8d1b7603d563bc0b524e327c9066",
+          "bytes": 28375,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/kick/60_107_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v7_rr1_Sum.wav",
+          "sourceSha256": "7024054e68261d2cca0ee58fdf9d6f23b54370792d04aa2c1ccf41acc090bd2b",
+          "sha256": "3120ef322d9d7e73094ff525cf49398f7a65f0b69824c2d4a2f1c435e709aa17",
+          "bytes": 19876,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/kick/60_107_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v7_rr2_Sum.wav",
+          "sourceSha256": "fa4374b9ffdc3b9a3c85331ce96c447cf13e46d956cce9cfd9ba02801f71276f",
+          "sha256": "7421e60716309163f25d90c0dcff78f18fb1d67bca1d2dad94dff40cec828ce4",
+          "bytes": 20088,
+          "seconds": 2
+        }
+      ]
+    },
+    {
+      "id": "snare",
+      "instrument": "Snare Drum, Modern 1",
+      "sourceMap": "Membranophones/Struck Membranophones/Snare Drum, Modern 1.sfz",
+      "files": [
+        {
+          "file": "public/samples/snare/60_0_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v3_rr1_Mid.wav",
+          "sourceSha256": "3d71765aa0d1e13260abeb003720aef0841432df601883177bf70e97d9af6c99",
+          "sha256": "b1c9485c3c416db246a97ba7ce4275275b87e4d29fd26a7940a87af3c99de271",
+          "bytes": 23272,
+          "seconds": 1.2
+        },
+        {
+          "file": "public/samples/snare/60_0_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v3_rr2_Mid.wav",
+          "sourceSha256": "770a0b6bfe95583c11014d5f9af9c94c425a15bd05234c86213aec356a2ffe29",
+          "sha256": "8a5d58dbe5f1d546a9ecf8c502897dd6c73f8b785bd8125b681f22c1ee58a7ff",
+          "bytes": 23195,
+          "seconds": 1.2
+        },
+        {
+          "file": "public/samples/snare/60_48_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v5_rr1_Mid.wav",
+          "sourceSha256": "6ec8445cb207df8f1178d8c3894f47969fd53fb2b81c404317e466de4598dc3e",
+          "sha256": "9c6348288431d89742c324a9e4d8f649791782b02d9d8f90ac5d090ab75d5a96",
+          "bytes": 22418,
+          "seconds": 1.2
+        },
+        {
+          "file": "public/samples/snare/60_48_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v5_rr2_Mid.wav",
+          "sourceSha256": "6d563828174cf9f29d221b14e1d3309ad4db8a4ac2cf10ff0ae4f0564e0d2590",
+          "sha256": "182000c09a492c67df56e2e9440bb9ff408a72c023a5947da3a988a2d3ee94e0",
+          "bytes": 22726,
+          "seconds": 1.2
+        },
+        {
+          "file": "public/samples/snare/60_73_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v6_rr1_Mid.wav",
+          "sourceSha256": "ca0ee01347176a65f9d7e361203a61e736fa14acb2a743df355a4bded1ee40bd",
+          "sha256": "cfab54fe36e7942be75c91e2b7d3e7f0e72b9ad886e953cd1bdabe9c78fed749",
+          "bytes": 21691,
+          "seconds": 1.2
+        },
+        {
+          "file": "public/samples/snare/60_73_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v6_rr2_Mid.wav",
+          "sourceSha256": "95105301c2eff6649f1983c7b2cb4bed78b310b500c7d5a0f708ac0c9c45edfc",
+          "sha256": "b06ae51c0fe580e195fe5daa568b911e53574913e3afa90c52329793c3c3e4d3",
+          "bytes": 21629,
+          "seconds": 1.2
+        },
+        {
+          "file": "public/samples/snare/60_94_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v7_rr1_Mid.wav",
+          "sourceSha256": "e63d9ebb2d1f85456d7554448b52330031051bc45db36f5fe08ef5f5149421e6",
+          "sha256": "6b4848cac3ac6a63868f365de60d2849c2e5ad3e640091fe01891d0c1c80b3ee",
+          "bytes": 19710,
+          "seconds": 1.2
+        },
+        {
+          "file": "public/samples/snare/60_94_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v7_rr2_Mid.wav",
+          "sourceSha256": "c0ee12638c1255152d9e914c61bdbe6ff145e396d21302a91e33495d50335383",
+          "sha256": "4c8375089aa057b5282e5ab0c78366ba1407fedac996342e0ca46023cd33f0cf",
+          "bytes": 20475,
+          "seconds": 1.2
+        },
+        {
+          "file": "public/samples/snare/60_111_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v9_rr1_Mid.wav",
+          "sourceSha256": "ea0adea05227c09002fb7305613cb2877003dc3ba3467d3b2d60c20f5664d59a",
+          "sha256": "b8ad9bd3ee369eb960d8ca94ea06cf9c05c21a39e47b634d808e10610bb1bf14",
+          "bytes": 18158,
+          "seconds": 1.2
+        },
+        {
+          "file": "public/samples/snare/60_111_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v9_rr2_Mid.wav",
+          "sourceSha256": "2a522774cab32b7c8ad6ea8d40ce5a4a36720c9735a653b4ee9c1c0c5294e61d",
+          "sha256": "50642c5e5cd7cdee8b928499c7aaf71e2d47cc390c5580c2a84dbd6faa603020",
+          "bytes": 18468,
+          "seconds": 1.2
+        }
+      ]
+    },
+    {
+      "id": "rim",
+      "instrument": "Snare Drum, Modern 1",
+      "sourceMap": "Membranophones/Struck Membranophones/Snare Drum, Modern 1.sfz",
+      "files": [
+        {
+          "file": "public/samples/rim/60_0_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_stick_v1_rr1_Mid.wav",
+          "sourceSha256": "98258bc22a11aca0a8eb1d50a2e0a82cbe6357d30e0b55116db0b188015ff648",
+          "sha256": "762f866d96f4672f295dc02d52197080bf6edca2a02cb4de8d8f45c70a887727",
+          "bytes": 17140,
+          "seconds": 0.753
+        },
+        {
+          "file": "public/samples/rim/60_0_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_stick_v1_rr2_Mid.wav",
+          "sourceSha256": "a51181312d92049c2082d116efe96a32305b41c81c06b6c254a94cd2efd08bb1",
+          "sha256": "043d282a66808c7513c70142867680b254b297a38ba3a32a80857c72756fdc32",
+          "bytes": 17009,
+          "seconds": 0.8
+        }
+      ]
+    },
+    {
+      "id": "hihat",
+      "instrument": "Hi-Hat Cymbal",
+      "sourceMap": "Idiophones/Struck Idiophones/Hi-Hat Cymbal.sfz",
+      "files": [
+        {
+          "file": "public/samples/hihat/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitC_v1_rr1_Mid.wav",
+          "sourceSha256": "88447fa285b9592cfb7ff2b333977b032e667215f3db0f84d6ff0f4953e39980",
+          "sha256": "b36a6a47430307e6c30c88227718aca8addd082d8afa97bf4cfc051956ff84ef",
+          "bytes": 21217,
+          "seconds": 1
+        },
+        {
+          "file": "public/samples/hihat/60_0_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitC_v1_rr2_Mid.wav",
+          "sourceSha256": "6545c09b04b4cd8dbf004d24d7a8a560b7d6272deb598ae263b3e1a0fa9832b2",
+          "sha256": "c96c0f14c82f4b371d355c3bf40bb278e7a1f239adfe4c5ec12ab06ae2576953",
+          "bytes": 21299,
+          "seconds": 1
+        },
+        {
+          "file": "public/samples/hihat/60_55_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitC_v2_rr1_Mid.wav",
+          "sourceSha256": "e1fb54c9a030800038abcebbed1c056fb74bdeec627315f3cd5fd893c6e6b031",
+          "sha256": "8e66aad8635d2c72d18c442bc4ce8293e6c95f79c7c43dbb74004ef65eee8d7c",
+          "bytes": 20578,
+          "seconds": 1
+        },
+        {
+          "file": "public/samples/hihat/60_55_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitC_v2_rr2_Mid.wav",
+          "sourceSha256": "72830eafed387f4b4b5904d4d6f1da23e13b48986fa1bc09d7c5771eafbb3a1a",
+          "sha256": "56321c24887e1b3f6a1a34dd8470c29cec1587d35517126979895d22e1da1835",
+          "bytes": 20780,
+          "seconds": 1
+        },
+        {
+          "file": "public/samples/hihat/60_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitC_v3_rr1_Mid.wav",
+          "sourceSha256": "b65ca06ea4f8b5209fc8d98912094be1212911f21e01bd949cc9960db049d37c",
+          "sha256": "3bb872c62869bbd0fea0ab3619d3c4e259d9d6a224566d8fc05b65225cb9a26e",
+          "bytes": 19773,
+          "seconds": 1
+        },
+        {
+          "file": "public/samples/hihat/60_84_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitC_v3_rr2_Mid.wav",
+          "sourceSha256": "fac6cf410239603afff803ea97aa78fc38ccae185b5f60217c3c8cd632c265bd",
+          "sha256": "5ed10ceaf5a3917cc07e5f9bbc7e4bfe2f76e1b1bbc854eb992393b312268530",
+          "bytes": 20401,
+          "seconds": 1
+        },
+        {
+          "file": "public/samples/hihat/60_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitC_v4_rr1_Mid.wav",
+          "sourceSha256": "ccaf3b3a353c22d7aac00c261229c42a1ef083285069f4c76dbafba454b46edd",
+          "sha256": "3d791cace4e06d690b29fa3d01401f7d66553ffc428328e9761ef7b23f9bb7a4",
+          "bytes": 19622,
+          "seconds": 1
+        },
+        {
+          "file": "public/samples/hihat/60_107_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitC_v4_rr2_Mid.wav",
+          "sourceSha256": "98325d2327a7165b12840951de3fd2297e59fcdd0a6a58176a5cb4a3ed1f2958",
+          "sha256": "9ec2a47de696af34d8c0f08fb2901a8fae647e99a2e502f523b32c4496296ee0",
+          "bytes": 19443,
+          "seconds": 1
+        }
+      ]
+    },
+    {
+      "id": "openhat",
+      "instrument": "Hi-Hat Cymbal",
+      "sourceMap": "Idiophones/Struck Idiophones/Hi-Hat Cymbal.sfz",
+      "files": [
+        {
+          "file": "public/samples/openhat/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitO_rr1_Mid.wav",
+          "sourceSha256": "fa492ec14cc6924b43ad5fcf9e9a0f406d926998835bde2eb5847cd15ad25be7",
+          "sha256": "600213216559303bf2e808aabb305e275bc87669629e65cfca35dcd086b5c9b8",
+          "bytes": 46591,
+          "seconds": 2.5
+        },
+        {
+          "file": "public/samples/openhat/60_0_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitO_rr2_Mid.wav",
+          "sourceSha256": "f71f21883f6fe5466d15610ef0e9241ba3851c821858a958f8a6a75bff774760",
+          "sha256": "735cf9f81308cbd33d2f6f95a4f1b884b62ec8c3be94ea2e205bef053086d35c",
+          "bytes": 44979,
+          "seconds": 2.5
+        }
+      ]
+    },
+    {
+      "id": "tom",
+      "instrument": "Tom 1 (high)",
+      "sourceMap": "Membranophones/Struck Membranophones/Tom 1.sfz",
+      "files": [
+        {
+          "file": "public/samples/tom/60_0_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 1/Stick/TomH_HitS_v2_rr1_Mid.wav",
+          "sourceSha256": "ed22e076b649b9fd678454a6fc8852fb8e6a86d782d8b48e0107c1fb73104122",
+          "sha256": "7436e3ca49c157f1a4ba8adb1a6f0d160c5c3a74069bdfec15ed9fa70de4742e",
+          "bytes": 28916,
+          "seconds": 1.6
+        },
+        {
+          "file": "public/samples/tom/60_0_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 1/Stick/TomH_HitS_v2_rr2_Mid.wav",
+          "sourceSha256": "6cb3888e0077a20ac2063064cbcaef08e6d0ba04d925e3938019897452fe14fb",
+          "sha256": "42bd1b76864373a19d775ca4f236c97d0761b35adf604411db919a35b5b91f3d",
+          "bytes": 28600,
+          "seconds": 1.6
+        },
+        {
+          "file": "public/samples/tom/60_66_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 1/Stick/TomH_HitS_v3_rr1_Mid.wav",
+          "sourceSha256": "40bd5cf904ed20eb8e7bba6298e356b66cedd313b4f459c5a5884c054bf447a4",
+          "sha256": "732349a494c202cc5b139a170ff8b69d5f6d56a7552a0cf20291806987ba259b",
+          "bytes": 26897,
+          "seconds": 1.6
+        },
+        {
+          "file": "public/samples/tom/60_66_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 1/Stick/TomH_HitS_v3_rr2_Mid.wav",
+          "sourceSha256": "d7ad9e7f9faff3593a78404d867c8c214cc806d325a4751e126af18af713b799",
+          "sha256": "f7cf1c58deaab024283f1efa70cf083b4149809bf8865b323ad3e960ccf51879",
+          "bytes": 27027,
+          "seconds": 1.6
+        },
+        {
+          "file": "public/samples/tom/60_100_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 1/Stick/TomH_HitS_v4_rr2_Mid.wav",
+          "sourceSha256": "1a0774d0a255ffdd96610161be75003b7bb0d533b84aedc99ce3b567b21a051f",
+          "sha256": "cf77dd929b0d51d8dd2c122ed57b4d4baa8648db85ed8b7073bc3dc3ad4dcb32",
+          "bytes": 23790,
+          "seconds": 1.6
+        },
+        {
+          "file": "public/samples/tom/60_100_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 1/Stick/TomH_HitS_v4_rr1_Mid.wav",
+          "sourceSha256": "021ae3ad142c891d2f8422f74bbbff24d258a72edcc3d9c4ff0d8107f1686512",
+          "sha256": "ff3c4508e704bc350d144d8b4faa0297b660311c1b4a90dbb6557b8e95605508",
+          "bytes": 23891,
+          "seconds": 1.6
+        }
+      ]
+    },
+    {
+      "id": "tomlow",
+      "instrument": "Tom 2 (low)",
+      "sourceMap": "Membranophones/Struck Membranophones/Tom 2.sfz",
+      "files": [
+        {
+          "file": "public/samples/tomlow/60_0_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 2/Stick/TomL_HitS_v2_rr1_Mid.wav",
+          "sourceSha256": "662aebda82f294d754a1c026bba81304e78d6ef49aadac4fb5edb582bdbe061a",
+          "sha256": "134a94c308410dc5ecf53e24b7cb76184f2753471243c7d66c682b6b59c4894e",
+          "bytes": 30092,
+          "seconds": 1.8
+        },
+        {
+          "file": "public/samples/tomlow/60_0_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 2/Stick/TomL_HitS_v2_rr2_Mid.wav",
+          "sourceSha256": "0436df2d06e0520f35dccf835cf60c515f0ae34bd618f9c8d4c0a6a0ba5cb014",
+          "sha256": "56ceac82b516c36592d15d35f0cbc272aabe9c6ec002f60305382c1f14af123f",
+          "bytes": 31492,
+          "seconds": 1.8
+        },
+        {
+          "file": "public/samples/tomlow/60_66_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 2/Stick/TomL_HitS_v3_rr1_Mid.wav",
+          "sourceSha256": "bdc312f2f4c799cb43319a7aa0e664bf6194c6f8b14151051b375968df55eab4",
+          "sha256": "860b2d5c8d93af80d3f208583eeede0965d22e667782cbe3c4c3a45446187bee",
+          "bytes": 28740,
+          "seconds": 1.8
+        },
+        {
+          "file": "public/samples/tomlow/60_66_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 2/Stick/TomL_HitS_v3_rr2_Mid.wav",
+          "sourceSha256": "c3ff68525047c8571522798132c3d0d09f32e9567313f8cefc2d1580a21d40da",
+          "sha256": "7d0af0ac7f60caef6b603f52b566da829acef4394d229edd6fa0ef812d82beda",
+          "bytes": 28898,
+          "seconds": 1.8
+        },
+        {
+          "file": "public/samples/tomlow/60_100_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 2/Stick/TomL_HitS_v4_rr2_Mid.wav",
+          "sourceSha256": "b432f3e837f9a5ad9bf9eb8c2e9c67aa00e314d85e6ffa0fce99188ff9dfbbd0",
+          "sha256": "80dbfee6dbf6e30bcd5216533a7e0807aafb4430de2d4d1f927f3bfc4ef4266d",
+          "bytes": 27116,
+          "seconds": 1.8
+        },
+        {
+          "file": "public/samples/tomlow/60_100_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Tom 2/Stick/TomL_HitS_v4_rr1_Mid.wav",
+          "sourceSha256": "d1cb91ccf2817e4c6f2e839530980554f63c232a3fa98f84a383a6cb1c4a98bd",
+          "sha256": "975384b60c1f0ef900968ec031c7d3c7250c320aeb8f359445d4518b40300791",
+          "bytes": 25753,
+          "seconds": 1.8
+        }
+      ]
+    },
+    {
+      "id": "crash",
+      "instrument": "Suspended Cymbal 1",
+      "sourceMap": "Idiophones/Struck Idiophones/Suspended Cymbal 1.sfz",
+      "files": [
+        {
+          "file": "public/samples/crash/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Suspended Cymbal 1/susCymb1_hit_pp1.wav",
+          "sourceSha256": "d3221ae2c34233b1fa8ceb011ac91d9d3064a57bacff158e41fdef780ad575f8",
+          "sha256": "3b8173a96003abe9cf525f1d04e018be422b941cb65c75b257fe4c8ff60c4ad8",
+          "bytes": 72395,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/crash/60_55_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Suspended Cymbal 1/susCymb1_hit_mp1.wav",
+          "sourceSha256": "426238ad2bfadab07895c7b8f89204fed623d865693cc02d72c68627a86df75e",
+          "sha256": "3aab8b3f5c7a7405dd34363634b5f3759ddccae24d2431556b955df244117924",
+          "bytes": 66053,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/crash/60_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Suspended Cymbal 1/susCymb1_hit_f1.wav",
+          "sourceSha256": "42a8ece91eccec9b7063793e6644d037a9005c01d5b76f6bec358e8d53fb92a5",
+          "sha256": "b11606908206a2e29008caf2703de058e9b0c90ff467025d8efa42a948047839",
+          "bytes": 65697,
+          "seconds": 4
+        },
+        {
+          "file": "public/samples/crash/60_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Suspended Cymbal 1/susCymb1_hit_fff1.wav",
+          "sourceSha256": "993ceb041adaad19c88042e9d6e66707c30eda6e44a5a263d68bb4a3cdb2ca02",
+          "sha256": "c4e8c116afb86e8cf022237609a60cfe303cd8c2980b727dd6d9b331b099095d",
+          "bytes": 64932,
+          "seconds": 4
+        }
+      ]
+    },
+    {
+      "id": "ride",
+      "instrument": "Suspended Cymbal 1",
+      "sourceMap": "Idiophones/Struck Idiophones/Suspended Cymbal 1.sfz",
+      "files": [
+        {
+          "file": "public/samples/ride/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Suspended Cymbal 1/susCymb1_hit_stick_pp1.wav",
+          "sourceSha256": "6f690228ff01e590965598c8b2da534b9c9126426ce106728be46e71a28ab93f",
+          "sha256": "e33f7826a26cb9f6b32d29250e74b0ea7940a8f3c8b8605aaf17a2415c2a7e2a",
+          "bytes": 57132,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/ride/60_66_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Suspended Cymbal 1/susCymb1_hit_stick_mp1.wav",
+          "sourceSha256": "17294cefa7f50367d1d9ae885a5f63a52eab372b90aeb7c3a8b400942cc95b9f",
+          "sha256": "0d1d8569c2444e4e6bd58cceee6e801279d7f383dd1f8187f20289c1ea63d90b",
+          "bytes": 55112,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/ride/60_100_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Suspended Cymbal 1/susCymb1_hit_stick_f1.wav",
+          "sourceSha256": "bc03d2057fed2e56f0aa5f34d3fa42d859ba06150f6b9433409d3fce43342fcb",
+          "sha256": "13bf6ea2fa173a40c3c8c56dc233484233a4015fe99300467cb84206e4e4f49b",
+          "bytes": 50916,
+          "seconds": 3
+        }
+      ]
+    },
+    {
+      "id": "clap",
+      "instrument": "Claps (group)",
+      "sourceMap": "Idiophones/Struck Idiophones/Claps.sfz",
+      "files": [
+        {
+          "file": "public/samples/clap/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Claps/Clap_rr5.wav",
+          "sourceSha256": "7117311949d6640fb0d016bfe780fe3351924c49f48e876433893f4287f692ba",
+          "sha256": "3c3bac36005f72d450a9fd982a222027273ef03474423062478ce5604adbfedf",
+          "bytes": 12848,
+          "seconds": 0.658
+        },
+        {
+          "file": "public/samples/clap/60_0_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Claps/Clap_rr4.wav",
+          "sourceSha256": "3415613351d0af8de674ebc3e8200784c2ffc691da60698cb81ba03704ad748a",
+          "sha256": "240937b540c489b11bd4f4c621a7b4154b1c848298ea1f8c55219b9deacfc1c3",
+          "bytes": 15533,
+          "seconds": 0.769
+        },
+        {
+          "file": "public/samples/clap/60_0_3.m4a",
+          "source": "Idiophones/Struck Idiophones/Claps/Clap_rr6.wav",
+          "sourceSha256": "b48d77c53e31f251b4304cf68daec2a85260becd1a93b81010b93adb7cdcfb46",
+          "sha256": "f393ceda00d0a853f92395d948799bfe1903422e3f53eb4087b5c8079f5bc6f5",
+          "bytes": 10127,
+          "seconds": 0.467
+        },
+        {
+          "file": "public/samples/clap/60_0_4.m4a",
+          "source": "Idiophones/Struck Idiophones/Claps/Clap_rr3.wav",
+          "sourceSha256": "e8c13dc41f31b479f8e3ec49e9dfc49c17d299cce36eedb657fe170f0e6fcb44",
+          "sha256": "d8b3acfeb3befeac53bc769f89a2e3f7f86e687705e75674145c4ef9b7fb3c84",
+          "bytes": 13548,
+          "seconds": 0.688
+        },
+        {
+          "file": "public/samples/clap/60_0_5.m4a",
+          "source": "Idiophones/Struck Idiophones/Claps/Clap_rr2.wav",
+          "sourceSha256": "5ae64e838b76d0658cc541f07c3c7dcfd4b08815a915f32843a8279bf2c33b9a",
+          "sha256": "66218513800c1bc3e74e1db4ace1ecb180df6f6ac7184b89253eaeeb34da8a78",
+          "bytes": 13946,
+          "seconds": 0.713
+        },
+        {
+          "file": "public/samples/clap/60_0_6.m4a",
+          "source": "Idiophones/Struck Idiophones/Claps/Clap_rr1.wav",
+          "sourceSha256": "4c9f3fe4a34733b9be6ed9ce5e5aad48b19c1029ae9c6dd1b96294a847539e3f",
+          "sha256": "a4a961f12830ecaa7b253cb1fc78d38077e935c2c9d5921a843beb0f900521e9",
+          "bytes": 14813,
+          "seconds": 0.739
+        }
+      ]
+    },
+    {
+      "id": "shaker",
+      "instrument": "Shaker, Small",
+      "sourceMap": "Idiophones/Struck Idiophones/Shaker, Small.sfz",
+      "files": [
+        {
+          "file": "public/samples/shaker/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Shaker, Small/Mid_ShakerHighFaster_Down_rr1.wav",
+          "sourceSha256": "cf4cb388ffcff5a042149e0645123b089ae85e8342876421e817dce55ce66a5a",
+          "sha256": "21aaedc755ba03db5709c632c3ae02563a1aca285ae554d232fbbf59b6dc4fbe",
+          "bytes": 8003,
+          "seconds": 0.179
+        },
+        {
+          "file": "public/samples/shaker/60_0_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Shaker, Small/Mid_ShakerHighFaster_Up_rr1.wav",
+          "sourceSha256": "45ae715ce4f64280c9d8fa7eacb4e7003127b93c59c08e95125b67b173cf98e0",
+          "sha256": "c19e45825d9b23a0620ff79df3e18abd8a800ff9cfa2bb073bbb4f4b522c9785",
+          "bytes": 8211,
+          "seconds": 0.182
+        },
+        {
+          "file": "public/samples/shaker/60_0_3.m4a",
+          "source": "Idiophones/Struck Idiophones/Shaker, Small/Mid_ShakerHighFaster_Down_rr2.wav",
+          "sourceSha256": "fa616e9ea22817bb75dfeb6a914440ea933696d43649d6c472f417617b741bd4",
+          "sha256": "d63cd34939af15f8a8a2c94ad7e8fa71184aa7422f9588079cedbd3b7613663c",
+          "bytes": 7600,
+          "seconds": 0.136
+        },
+        {
+          "file": "public/samples/shaker/60_0_4.m4a",
+          "source": "Idiophones/Struck Idiophones/Shaker, Small/Mid_ShakerHighFaster_Up_rr2.wav",
+          "sourceSha256": "43511c3cf1522a3adf1f5533d443aa147e4a3e5272615e29485cb8efebc63dd2",
+          "sha256": "673edeb65a1c91855c8cbbaf25f30d0f512ed312534a568f5b12c9d20007c198",
+          "bytes": 7267,
+          "seconds": 0.14
+        }
+      ]
+    },
+    {
+      "id": "cowbell",
+      "instrument": "Cowbells",
+      "sourceMap": "Idiophones/Struck Idiophones/Cowbells.sfz",
+      "files": [
+        {
+          "file": "public/samples/cowbell/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Cowbells/Cowbell1_Hit_v2_rr1_Mid.wav",
+          "sourceSha256": "6820d8f2abebe1d3e4dba262ad628d833ab04ade72dd2711b0cf4d2a58fa780d",
+          "sha256": "611394124de0d7ae0900bda4426667144513f8fcf786f9a1805460db9990719b",
+          "bytes": 19458,
+          "seconds": 1.126
+        },
+        {
+          "file": "public/samples/cowbell/60_66_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Cowbells/Cowbell1_Hit_v3_rr1_Mid.wav",
+          "sourceSha256": "36e9243e18b299bde0ebbb108c65846ddb5d46b35a61655fa18a0327e3390e87",
+          "sha256": "bf86d550b30d28ff44a570f224ac0ed858157fb57e5ee24157fce70ef76bfb1c",
+          "bytes": 19303,
+          "seconds": 1.151
+        },
+        {
+          "file": "public/samples/cowbell/60_100_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Cowbells/Cowbell1_Hit_v4_rr1_Mid.wav",
+          "sourceSha256": "e32a7a646bddfbc63595de9f64e3e435999c932ebadf0fe98759e754096002a0",
+          "sha256": "e0bfb716381908e593be6d4e3afe7535b262da0a8c9820fd539bab9195b307ef",
+          "bytes": 18440,
+          "seconds": 1.095
+        }
+      ]
+    },
+    {
+      "id": "perc",
+      "instrument": "Woodblock",
+      "sourceMap": "Idiophones/Struck Idiophones/Woodblock.sfz",
+      "files": [
+        {
+          "file": "public/samples/perc/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Woodblock/wood_click_pp_rr1.wav",
+          "sourceSha256": "2c21a5de6f3ddd51ce851325ba6caa4a187422c51299da7b2fdc4f51ae5e9ee1",
+          "sha256": "2c7be17c90eb5aac8c6913d2a86331e89c2ebbf65e2d9dd9d3453f336df2731f",
+          "bytes": 11858,
+          "seconds": 0.405
+        },
+        {
+          "file": "public/samples/perc/60_0_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Woodblock/wood_click_pp_rr3.wav",
+          "sourceSha256": "ecd77e89be7f5ba0b875825ee61902f54736014e3892248299af6b70fff5feb1",
+          "sha256": "0e3e48ad3d86f63b5a56739324490e5541a6581c644b8f63aa9bc200d09ad301",
+          "bytes": 10292,
+          "seconds": 0.311
+        },
+        {
+          "file": "public/samples/perc/60_0_3.m4a",
+          "source": "Idiophones/Struck Idiophones/Woodblock/wood_click_pp_rr2.wav",
+          "sourceSha256": "94db112d562381852c6f7356a85090db25980ec6c9f1dbda0615bafac0fad7db",
+          "sha256": "747acdcc563594bf5543bf558232faa7bf3931f70f548152a2cd1612e102edc0",
+          "bytes": 11777,
+          "seconds": 0.405
+        },
+        {
+          "file": "public/samples/perc/60_55_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Woodblock/wood_click_mp.wav",
+          "sourceSha256": "00b76f9fe96c118f29dfc69866c12ec11f2e1264f6cb9c0b36912c2210b015fe",
+          "sha256": "4acbcd96b3eeaeb186cd9dfbe9f59b30c2e68d62572c8203659596c39d844fc4",
+          "bytes": 13011,
+          "seconds": 0.485
+        },
+        {
+          "file": "public/samples/perc/60_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Woodblock/wood_click_f_rr1.wav",
+          "sourceSha256": "86b690a393ad62d65dc6832948adb0cc164fe22f544a8065809f000c65d615fc",
+          "sha256": "daa33204d045901b0b1cea6169d17018b0da0eaa322376fb63d2ffa4d853e27e",
+          "bytes": 16075,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/perc/60_84_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Woodblock/wood_click_f_rr2.wav",
+          "sourceSha256": "661e25cc1233a9d3d85bde188762d23fbbd69ac6af68af5c8db8fdd36fe25608",
+          "sha256": "cc91f4529cfdb44b8f7af0e371838b6183036b5f0b97cfeb09c70682eb4fecff",
+          "bytes": 16173,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/perc/60_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Woodblock/wood_click_ff.wav",
+          "sourceSha256": "9a911c66212d50a09494821bf9af8ce6e007612e232b5905f838348cb1d63b75",
+          "sha256": "f9650db796e7033c33a709a5d879ebd345a08f1406f700f5aaef1b9f8f0c6c0b",
+          "bytes": 15133,
+          "seconds": 0.743
+        }
+      ]
+    }
+  ]
+}

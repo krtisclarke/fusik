@@ -10,7 +10,7 @@
 import type { Project } from '../model/types';
 import { beatsToSeconds } from '../model/time';
 import { resolveArrangement, songBeats } from '../model/arrange';
-import { resolveParams } from '../model/voices';
+import { getVoice, isPitched, resolveParams } from '../model/voices';
 import { createMasterChain } from './master';
 import { createTrackChain } from './trackChain';
 import { getTrigger } from './synth';
@@ -65,6 +65,54 @@ export function clipOverhangSeconds(
   return Math.max(0, overhang);
 }
 
+/** However long a block is asked to ring, the render won't wait past this. */
+const MAX_VOICE_OVERHANG_SECONDS = 8;
+
+/**
+ * How far past the end of the song its *blocks* keep sounding.
+ *
+ * Measured the same way as `clipOverhangSeconds` above, and for the same
+ * reason: a fixed tail was fine while every drum was synthesized and the
+ * longest was a 1.3-second crash. A recorded crash rings for four seconds by
+ * default, a child can take any drum to four with the Decay slider, and a
+ * melodic block's right-hand edge can be dragged past the end of its part — all
+ * of which live playback rings out and a fixed tail cut off mid-sound, with a
+ * click, because the recording is still near full level there. An exported file
+ * that isn't what the child heard is the one thing Export must never produce.
+ *
+ * A drum rings for its Decay however wide its block is; a melodic note rings for
+ * its block plus its release. Recordings the child made are counted separately.
+ */
+export function voiceOverhangSeconds(
+  project: Project,
+  entries: { sectionId: string; startBeat: number; lengthBeats: number }[],
+  beatsPerLoop: number,
+  loops: number,
+): number {
+  const musicSeconds = beatsToSeconds(beatsPerLoop * loops, project.bpm);
+  let overhang = 0;
+  for (const track of project.tracks) {
+    const voice = getVoice(track.instrument.voiceId);
+    if (!voice) continue;
+    const pitched = isPitched(voice);
+    for (const note of track.notes) {
+      if (note.clipId) continue;
+      const params = resolveParams(track.instrument.voiceId, note.params);
+      const rings = pitched
+        ? beatsToSeconds(note.lengthBeats, project.bpm) + (params.release ?? 0)
+        : params.decay ?? 0;
+      for (const entry of entries) {
+        if (entry.sectionId !== note.sectionId || note.startBeat >= entry.lengthBeats) continue;
+        // The last pass is the one that runs latest.
+        const startBeat = entry.startBeat + note.startBeat + (loops - 1) * beatsPerLoop;
+        const endsAt = beatsToSeconds(startBeat, project.bpm) + rings;
+        if (endsAt - musicSeconds > overhang) overhang = endsAt - musicSeconds;
+      }
+    }
+  }
+  return Math.min(Math.max(0, overhang), MAX_VOICE_OVERHANG_SECONDS);
+}
+
 export async function renderProject(project: Project, opts: RenderOptions = {}): Promise<AudioBuffer> {
   const loops = Math.max(1, Math.floor(opts.loops ?? 1));
   const sampleRate = opts.sampleRate ?? 44100;
@@ -77,7 +125,12 @@ export async function renderProject(project: Project, opts: RenderOptions = {}):
   // its tail chopped off in the exported file.
   const echoSeconds = project.tracks.some((t) => t.echo > 0) ? (30 / Math.max(1, project.bpm)) * 8 : 0;
   const tail =
-    TAIL_SECONDS + echoSeconds + clipOverhangSeconds(project, entries, beatsPerLoop, loops);
+    TAIL_SECONDS
+    + echoSeconds
+    + Math.max(
+        clipOverhangSeconds(project, entries, beatsPerLoop, loops),
+        voiceOverhangSeconds(project, entries, beatsPerLoop, loops),
+      );
   const length = Math.max(1, Math.ceil((musicSeconds + tail) * sampleRate));
 
   const ctx = new OfflineAudioContext(2, length, sampleRate);

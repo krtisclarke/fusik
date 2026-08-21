@@ -28,6 +28,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.ts', 'electron/**/*.test.mjs'],
+    include: ['src/**/*.test.ts', 'electron/**/*.test.mjs', 'tools/**/*.test.mjs'],
   },
 });

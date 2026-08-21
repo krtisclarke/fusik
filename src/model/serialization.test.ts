@@ -10,6 +10,7 @@ import {
   addTrack,
 } from './project';
 import { PROJECT_FORMAT_VERSION } from './types';
+import { getVoice } from './voices';
 
 const sec = (p: ReturnType<typeof createDefaultProject>) => p.sections[0].id;
 
@@ -339,5 +340,76 @@ describe('recordings in the file', () => {
     expect(project.bpm).toBe(100);
     expect(project.tracks[0].notes).toHaveLength(1);
     expect(project.tracks[0].notes[0].clipId).toBeUndefined();
+  });
+});
+
+describe('a song saved before the instruments became recordings', () => {
+  /** A format-3 file: one Piano block left alone, one the child turned up. */
+  function oldSong(voiceId: string, savedGain: number) {
+    return JSON.stringify({
+      formatVersion: 3,
+      name: 'Old Song',
+      bpm: 120,
+      timeSignature: { numerator: 4, denominator: 4 },
+      scaleRoot: 0,
+      scaleId: 'majorPentatonic',
+      sections: [{ id: 'sec_a', name: 'A', lengthBars: 4, color: '#f59e0b' }],
+      arrangement: [{ id: 'arr_1', sectionId: 'sec_a' }],
+      tracks: [
+        {
+          id: 'trk_1',
+          name: 'Piano',
+          type: voiceId === 'piano' ? 'instrument' : 'drum',
+          color: '#60a5fa',
+          instrument: { voiceId, params: {} },
+          gain: 0.7,
+          muted: false,
+          solo: false,
+          echo: 0,
+          notes: [
+            { id: 'n_plain', sectionId: 'sec_a', startBeat: 0, lengthBeats: 1, velocity: 0.8, pitch: 72, params: {} },
+            { id: 'n_loud', sectionId: 'sec_a', startBeat: 1, lengthBeats: 1, velocity: 0.8, pitch: 72, params: { gain: savedGain } },
+          ],
+        },
+      ],
+    });
+  }
+
+  it('keeps a block louder than its neighbours if that is how it was saved', () => {
+    // Volume is stored as an absolute number, so when the piano's normal level
+    // moved from 0.34 to 1.6 a block the child had turned *up* to 0.5 came back
+    // thirteen decibels *below* the untouched ones beside it. The emphasis they
+    // put on that note became the opposite of what they meant.
+    const project = parseProject(oldSong('piano', 0.5));
+    const notes = project.tracks[0].notes;
+    const plain = getVoice('piano')!.defaults.gain;
+    expect(notes[0].params.gain).toBeUndefined();
+    expect(notes[1].params.gain).toBeGreaterThan(plain);
+    // and the proportion the child chose is what survives: 0.5 of an old 0.34
+    expect(notes[1].params.gain! / plain).toBeCloseTo(0.5 / 0.34, 5);
+  });
+
+  it('keeps a block quieter than its neighbours by the same proportion', () => {
+    const project = parseProject(oldSong('hihat', 0.2));
+    const plain = getVoice('hihat')!.defaults.gain;
+    const gain = project.tracks[0].notes[1].params.gain!;
+    expect(gain).toBeLessThan(plain);
+    expect(gain / plain).toBeCloseTo(0.2 / 0.55, 5);
+  });
+
+  it('leaves a block alone on a voice whose level never moved', () => {
+    const project = parseProject(oldSong('synth', 0.3));
+    expect(project.tracks[0].notes[1].params.gain).toBeCloseTo(0.3, 6);
+  });
+
+  it('does not touch a block that never had a Volume of its own', () => {
+    const project = parseProject(oldSong('piano', 0.5));
+    expect(project.tracks[0].notes[0].params.gain).toBeUndefined();
+  });
+
+  it('leaves an already-migrated file alone', () => {
+    const once = parseProject(oldSong('piano', 0.5));
+    const twice = parseProject(serializeProject(once));
+    expect(twice.tracks[0].notes[1].params.gain).toBeCloseTo(once.tracks[0].notes[1].params.gain!, 6);
   });
 });

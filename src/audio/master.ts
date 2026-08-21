@@ -79,9 +79,17 @@ export function createMasterChain(ctx: BaseAudioContext): MasterChain {
   limiter.release.value = 0.1;
 
   // A final touch of headroom so a fast transient slipping past the limiter's
-  // attack still can't reach full scale and clip.
+  // three-millisecond attack still can't reach full scale and clip.
+  //
+  // 0.85 rather than 0.9. The worst case a child can build — every voice, a note
+  // on every sixteenth, every slider at the end of its range, every echo at
+  // maximum — gained about half a decibel when most of the drums became real
+  // recordings, and was landing between 0.976 and 0.993 across repeated renders.
+  // That passes, and it is far too close: the voices vary a little from run to
+  // run by design, so "never clips" cannot rest on three parts in a thousand.
+  // Half a decibel is inaudible and buys back the margin.
   const output = ctx.createGain();
-  output.gain.value = 0.9;
+  output.gain.value = 0.85;
 
   sum.connect(saturation).connect(limiter).connect(output);
 

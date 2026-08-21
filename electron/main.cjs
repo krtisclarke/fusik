@@ -143,6 +143,42 @@ async function findClipFile(songId, clipId) {
   return match ? path.join(dir, match) : null;
 }
 
+/**
+ * The instrument recordings that ship with the app.
+ *
+ * They live in `public/samples/` in the source tree and are copied to
+ * `dist/samples/` by the build, so a packaged app finds them under `dist` and a
+ * development one finds them under `public`. Names are checked rather than
+ * trusted: the renderer is ordinary web code, and a set or file name with a
+ * path in it must not be able to read anything else on the machine.
+ */
+const SAFE_NAME = /^[A-Za-z0-9_.-]+$/;
+
+function sampleFilePath(setId, file) {
+  if (!SAFE_NAME.test(String(setId || '')) || !SAFE_NAME.test(String(file || ''))) return null;
+  if (String(file).includes('..') || String(setId).includes('..')) return null;
+  const roots = app.isPackaged
+    ? [path.join(__dirname, '..', 'dist', 'samples')]
+    : [path.join(__dirname, '..', 'public', 'samples'), path.join(__dirname, '..', 'dist', 'samples')];
+  for (const root of roots) {
+    const full = path.join(root, setId, file);
+    if (!full.startsWith(root + path.sep)) continue;
+    if (fsSync.existsSync(full)) return full;
+  }
+  return null;
+}
+
+ipcMain.handle('samples:read', async (_event, { setId, file }) => {
+  const full = sampleFilePath(setId, file);
+  if (!full) return { ok: false };
+  try {
+    const data = await fs.readFile(full);
+    return { ok: true, bytes: data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) };
+  } catch {
+    return { ok: false };
+  }
+});
+
 ipcMain.handle('clips:write', async (_event, { songId, clipId, bytes, extension }) => {
   const dir = clipDir(songId);
   await fs.mkdir(dir, { recursive: true });

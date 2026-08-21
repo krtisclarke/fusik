@@ -5,8 +5,16 @@
 // turns them into the .beatbox file on disk. Nothing here knows about Web Audio,
 // React, or the DOM — that separation is deliberate and load-bearing.
 
-/** Bumped whenever the on-disk shape changes in a non-backwards-compatible way. */
-export const PROJECT_FORMAT_VERSION = 3;
+/**
+ * Bumped whenever the on-disk shape — or what a number in it *means* — changes.
+ *
+ * Version 4 is a meaning change rather than a shape change: most instruments
+ * became real recordings, which sit at a different Volume from the synthesized
+ * ones they replaced, so a Volume a child had set on a block needed rescaling to
+ * keep meaning what they meant by it. See `migrateBlockVolume` in
+ * model/voices.ts.
+ */
+export const PROJECT_FORMAT_VERSION = 4;
 
 export interface TimeSignature {
   /** Beats per bar (the top number). */

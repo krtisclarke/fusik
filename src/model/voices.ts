@@ -5,8 +5,13 @@
 // turns the numbers into actual sound. A track's `instrument.params` overrides
 // these defaults; an empty override object means "sound exactly like this".
 //
-// Every sound here is synthesized from scratch, so there are zero sample
-// licensing concerns and every parameter is something a child can tweak.
+// Most sounds here are synthesized from scratch. The acoustic ones — the
+// instruments no amount of synthesis makes convincing — play recordings
+// instead: a voice with a `sampleSet` is played by audio/sampler.ts from the
+// files in public/samples/, and one without is built by audio/synth.ts. The two
+// live together in the same song and behave identically everywhere else.
+//
+// Every recording is CC0. Provenance, licence and hashes: docs/asset-manifest.json.
 
 export type VoiceCategory = 'Drums' | 'Bass' | 'Keys' | 'Cymbals' | 'Percussion';
 
@@ -26,12 +31,61 @@ export interface VoiceDef {
   baseMidi?: number;
   /** For pitched voices: how many octaves of the scale the note-grid spans. */
   octaves?: number;
-  /** Base parameters for the synth. Overridable per track. */
+  /**
+   * Recordings this voice plays, from model/sampleSets.ts. Absent means the
+   * voice is synthesized. The parameters a sampled voice offers are different —
+   * see the note at the top of this file.
+   */
+  sampleSet?: string;
+  /** Base parameters. Overridable per block. */
   defaults: Record<string, number>;
 }
 
 export function isPitched(voice: VoiceDef | undefined): boolean {
   return voice?.kind === 'pitched';
+}
+
+/** Whether this voice plays a recording rather than building a sound. */
+export function isSampled(voice: VoiceDef | undefined): boolean {
+  return !!voice?.sampleSet;
+}
+
+/**
+ * The controls a sampled voice offers.
+ *
+ * Volume, pitch, brightness, drive and attack all still mean exactly what they
+ * meant on a synthesized voice — they shape the sound on its way out. Waveform
+ * and detune describe how a sound is *built*, and there is nothing to build, so
+ * they are absent rather than present and dead. `decay` is how long a drum rings
+ * before it is cut; a pitched voice uses `release` instead, because its length
+ * already comes from its block.
+ */
+/**
+ * `gain` here is measured rather than guessed. Every recording is levelled to a
+ * common loudness at build time, but instruments still differ in how much of
+ * that loudness survives as a peak — a woodblock is all transient, a cymbal is
+ * all tail — so each voice's level was set by rendering one hit and comparing it
+ * against the synthesized voice it replaced. Values above 1 are normal and safe:
+ * a recording peaks well below full scale by the time it has been levelled, and
+ * the master limiter is the backstop either way.
+ */
+function sampledDefaults(gain: number, opts: { pitched?: boolean; seconds?: number }): Record<string, number> {
+  // Insertion order is the order the Sound Editor draws them in, so the two a
+  // child reaches for first come first.
+  //
+  // Brightness keeps the key each voice used when it was synthesized —
+  // `cutoff` for the melodic ones, `tone` for the drums. Both already read as
+  // "Brightness" in the editor, and matching them means a block a child had
+  // already darkened stays darkened when its instrument becomes a recording
+  // instead of quietly springing back.
+  //
+  // Pitch is offered on drums only. On a melodic voice the note-grid is the
+  // pitch control, and its one promise is that nothing placed on it can sound
+  // wrong — a slider that moves a block a semitone off its own row, invisibly,
+  // breaks exactly that.
+  return opts.pitched
+    ? { gain, release: 0.25, cutoff: 12000, drive: 0, attack: 0.002 }
+    : { gain, pitch: 0, decay: opts.seconds ?? 1, tone: 12000, drive: 0, attack: 0.002 };
 }
 
 export const VOICE_CATALOG: VoiceDef[] = [
@@ -41,7 +95,24 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '🥁',
     category: 'Drums',
     color: '#ef4444',
-    defaults: { tune: 50, pitchDrop: 110, decay: 0.34, click: 0.4, drive: 0.15, gain: 1.0 },
+    // Left synthesized on purpose. A drum-machine kick *is* a built sound —
+    // that is what the instrument is — and the only real recording available is
+    // an orchestral bass drum, which is a different, boomier thing. That one is
+    // here too, as its own voice ('bassdrum').
+    // 0.45, not 1.0. At 1.0 this voice peaked at 1.35 on its own — clipped
+    // before it even reached the limiter, and loud enough to bury every other
+    // drum in the kit now that the rest are recordings. It is still the fullest
+    // thing in there.
+    defaults: { tune: 50, pitchDrop: 110, decay: 0.34, click: 0.4, drive: 0.15, gain: 0.45 },
+  },
+  {
+    id: 'bassdrum',
+    label: 'Big Drum',
+    emoji: '🪘',
+    category: 'Drums',
+    color: '#dc2626',
+    sampleSet: 'kick',
+    defaults: sampledDefaults(0.95, { seconds: 2 }),
   },
   {
     id: 'snare',
@@ -49,7 +120,8 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '🪘',
     category: 'Drums',
     color: '#f59e0b',
-    defaults: { tune: 180, decay: 0.2, noise: 0.7, tone: 2200, gain: 0.9 },
+    sampleSet: 'snare',
+    defaults: sampledDefaults(1.05, { seconds: 1.2 }),
   },
   {
     id: 'hihat',
@@ -57,7 +129,8 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '🎩',
     category: 'Cymbals',
     color: '#22d3ee',
-    defaults: { decay: 0.05, tone: 8000, gain: 0.55 },
+    sampleSet: 'hihat',
+    defaults: sampledDefaults(1.3, { seconds: 1 }),
   },
   {
     id: 'openhat',
@@ -65,7 +138,8 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '👒',
     category: 'Cymbals',
     color: '#2dd4bf',
-    defaults: { decay: 0.32, tone: 8000, gain: 0.5 },
+    sampleSet: 'openhat',
+    defaults: sampledDefaults(1.1, { seconds: 2.5 }),
   },
   {
     id: 'clap',
@@ -73,7 +147,8 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '👏',
     category: 'Percussion',
     color: '#a78bfa',
-    defaults: { decay: 0.18, tone: 1500, gain: 0.8 },
+    sampleSet: 'clap',
+    defaults: sampledDefaults(1.15, { seconds: 0.77 }),
   },
   {
     id: 'tom',
@@ -81,7 +156,17 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '🛢️',
     category: 'Drums',
     color: '#fb923c',
-    defaults: { tune: 120, pitchDrop: 70, decay: 0.34, click: 0.1, drive: 0.0, gain: 0.9 },
+    sampleSet: 'tom',
+    defaults: sampledDefaults(1.0, { seconds: 1.6 }),
+  },
+  {
+    id: 'tomlow',
+    label: 'Low Tom',
+    emoji: '🛢️',
+    category: 'Drums',
+    color: '#ea580c',
+    sampleSet: 'tomlow',
+    defaults: sampledDefaults(0.95, { seconds: 1.8 }),
   },
   {
     id: 'crash',
@@ -89,7 +174,8 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '💥',
     category: 'Cymbals',
     color: '#eab308',
-    defaults: { decay: 1.3, tone: 5000, gain: 0.5 },
+    sampleSet: 'crash',
+    defaults: sampledDefaults(0.95, { seconds: 4 }),
   },
   {
     id: 'ride',
@@ -97,7 +183,8 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '🔔',
     category: 'Cymbals',
     color: '#84cc16',
-    defaults: { decay: 0.85, tone: 7000, gain: 0.45 },
+    sampleSet: 'ride',
+    defaults: sampledDefaults(1.45, { seconds: 3 }),
   },
   {
     id: 'rim',
@@ -105,7 +192,8 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '🥢',
     category: 'Percussion',
     color: '#f472b6',
-    defaults: { tune: 1700, decay: 0.05, gain: 0.7 },
+    sampleSet: 'rim',
+    defaults: sampledDefaults(1.05, { seconds: 0.8 }),
   },
   {
     id: 'shaker',
@@ -113,7 +201,8 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '🧂',
     category: 'Percussion',
     color: '#38bdf8',
-    defaults: { decay: 0.06, tone: 6500, gain: 0.5 },
+    sampleSet: 'shaker',
+    defaults: sampledDefaults(1.9, { seconds: 0.18 }),
   },
   {
     id: 'cowbell',
@@ -121,18 +210,20 @@ export const VOICE_CATALOG: VoiceDef[] = [
     emoji: '🐄',
     category: 'Percussion',
     color: '#f97316',
-    defaults: { tune: 540, decay: 0.35, gain: 0.6 },
+    sampleSet: 'cowbell',
+    defaults: sampledDefaults(1.0, { seconds: 1.15 }),
   },
   {
     id: 'perc',
-    label: 'Blip',
-    emoji: '✨',
+    label: 'Wood Block',
+    emoji: '🪵',
     category: 'Percussion',
     color: '#c084fc',
-    defaults: { tune: 420, decay: 0.22, gain: 0.6 },
+    sampleSet: 'perc',
+    defaults: sampledDefaults(1.05, { seconds: 0.8 }),
   },
 
-  // ---- Pitched instruments (wave: 0=sine 1=triangle 2=saw 3=square) ----
+  // ---- Pitched instruments ------------------------------------------------
   {
     id: 'piano',
     label: 'Piano',
@@ -142,8 +233,30 @@ export const VOICE_CATALOG: VoiceDef[] = [
     kind: 'pitched',
     baseMidi: 60,
     octaves: 2,
-    defaults: { wave: 2, attack: 0.004, decay: 0.45, sustain: 0.0, release: 0.32, cutoff: 900, bite: 3.4, detune: 9, gain: 0.34 },
+    sampleSet: 'piano',
+    defaults: sampledDefaults(1.6, { pitched: true }),
   },
+  {
+    id: 'bells',
+    label: 'Bells',
+    emoji: '🛎️',
+    category: 'Keys',
+    color: '#f0abfc',
+    kind: 'pitched',
+    // Left where it was, at 72, even though the glockenspiel's lowest recorded
+    // bar is G5 (79) and the bottom three rows of the grid are stretched down to
+    // reach it. Moving the grid up to meet the recordings sounded better and
+    // broke every song already written: a saved note below the new range keeps
+    // its pitch, has no row to be drawn on, and collapses onto the bottom one —
+    // so a tune shows as a stack of blocks on one row while still playing six
+    // different notes, and dragging any of them rewrites it for good.
+    baseMidi: 72,
+    octaves: 2,
+    sampleSet: 'bells',
+    defaults: sampledDefaults(1.25, { pitched: true }),
+  },
+  // Synthesized on purpose: these are synthesizers. There is no "real" version
+  // of them to be more faithful to.
   {
     id: 'synth',
     label: 'Synth',
@@ -154,17 +267,6 @@ export const VOICE_CATALOG: VoiceDef[] = [
     baseMidi: 60,
     octaves: 2,
     defaults: { wave: 2, attack: 0.02, decay: 0.35, sustain: 0.55, release: 0.28, cutoff: 1400, bite: 2.4, detune: 14, gain: 0.42 },
-  },
-  {
-    id: 'bells',
-    label: 'Bells',
-    emoji: '🛎️',
-    category: 'Keys',
-    color: '#f0abfc',
-    kind: 'pitched',
-    baseMidi: 72,
-    octaves: 2,
-    defaults: { wave: 0, attack: 0.002, decay: 0.9, sustain: 0.0, release: 0.6, cutoff: 4200, bite: 3.2, detune: 6, gain: 0.4 },
   },
   {
     id: 'bass',
@@ -180,6 +282,49 @@ export const VOICE_CATALOG: VoiceDef[] = [
 ];
 
 const VOICE_BY_ID = new Map(VOICE_CATALOG.map((v) => [v.id, v]));
+
+/**
+ * The Volume each voice sat at before it became a recording.
+ *
+ * A block's Volume is stored as an absolute number, not as a fraction of its
+ * voice's normal level — so when a voice's normal level moves, every block a
+ * child had ever nudged moves with it, in the wrong direction. The piano went
+ * from 0.34 to 1.6, so a saved block someone had turned *up* to 0.5 came back
+ * about thirteen decibels *below* its untouched neighbours in the same phrase:
+ * a note they had emphasised, gone.
+ *
+ * Kept as plain data rather than derived, because it is a fact about files
+ * already on disk and must not change again when a level is next retuned.
+ */
+const VOLUME_BEFORE_RECORDINGS: Record<string, number> = {
+  kick: 1.0,
+  snare: 0.9,
+  hihat: 0.55,
+  openhat: 0.5,
+  clap: 0.8,
+  tom: 0.9,
+  crash: 0.5,
+  ride: 0.45,
+  rim: 0.7,
+  shaker: 0.5,
+  cowbell: 0.6,
+  perc: 0.6,
+  piano: 0.34,
+  bells: 0.4,
+  // synth and bass are unchanged, so they need no entry.
+};
+
+/**
+ * Rescale a Volume saved before the recordings arrived, keeping the *proportion*
+ * the child chose: a block set to half its voice's normal level stays at half.
+ * Returns the value unchanged for a voice whose level never moved.
+ */
+export function migrateBlockVolume(voiceId: string, gain: number): number {
+  const before = VOLUME_BEFORE_RECORDINGS[voiceId];
+  const now = VOICE_BY_ID.get(voiceId)?.defaults.gain;
+  if (!before || !now || before === now) return gain;
+  return gain * (now / before);
+}
 
 export function getVoice(voiceId: string): VoiceDef | undefined {
   return VOICE_BY_ID.get(voiceId);

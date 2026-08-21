@@ -4,3 +4,9 @@ release/
 *.log
 .DS_Store
 .vite/
+
+# Downloaded source recordings for the sampled instruments. These normally live
+# outside the project (see tools/build-samples.mjs), but VCSL_CACHE can point
+# back here — and a quarter of a gigabyte of build-time input has no business in
+# the repository either way.
+.cache/

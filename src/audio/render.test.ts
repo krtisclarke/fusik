@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { clipOverhangSeconds } from './render';
+import { clipOverhangSeconds, voiceOverhangSeconds } from './render';
 import * as P from '../model/project';
 import type { Project } from '../model/types';
 import { resolveArrangement, songBeats } from '../model/arrange';
@@ -56,5 +56,53 @@ describe('room for a recording that runs past the end', () => {
 
   it('is never negative', () => {
     expect(overhang(songWithRecording(0, 0.1))).toBe(0);
+  });
+});
+
+describe('voiceOverhangSeconds', () => {
+  /** One 4-bar part at 120 bpm — 16 beats, 8 seconds — with one block in it. */
+  function songWith(voiceId: string, opts: { startBeat?: number; lengthBeats?: number; params?: Record<string, number>; pitch?: number } = {}) {
+    let project = P.createDefaultProject();
+    const track = P.createTrackForVoice(voiceId);
+    project = P.addTrack(project, track);
+    return P.addNote(project, track.id, {
+      id: 'note_overhang',
+      sectionId: project.sections[0].id,
+      startBeat: opts.startBeat ?? 15,
+      lengthBeats: opts.lengthBeats ?? 1,
+      velocity: 0.8,
+      pitch: opts.pitch,
+      params: opts.params ?? {},
+    });
+  }
+  const overhang = (project: Project) =>
+    voiceOverhangSeconds(project, resolveArrangement(project), songBeats(project), 1);
+
+  it('waits for a cymbal on the last beat that rings for four seconds', () => {
+    // A fixed 2.5-second tail was fine while the longest drum was a 1.3-second
+    // synthesized crash. A recorded crash rings for four, and the export cut it
+    // off mid-ring — with a click, because the recording is still near full
+    // level there. Live playback rang it out, so the file was not what the child
+    // heard, which is the one thing Export must never be.
+    expect(overhang(songWith('crash'))).toBeCloseTo(3.5, 2);
+  });
+
+  it('follows the block\'s own Decay, not the voice\'s default', () => {
+    expect(overhang(songWith('hihat', { params: { decay: 3.5 } }))).toBeCloseTo(3, 2);
+  });
+
+  it('waits for a melodic block dragged past the end of its part', () => {
+    // A block's right-hand edge can be dragged anywhere; nothing clamps it to
+    // the part. Counting only drums left this one truncated.
+    const project = songWith('synth', { startBeat: 8, lengthBeats: 16, pitch: 72 });
+    expect(overhang(project)).toBeGreaterThan(4);
+  });
+
+  it('asks for nothing when everything finishes inside the song', () => {
+    expect(overhang(songWith('perc', { startBeat: 0, params: { decay: 0.2 } }))).toBe(0);
+  });
+
+  it('refuses to wait forever', () => {
+    expect(overhang(songWith('crash', { params: { decay: 500 } }))).toBe(8);
   });
 });

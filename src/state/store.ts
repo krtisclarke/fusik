@@ -44,6 +44,9 @@ import {
 import { newClipId, newSongId } from '../model/ids';
 import { MicRecorder, micAvailable } from '../audio/mic';
 import { clipsAvailable, readClip, sweepClips, writeClip } from '../platform/clips';
+import { readSampleFile } from '../platform/samples';
+import { decodeSample, sampleSetFiles, sampleSetReady, setSample } from '../audio/sampler';
+import { SAMPLE_SETS } from '../model/sampleSets';
 import { hasSeenTutorial, markTutorialSeen } from '../platform/prefs';
 import { flushAutosave } from './autosave';
 import { TOUR_STEPS } from './tour';
@@ -285,6 +288,53 @@ function loadClipsFor(project: Project, songId: string): void {
   }
 }
 
+/**
+ * Fetch and decode every instrument recording, once, at start-up.
+ *
+ * Before the first click rather than on demand, and that timing is the point:
+ * the recordings are what the sampled instruments *are*, and a child who drops
+ * a snare and hears the fallback instead has been given the wrong impression of
+ * the app in its first second. Nothing needs a user gesture here — decoding
+ * goes through an `OfflineAudioContext`, which needs none, and the buffers it
+ * produces play through the live engine perfectly well.
+ *
+ * A recording that fails to arrive is not fatal: its voice falls back to the
+ * synthesized version, so the app is never silent, only less good.
+ */
+let samplesLoaded: Promise<void> | null = null;
+
+export function loadSamples(): Promise<void> {
+  if (samplesLoaded) return samplesLoaded;
+  const jobs: { setId: string; file: string }[] = [];
+  for (const set of SAMPLE_SETS) {
+    for (const file of sampleSetFiles(set.id)) jobs.push({ setId: set.id, file });
+  }
+  // A handful at a time. All 150 at once floods the IPC bridge and the decoder
+  // for no gain — they are small, and the whole set is in within a second.
+  const WORKERS = 8;
+  let next = 0;
+  async function worker(): Promise<void> {
+    for (;;) {
+      const job = jobs[next++];
+      if (!job) return;
+      try {
+        const bytes = await readSampleFile(job.setId, job.file);
+        if (bytes) setSample(job.setId, job.file, await decodeSample(bytes));
+      } catch {
+        // One unreadable recording. Its voice keeps working from the others,
+        // or falls back to synthesis; the rest of the app is unaffected.
+      }
+    }
+  }
+  samplesLoaded = Promise.all(Array.from({ length: WORKERS }, worker)).then(() => undefined);
+  return samplesLoaded;
+}
+
+/** Whether every sampled instrument is ready to play. */
+export function samplesAreReady(): boolean {
+  return SAMPLE_SETS.every((s) => sampleSetReady(s.id));
+}
+
 /** A pleasant default pitch (middle of the instrument's range) for previews and
  *  freshly-dropped instrument notes. Undefined for drums. */
 function middlePitch(voiceId: string, project: Project): number | undefined {
@@ -403,6 +453,7 @@ export const useStore = create<StoreState>((set, get) => {
   engine.setEditSection(initialSectionId);
   const startHistory = createHistory(initialProject);
   loadClipsFor(initialProject, initialSongId);
+  void loadSamples();
 
   return {
     history: startHistory,
@@ -576,6 +627,11 @@ export const useStore = create<StoreState>((set, get) => {
       const project = get().history.present;
       try {
         set({ status: 'Rendering…' });
+        // Wait for the recordings. Everything else in Export is worth a
+        // moment's delay against the alternative — a file that comes out
+        // sounding nothing like what the child heard, with no sign anything
+        // went wrong.
+        await loadSamples();
         const buffer = await renderProject(project, { loops: 1, clips: engine.getClips() });
         const left = buffer.getChannelData(0);
         const right = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : left;

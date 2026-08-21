@@ -42,6 +42,15 @@ contextBridge.exposeInMainWorld('desktop', {
     sweep: (songId, keep) => ipcRenderer.invoke('clips:sweep', { songId, keep }),
   },
 
+  /**
+   * The instrument recordings that ship with the app. Read here rather than
+   * fetched by the renderer because the packaged app runs on a `file://` page,
+   * where Chromium will not fetch anything at all.
+   */
+  samples: {
+    read: (setId, file) => ipcRenderer.invoke('samples:read', { setId, file }),
+  },
+
   /** Subscribe to native menu commands. Returns an unsubscribe function. */
   onMenu: (channel, handler) => {
     const allowed = ['menu:new', 'menu:open', 'menu:save', 'menu:undo', 'menu:redo'];

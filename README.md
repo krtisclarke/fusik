@@ -4,11 +4,12 @@ A music-creation studio for curious kids — drag sounds onto a timeline, build 
 beat, tweak it, and hear the result instantly. Built as a cross-platform desktop
 app (Windows and macOS) using web technology wrapped in Electron.
 
-> **Status:** Working timeline, transport, a synthesized drum kit **and melodic
-> instruments** (piano, synth, bells, bass) with scale-snapped melodies, **song
-> parts you can arrange** (verse/chorus-style, A A B A), per-block sound
-> editing, WAV export, plus save/load, **autosave**, an **interactive
-> walkthrough** for first-timers, and undo/redo. See
+> **Status:** Working timeline, transport, a drum kit and melodic instruments
+> (piano, synth, bells, bass) with scale-snapped melodies — **most of them real
+> recordings** of real instruments — **song parts you can arrange**
+> (verse/chorus-style, A A B A), per-block sound editing, WAV export, plus
+> save/load, **autosave**, an **interactive walkthrough** for first-timers, and
+> undo/redo. See
 > [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the full picture and roadmap.
 
 ## Run it (development)
@@ -43,6 +44,7 @@ so everything (including audio) works.
 npm test          # run the automated tests
 npm run typecheck # TypeScript check, no build
 npm run build     # build the web bundle
+npm run samples   # rebuild the instrument recordings from the sample library
 npm run package:win   # build a Windows installer (needs Windows or CI)
 npm run package:mac   # build a macOS app bundle
 ```
@@ -55,6 +57,11 @@ npm run package:mac   # build a macOS app bundle
   it, not when you press Next. The **?** button in the toolbar starts it again
   any time.
 
+- **Real instruments.** The Piano is a recording of a real grand piano, the
+  Bells a real glockenspiel, and most of the drums are real drums — recorded
+  properly, several times over, so hitting a key harder doesn't just make it
+  louder, it makes it *brighter*, the way a real instrument does. Eight snares
+  in a row don't sound like eight copies of one snare, because they aren't.
 - **Drums:** click an empty spot in a track row to drop a beat; click a beat to remove it.
 - **Instruments:** drop a Piano, Synth, Bells or Bass in, then click its note-grid to
   write a melody or bassline. The grid only offers notes from a musical scale, so
@@ -105,5 +112,19 @@ npm run package:mac   # build a macOS app bundle
 - **Ctrl/Cmd+Z** to undo, **Ctrl/Cmd+S** to save, **Ctrl/Cmd+O** to open.
 - **Export** turns the song into a `.wav` audio file you can play or share anywhere.
 
-Every sound is synthesized by the app itself, so there are no audio files to
-license and every sound is fully tweakable.
+## Where the sounds come from
+
+Most instruments are real recordings, from the **Versilian Community Sample
+Library** — released by Versilian Studios under **CC0**, which puts them in the
+public domain. No royalties, no attribution, no terms: a song you export from
+here is yours to share with anybody, and nobody has to read a licence first.
+Every file that ships is listed in [docs/asset-manifest.json](docs/asset-manifest.json)
+with where it came from and a hash of it.
+
+The Synth, the Bass and the Kick are still built by the app rather than
+recorded, because that is genuinely what those instruments are — a synth is a
+synth, and a drum-machine kick is a made sound, not a recorded one. Both kinds
+sit in the same song and work exactly the same way.
+
+Every sound stays fully tweakable either way: pick a block and shape its volume,
+pitch, brightness, decay and grit.

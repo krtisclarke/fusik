@@ -15,15 +15,23 @@ if (import.meta.env.DEV) {
     import('./audio/master'),
     import('./audio/render'),
     import('./audio/wav'),
-  ]).then(([engineMod, storeMod, synthMod, voicesMod, masterMod, renderMod, wavMod]) => {
+    import('./audio/sampler'),
+    import('./model/sampleSets'),
+  ]).then(([engineMod, storeMod, synthMod, voicesMod, masterMod, renderMod, wavMod, samplerMod, setsMod]) => {
     (window as unknown as Record<string, unknown>).beatbox = {
       engine: engineMod.engine,
       store: storeMod.useStore,
       getTrigger: synthMod.getTrigger,
+      synth: synthMod,
       resolveParams: voicesMod.resolveParams,
       createMasterChain: masterMod.createMasterChain,
       renderProject: renderMod.renderProject,
       encodeWav: wavMod.encodeWav,
+      sampler: samplerMod,
+      sampleSets: setsMod.SAMPLE_SETS,
+      voices: voicesMod,
+      loadSamples: storeMod.loadSamples,
+      samplesAreReady: storeMod.samplesAreReady,
     };
   });
 }

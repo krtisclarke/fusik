@@ -41,6 +41,10 @@ interface DesktopBridge {
     remove: (songId: string, clipId: string) => Promise<{ ok: boolean }>;
     sweep: (songId: string, keep: string[]) => Promise<{ ok: boolean; removed?: number }>;
   };
+  /** The instrument recordings that ship inside the app bundle. */
+  samples?: {
+    read: (setId: string, file: string) => Promise<{ ok: boolean; bytes?: ArrayBuffer }>;
+  };
   onMenu: (channel: string, handler: () => void) => () => void;
 }
 

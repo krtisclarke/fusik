@@ -73,8 +73,12 @@ Strict one-way dependency flow. Lower layers never import higher ones.
 - **`state/`** — the Zustand store ties the model, the undo history, and the
   engine together. It is the only thing the UI talks to.
 - **`ui/`** — React components. Read from the store, dispatch actions.
-- **`platform/`** — save/open, abstracted over "desktop (Electron)" vs
-  "browser (download/upload)" so the app runs in both.
+- **`platform/`** — save/open, and reading the shipped instrument recordings,
+  abstracted over "desktop (Electron)" vs "browser (download/upload)" so the app
+  runs in both.
+- **`public/samples/`** — the instrument recordings themselves, and
+  **`tools/`** — the build-time only script that produced them from the sample
+  library. Neither is imported by the app; see §5.
 - **`electron/`** — the desktop shell (plain CommonJS, no build step). Opens a
   window, provides native Save/Open dialogs over a locked-down IPC bridge, and
   loads the dev server (development) or the built files (production).
@@ -190,12 +194,137 @@ Everything sums into a master chain (`audio/master.ts`):
   sounds stack up, the output can't spike loud enough to hurt ears or speakers.
 
 Verified by rendering a full beat through the chain in an `OfflineAudioContext`:
-peaks at ~0.97 with zero clipped samples. Gain staging is conservative (velocity
+the demo song peaks at 0.84, and the worst case a child can build at 0.94, both
+with zero clipped samples. See "Ear safety, re-measured" above for what that
+worst case actually contains. Gain staging is conservative (velocity
 and track volume scale voices down further before the master).
+
+### Playing recordings (`audio/sampler.ts`)
+
+Most instruments are now real recordings rather than built sounds. Which one a
+voice is, is a single field in the catalog: a `VoiceDef` with a `sampleSet` is
+played by the sampler, one without by the synthesizer, and `getTrigger` in
+`audio/synth.ts` is the one place that chooses. That matters because live
+playback and the offline render behind Export both go through it, so they cannot
+drift apart.
+
+**A recording is stretched to the note asked for** by playing it faster or
+slower. Past a couple of semitones that stops sounding like the same instrument
+and starts sounding like a cartoon, so an instrument is many recordings across
+its range and the engine picks the nearest — the piano is 24 notes' worth,
+roughly one every two semitones.
+
+The **Bells** are the exception, and knowingly. A glockenspiel's lowest bar is
+G5, well above the bottom of the grid, so the lowest three rows are stretched
+down to reach it and sound like a larger, duller metallophone. Moving the grid up
+to meet the recordings sounded better and broke every song already written: a
+saved note below the new range keeps its pitch, has no row to be drawn on, and
+collapses onto the bottom one — so a tune shows as a stack of blocks on one row
+while still playing six different notes, and dragging any of them rewrites it for
+good. A recording of a lower metallophone would fix it properly.
+
+**Strength bands tile exactly, and that is load-bearing.** The bands are whole
+numbers in the library's map and fractions in the app's, and converting each
+edge on its own left a 1/127-wide hole between every pair. A strike landing in
+one matched no band of the note being played — only a band belonging to some
+*other* note, which was then dragged into tune from as much as two octaves away:
+middle C at one particular strength came out as a slurred growl. Both edges now
+come from the same expression on the same integer, the bands are half-open, and
+`sampler.test.ts` sweeps every strength of every note in the shipped map.
+
+**Strength is chosen before pitch, and that order is the point.** How hard a
+piano is struck changes its *tone*, not only its loudness, so each note is
+recorded two or three times at different strengths. Given a soft recording of
+the exact note and a hard recording a tone away, a hard strike must take the
+hard one: playing the soft one louder sounds like a soft hit turned up, because
+that is what it is.
+
+**Repeated hits alternate between takes** where a note has more than one. Choosing
+at random sounds like the right idea and isn't — with three takes it repeats
+about a third of the time, which is the machine-gun rattle the takes exist to
+avoid.
+
+**Sampled voices offer different controls, and the Sound Editor follows.**
+Volume, brightness, drive and attack all still mean what they meant on a
+synthesized voice — they shape the sound on its way out. Waveform and detune
+describe how a sound is *built*, and there is nothing to build, so they are
+absent rather than present and dead. The editor draws whatever is in a voice's
+`defaults`, so this needed no special case. A drum gets `decay` (how long it
+rings before it is cut); a pitched voice gets `release` instead, because its
+length already comes from its block. Brightness deliberately keeps the key each
+voice used before — `tone` on the drums, `cutoff` on the melodic ones — so a
+block a child had already darkened stays darkened.
+
+**Pitch is offered on drums only.** Tuning a tom up or down is a real thing to
+want, and a drum has no scale to violate. On a melodic voice the note-grid *is*
+the pitch control, and its one promise is that nothing placed on it can sound
+wrong — a slider that moves a block a semitone off the row it is drawn on, with
+nothing on screen to show it, breaks exactly that. Where a transpose does apply,
+it picks the recording of the note it lands on rather than stretching the
+original one that far.
+
+**A held note lasts as long as it actually plays for.** A recording played below
+its own note runs slower, so a three-and-a-half second glockenspiel takes over
+five at the bottom of the Bells grid. The stop time is divided by the playback
+rate for exactly that reason; without it the note was cut a second and a half
+early, on a hard edge, with the level still held at full.
+
+**A drum's envelope has to stay in order.** Web Audio sorts automation events by
+time, so with a slow attack and a short decay the ramp to silence was scheduled
+*before* the ramp to full, and the level sat at the envelope's floor for the
+whole note — the drum made no sound at all. A Shaker's Decay is 0.18 against an
+Attack that goes to 1.0, so it took one drag to silence a block with nothing to
+say why. `drumEnvelope` is that ordering, and it is tested across the whole
+range of both sliders.
+
+**A sampled drum ignores how wide its block is**, exactly as a synthesized one
+does. A child drawing a narrow hi-hat means "a hi-hat here", not "a hi-hat cut
+off after a sixteenth".
+
+**The recordings are fetched and decoded at start-up**, before the first click,
+because they are what the sampled instruments *are* — a child who drops a snare
+and hears the fallback has been given the wrong impression of the app in its
+first second. Nothing there needs a user gesture: decoding goes through an
+`OfflineAudioContext`, which needs none, and an `AudioBuffer` is not tied to the
+context that made it. The whole set is 158 files and 6.8 MB, in within about a
+tenth of a second. A voice whose recordings never arrive falls back to its
+synthesized version, so the app is never silent, only less good — with its
+Volume capped on the way, because a sampled voice's Volume sits higher than a
+synthesized one's and handing that number straight over would make the stand-in
+several times louder than the sound it stands in for.
+
+**Levels were set by measurement, not by ear.** Each sampled voice's Volume was
+chosen by rendering one hit and comparing it against the synthesized voice it
+replaced, aiming at the same loudness with a peak around 0.72 at a normal
+strike. Values above 1 are normal: a levelled recording peaks well below full
+scale where a built waveform does not. The synthesized **kick** came down from
+1.0 to 0.45 as part of this — at 1.0 it peaked at 1.35 on its own, clipped
+before it even reached the limiter, and was loud enough to bury every other drum
+now that the rest are recordings.
+
+**Ear safety, re-measured.** The worst case a child can build — every voice, a
+note on every sixteenth, every slider at the end of its range, every track's
+echo at maximum, at 180 bpm, plus a microphone recording at the level a decoded
+take really comes back at — renders at peak **0.943 with zero clipped samples**
+across repeated renders. The demo song renders at 0.839.
+
+Getting there took half a decibel off the master's final gain (0.9 → 0.85, in
+`audio/master.ts`). Recordings are hotter than synthesis, and the Volume slider's
+ceiling went up to make room for them, so the same worst case that used to land
+at 0.977 was landing between 0.976 and 0.993 — passing, and far too close. The
+voices vary a little from run to run by design (noise offsets, alternating
+takes), so "never clips" cannot rest on three parts in a thousand.
 
 ### Synthesis
 
-All sounds are synthesized (`audio/synth.ts`) from a few primitives:
+Some voices stay synthesized, on purpose. The **Synth** and the **Bass** are
+synthesizers: there is no "real" version of them to be more faithful to. The
+**Kick** is a drum-machine kick, which is a built sound by definition, and the
+only real recording available for it is an orchestral bass drum — a different,
+boomier thing, which is in the app as its own voice (**Big Drum**) rather than
+in place of it.
+
+All of those sounds are built (`audio/synth.ts`) from a few primitives:
 
 - **membrane** — a pitched sine with a fast pitch-drop envelope (tom).
 - **noise burst** — filtered white noise with a shaped decay (snare body,
@@ -434,18 +563,19 @@ aren't on the grid. This is what lets an 8-year-old build real melodies without
 music theory getting in the way.
 
 Verified non-silent by rendering each voice through an `OfflineAudioContext` and
-measuring peak/RMS (all voices produce real signal; kick is fullest at ~1.0
-pre-limiter, cymbals/percussion sit lower).
+measuring peak/RMS. All voices produce real signal, and after the levelling
+described in §5 they sit within about 5 dB of each other rather than the 24 dB
+spread they started at.
 
 ---
 
 ## 4. Project file format (`.beatbox`)
 
-Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v2):
+Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v4):
 
 ```jsonc
 {
-  "formatVersion": 3,
+  "formatVersion": 4,
   "name": "My Song",
   "bpm": 120,
   "timeSignature": { "numerator": 4, "denominator": 4 },
@@ -508,6 +638,19 @@ Plain, pretty-printed JSON — human-readable and diff-friendly. Shape (v2):
   the synth voice; `instrument.params` is retained for compatibility, but sound
   now lives on the blocks. Older files that stored sound on the track are
   migrated onto their notes on load.
+- **Version 4 is a change of *meaning*, not of shape.** Most instruments became
+  recordings, and a recording sits at a different Volume from the synthesized
+  voice it replaced — the piano's normal level moved from 0.34 to 1.6. A block's
+  Volume is stored as an absolute number, so without a migration a block a child
+  had deliberately turned *up* came back thirteen decibels *below* the untouched
+  ones beside it: the emphasis they put on a note, inverted. Loading a format-3
+  file rescales any Volume a block carries so the *proportion* the child chose
+  survives — half its voice's normal level stays half. Blocks with no Volume of
+  their own are left alone, because they already say "however loud this voice
+  normally is". `migrateBlockVolume` in `model/voices.ts` keeps the old levels as
+  plain data, since they are a fact about files already on disk and must not
+  move again the next time a level is retuned.
+
 - **Loading is validated** (`model/serialization.ts`): bad JSON, non-project
   values, or a missing `tracks` array throw a clear `ProjectLoadError`; a file
   from a newer `formatVersion` is refused; imperfect-but-recoverable data is
@@ -594,12 +737,127 @@ second.
 
 ## 5. Assets & licensing
 
-**There are no third-party audio assets.** Every sound is generated by the app's
-own synthesis engine. This sidesteps sample-licensing entirely — nothing to
-attribute, nothing that can't be redistributed. If sampled assets are ever
-added, they must be CC0 or equivalent and recorded in an asset manifest
-(name, source, license, attribution, URL, hash); prefer CC0 so redistribution
-stays trivial.
+**Every third-party recording in this app is CC0**, from the Versilian
+Community Sample Library (VCSL) by Versilian Studios LLC, pinned to commit
+`c1ea7bc`. CC0 is a dedication to the public domain: no royalties, no
+attribution, no terms — which matters because an exported song is meant to be
+shareable without anyone reading a licence first. "Free for non-commercial use"
+would have failed exactly there.
+
+Every shipped file is recorded in **`docs/asset-manifest.json`**: which VCSL
+recording it came from, the hash of that recording, the hash of the file we
+ship, its size and length, plus the library's licence, publisher, URL and the
+hash of its licence text. `tools/manifest.test.mjs` holds the two halves
+together — every shipped file is in the manifest, every manifest entry is on
+disk, and the hashes match. That test earns its keep: this project lives in an
+iCloud-synced folder, which leaves duplicate `… 2.m4a` copies behind after a
+rebuild, and without the check they would have been committed with no licence
+record attached.
+
+**A CC0 label is only as good as the right to apply it.** VCSL is Versilian's
+own recordings, released by the people who made them — a chain that holds up.
+Several "CC0 drum kit" repositories on GitHub are re-uploads of other people's
+commercial content with a licence file added on top, and none of those are used
+here.
+
+### Building the recordings (`tools/`)
+
+`node tools/build-samples.mjs` goes from "a VCSL commit" to "the files in
+`public/samples/` and the map in `src/model/sampleSets.ts`". Verified end to end
+from an empty cache: it fetches the 191 source recordings, and produces the same
+map and the same audio as the committed build. `--plan` prints the selection,
+fetching only the small text maps. Source recordings are cached outside the
+project, in `~/Library/Caches/beatbox-studio/vcsl` — about 270 MB, and this
+project lives in an iCloud-synced folder, which is no place for it.
+
+**The library ships its own map, and reading it beats guessing.** Alongside the
+audio, VCSL publishes SFZ files saying which recording is which note, which
+strike strength it covers, how far out of tune it is, and how much to turn it up
+so it sits level with the others. Those numbers were measured by the people who
+made the recordings.
+
+**But the map is not always right, and the failure is silent.** VCSL's
+glockenspiel is filed an octave below where it actually rings — there is no
+energy whatsoever at the note its map names. Believed, every Bells note in the
+app would have come out an octave low, and nobody would have found that by
+reading code. So `verifyKeyCentre` checks each pitched recording against its map
+before the map is used, and the build *fails* rather than guessing when the two
+can't be reconciled.
+
+That check is a measurement with a trap in it. The obvious test — "which partial
+is loudest?" — is wrong: a piano's second harmonic is routinely louder than its
+fundamental, so that answer is an octave high on notes that are perfectly
+correct. A pitch tracker (YIN) is exact on the piano and useless on a struck
+metal bar, which has no repeating period to find. What works for both is asking
+which octave has real energy *at its own fundamental*, taking the lowest that
+does. Measured across this whole selection the two cases are nowhere near each
+other: every piano recording has at least 28% of its loudest partial at its
+fundamental, and every glockenspiel recording has 0.1% or less at the note its
+map names. Walking upward from the octave below is what makes a map that is too
+*high* fail too.
+
+**The tuning correction's sign is load-bearing.** A measurement says how far the
+recording *is* from the note; the number stored says how far to *move* it.
+Getting that backwards doubles the error instead of removing it — the
+glockenspiel first came out a third of a semitone sharp, which is enough to
+sound wrong against everything else in the song. Verified after the fix by
+rendering each note and measuring: bells land within 1 cent across their whole
+range.
+
+**Every recording is levelled to one loudness**, measured over its first 300 ms,
+and how hard the note was struck supplies all of the loudness difference at
+playback. That is what VCSL's own level trims are reaching for, and they don't
+quite get there — the hi-hat's third-hardest recording came out *quieter* than
+its second-hardest, which reads as a hit that lands wrong. Peaks are capped at
+0.89 rather than full scale, because encoded audio decodes back slightly above
+where it went in: an open hi-hat levelled to 0.95 came back at 1.006.
+
+**What gets thrown away, and why.** VCSL records every technique for an
+instrument in one folder — a hi-hat's closed, loose, open and pedal hits all
+together, on different keys — so each voice takes exactly one of them, or it
+would change character at random from hit to hit. Rolls, bowed swells and
+crescendos are dropped. Where a note was recorded at four strengths and only
+three are kept, the survivors are stretched to cover the whole range: dropping
+one leaves a hole, and a strike landing in it finds no recording at all. And a
+note the library captured at only one strength is dropped entirely — B4 on the
+Kawai is the only loud-only note on the keyboard, and kept, it would play at
+that one volume however gently a child hit it.
+
+**Rebuilding produces the same sound, and almost always the same bytes.** The
+encoder stamps the current date into three MP4 headers, so the same audio encoded
+twice differed in six bytes — enough to make every rebuild look like 6.8 MB of
+changed binaries to git and to change every hash in the licence manifest for no
+reason. Those fields are zeroed after encoding.
+
+What remains is the system encoder itself, which is not quite bit-exact: measured
+at eleven identical encodes out of twelve for one input, and about one file in
+eight across a full rebuild. The audio is the same either way — this is the
+encoder making a marginally different choice, not the tool making a different
+decision — but it does mean a rebuild is not a no-op in git, and it is why the
+licence manifest is regenerated by the same run that writes the files rather than
+being checked against an older one.
+
+Both the audio commit *and* the commit the maps come from are pinned:
+everything that decides mapping rather than sound — root notes, strength bands,
+tunings, take numbers, which recordings exist at all — lives in those maps, so a
+branch name there would have meant a regenerated upstream could silently produce
+a different instrument from byte-identical audio and report success.
+
+**Format: AAC in an MP4 container (`.m4a`), stereo, 44.1 kHz.** 267 MB of source
+recordings become 6.8 MB shipped. Stereo rather than mono because these were
+recorded with a spaced pair, and for the piano and the cymbals that width *is*
+the realism — mono saves about 3 MB and makes a piano sit at a point rather than
+in a room. AAC was checked for the one thing that would have ruled it out:
+compressed audio can decode a few milliseconds late, which would put every
+sampled drum behind every synthesized one. Measured in Electron, the transient
+lands on exactly the same frame as the source WAV.
+
+**Timing was measured, not assumed.** Recordings carry several milliseconds of
+room before the hit; left in, every sampled drum lands that much behind a
+synthesized one, which reads as a flam between the kick and the snare. The build
+trims to just before the transient, and four hi-hats rendered a beat apart now
+start within 1.1–1.7 ms of where they were asked for — most of which is the
+instrument's own attack.
 
 ---
 
@@ -705,7 +963,7 @@ target genuinely isn't there, the card centres itself instead of vanishing.
 
 ### Testing approach
 
-- **Automated (172 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (222 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -738,7 +996,8 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Electron desktop shell | ✅ | Window, native menu, Save/Open dialogs. |
 | Timeline (bars/beats/grid, snapping) | ✅ | One **Timing** toggle: Tidy (a 1/16 grid) or Free. The finer resolutions still exist in `model/time.ts` and are tested — they just aren't a choice a child is asked to make. |
 | Transport (play/pause/stop/loop, BPM, position) | ✅ | Two-clock scheduler; live tempo change. |
-| Synthesized drum kit (12 voices) | ✅ | Membrane / noise / blip primitives. |
+| Drum kit (14 voices) | ✅ | Mostly real recordings (CC0 — see §5); the Kick stays synthesized, because a drum-machine kick is a built sound. |
+| Sampled instruments | ✅ | Piano, Bells and most of the kit play real recordings, pitch-shifted per note with several strengths each. Sampled and synthesized voices sit in the same song and behave identically everywhere else. |
 | Place / remove / move notes | ✅ | Click to place, click to remove, drag sideways to move in time and up/down to change the note. A dragged note lands on the scale, so it can't be dropped on a wrong one. |
 | Drag sound from library | ✅ | Creates or reuses the voice's track. |
 | Per-track volume / mute / solo | ✅ | |
@@ -756,7 +1015,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Block length / resize | ✅ | Drag a selected block's right edge to change its length (snaps to grid). |
 | Per-track echo | ✅ | One slider per track, on the lane header. Tempo-synced (repeats land an eighth note apart at any tempo) and one control drives level, repeats and feedback together, so there's no way to set it to something unmusical. Same chain live and in Export. |
 | Other per-track effects (reverb send, filter) | ⬜ | The per-track chain (`audio/trackChain.ts`) is the place to add them. |
-| Melodic instruments (piano, synth, bells, bass) | ✅ | Pitched subtractive synth: 2 oscillators, ADSR, low-pass filter. |
+| Melodic instruments (piano, synth, bells, bass) | ✅ | Piano and Bells are recordings (a Kawai grand and a glockenspiel); Synth and Bass stay a pitched subtractive synth — 2 oscillators, ADSR, low-pass filter — because that is what they are. |
 | Swap a row's instrument | ✅ | The row's name is a picker. The tune comes with it, landing in the new instrument's own range. Drums stay drums. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
 | Change the song's mood | ✅ | Happy / Sad, each with a "more notes" version, from the toolbar. The tune already written moves with it, by scale degree, so it keeps its shape — and flipping between two scales of the same size is exactly reversible. |
@@ -868,6 +1127,41 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Play the same key near the bottom and near the top — the bottom is
       noticeably louder. Hit the note *name* printed on the key near the bottom:
       still loud.
+- [ ] Every sound in the library makes a noise when you click it, including
+      **Big Drum**, **Low Tom** and **Wood Block**.
+- [ ] Select a Piano block: the Sound Editor offers Volume, Pitch, Release,
+      Brightness, Buzz and Attack — and **no Wave or Detune**. A Snare block
+      offers Decay where the Piano offers Release.
+- [ ] A Piano block has no **Pitch** slider; a Snare block does. Turn a Snare's
+      Pitch down 12 — it plays an octave lower.
+- [ ] Drag a Shaker block's **Attack** all the way up: it swells in and gets
+      quieter, but it never goes silent.
+- [ ] Play the same piano key at every depth from top to bottom, slowly. Every
+      strike sounds like a piano — none of them drops into a slurred growl.
+- [ ] Put a Crash on the last beat and Export: the file rings the cymbal out
+      fully and ends in silence, not with a click.
+- [ ] Play a tune high up on the Bells and low down on the Piano — neither turns
+      into a chipmunk or a growl.
+- [ ] Hit a Piano key gently and hard: the hard one is brighter, not just
+      louder.
+- [ ] Put eight snares in a row and listen: they are not identical.
+- [ ] A drum block one sixteenth wide still rings out naturally rather than
+      being chopped off.
+- [ ] Put a Kick and a Snare on the same beat: they land together, with no flam.
+- [ ] Export a song with sampled instruments in it and play the file — the
+      instruments are the real ones, not the synthesized fallbacks.
+- [ ] Stretch a Piano block's right edge past the end of its part and Export:
+      the note is complete in the file, not cut off part-way.
+- [ ] Hold the lowest Bells key for five seconds — it rings out and fades,
+      rather than stopping dead part-way.
+- [ ] Open a song saved before this change in which a block's Volume had been
+      turned up: that block is still louder than the ones beside it, not
+      quieter.
+- [ ] Open a song saved before the recordings arrived: it plays, with its blocks
+      and any sound tweaks intact, and a Bells row still shows its tune spread
+      across the grid rather than stacked on the bottom row.
+- [ ] In the packaged desktop app (not just `npm run dev`), every instrument
+      sounds — that is where the recordings are read a different way.
 - [ ] Record a phrase played at different depths — the blocks come back with
       different heights in their strength bar, not all identical.
 
