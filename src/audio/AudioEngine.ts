@@ -33,6 +33,12 @@ const START_LEAD_S = 0.06; // tiny delay before the first note so it isn't late
 // start from (the downbeat, every time you press Play), so the very first window
 // starts a hair below it.
 const START_EPSILON_BEATS = 1e-6;
+/**
+ * How far behind the scheduler may fall before it gives up on what it missed.
+ * Comfortably longer than any normal hitch (it wakes every 25 ms), short enough
+ * that a real stall never turns into a pile-up. See the stall guard in tick().
+ */
+const MAX_CATCHUP_S = 0.5;
 
 export type PlayMode = 'song' | 'section';
 
@@ -357,8 +363,22 @@ export class AudioEngine {
       return;
     }
 
-    const lo = this.lastScheduledBeat;
+    let lo = this.lastScheduledBeat;
     const hi = horizonBeat;
+
+    // The scheduler couldn't run for a while — a dialog blocking the main
+    // thread, a backgrounded tab, a machine under load. The audio clock kept
+    // going without it, so this window now spans everything that was missed.
+    // Every one of those notes is already in the past, and the `Math.max(when,
+    // now)` below would clamp the lot onto this single instant: seconds of
+    // drums as one blast. On a kids' app that is an ear-safety problem rather
+    // than a timing one, and the limiter only caps its peak. Their moment has
+    // gone, so skip to the present — silence across the gap, then the song from
+    // where it has actually got to.
+    if (beatsToSeconds(hi - lo, bpm) - LOOK_AHEAD_S > MAX_CATCHUP_S) {
+      lo = this.beatAtTime(now, bpm) - START_EPSILON_BEATS;
+    }
+
     const period = this.looping ? len : Infinity;
 
     for (const track of project.tracks) {

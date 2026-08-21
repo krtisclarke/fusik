@@ -121,6 +121,20 @@ somewhere unrelated and take a stretch of silence with it. Re-anchoring keeps
 both the wrapped position and the already-scheduled horizon, so nothing is heard
 twice.
 
+**When the scheduler is starved.** The look-ahead assumes the timer keeps
+waking. When it can't — a modal dialog blocking the main thread, a backgrounded
+tab, a machine under load — the audio clock runs on without it, and the next
+window spans *everything missed*. Those notes are all in the past, and clamping
+each one to "now" (which the scheduler must do, since Web Audio will not start a
+source at a time already gone) lands the whole lot on a single instant: several
+seconds of drums as one blast. That is an ear-safety problem rather than a
+timing one, and the limiter caps its peak but not its existence. So `tick()`
+checks how far behind it is, and past `MAX_CATCHUP_S` it abandons the gap and
+resumes from the present — silence across the stall, then the song where it has
+actually got to. Measured (`AudioEngine.test.ts`): a five-second stall in a
+dense three-track loop scheduled 117 notes on one instant before this guard, and
+at most three — normal playback's ceiling — after it.
+
 **Two play modes.** In `'song'` mode the engine plays the arrangement: each
 slot's section is laid end to end (`model/arrange.ts` resolves slots to absolute
 beats), a note is scheduled once per slot its section occupies, and looping
@@ -375,7 +389,7 @@ npm run package:mac # macOS app bundle
 
 ### Testing approach
 
-- **Automated (97 tests):** timing/beat math, snapping, scheduling windows,
+- **Automated (99 tests):** timing/beat math, snapping, scheduling windows,
   project serialization (round-trip, invalid input, repair, format-1
   migration), arrangement math, undo/redo history, and the pure project edit
   operations, and autosave (round-trip through the slot, corrupt/newer-version
@@ -385,8 +399,9 @@ npm run package:mac # macOS app bundle
   against a stubbed AudioContext and a fake clock, recording every note it hands
   to Web Audio. Pure-function tests can't catch the bugs that live here, which
   are about how each window is *set up*: the downbeat playing on the first pass,
-  a note never scheduled twice, a part appearing once per slot it occupies, and
-  the playhead surviving a length change mid-play.
+  a note never scheduled twice, a part appearing once per slot it occupies, the
+  playhead surviving a length change mid-play, and a starved scheduler declining
+  to fire everything it missed at once.
 - **Audio:** verified by offline-rendering each voice and asserting non-silent
   output (done interactively via the dev console; see the debug handle exposed
   on `window.beatbox` in development builds).
@@ -471,6 +486,8 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Press **New** with a song in progress — it asks first, and Cancel keeps
       the song.
 - [ ] After **New**, reload — the empty song stays empty, not the old one.
+- [ ] Press **New** while the song is playing and leave the question on screen
+      for a few seconds, then Cancel — the song picks up quietly, with no burst.
 
 ---
 

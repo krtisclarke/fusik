@@ -199,3 +199,68 @@ describe('arrangement playback', () => {
     expect(scheduled).toHaveLength(2);
   });
 });
+
+/** A busy one-bar loop: three tracks, a hit on every sixteenth. */
+function busyBar() {
+  let project = P.createDefaultProject();
+  project = P.setSectionLength(project, project.sections[0].id, 1);
+  const sectionId = project.sections[0].id;
+  for (const track of [...project.tracks]) {
+    for (let i = 0; i < 16; i++) {
+      project = P.addNote(project, track.id, P.createNote(sectionId, i * 0.25, 0.25));
+    }
+  }
+  return project;
+}
+
+/** How many notes share their loudest single instant. */
+function worstStack(): number {
+  const byTime = new Map<number, number>();
+  for (const s of scheduled) byTime.set(s.when, (byTime.get(s.when) ?? 0) + 1);
+  return Math.max(0, ...byTime.values());
+}
+
+describe('a stalled scheduler', () => {
+  it('does not fire every missed note at once when the main thread was blocked', async () => {
+    // The scheduler hands notes to Web Audio ahead of time, in windows of
+    // (lastScheduled, horizon]. If the timer can't run for a while — a modal
+    // dialog, a background tab, a slow machine — the audio clock keeps going
+    // and that window grows to cover everything missed. Each of those notes is
+    // then clamped to `now`, so they all land on the same instant: several
+    // seconds of drums as one blast. On a kids' app that is an ear-safety
+    // problem, not a timing one, and the limiter only caps the peak.
+    const engine = await newEngine();
+    engine.setProject(busyBar());
+    await engine.play();
+    await advance(0.5);
+
+    const ceiling = worstStack(); // what normal playback looks like
+    expect(ceiling).toBeLessThanOrEqual(3); // three tracks, one sixteenth
+
+    // The main thread is blocked for five seconds. The audio clock runs on; the
+    // scheduler's timer cannot fire.
+    scheduled.length = 0;
+    ctx.currentTime += 5;
+    await vi.advanceTimersByTimeAsync(25); // the first tick after the stall
+
+    expect(worstStack()).toBeLessThanOrEqual(ceiling);
+  });
+
+  it('carries on from where the song has got to, rather than replaying the gap', async () => {
+    const engine = await newEngine();
+    engine.setProject(busyBar()); // 1 bar = 4 beats = 2s at 120bpm
+    await engine.play();
+    await advance(0.5);
+
+    scheduled.length = 0;
+    ctx.currentTime += 5;
+    await vi.advanceTimersByTimeAsync(25);
+
+    // One tick covers 25ms plus the 100ms look-ahead: at 120bpm that is a
+    // quarter of a beat, so one sixteenth per track at most.
+    expect(scheduled.length).toBeLessThanOrEqual(6);
+    // And it keeps playing afterwards.
+    await advance(0.5);
+    expect(scheduled.length).toBeGreaterThan(6);
+  });
+});
