@@ -99,6 +99,7 @@ export function Transport() {
   const setTidyTiming = useStore((s) => s.setTidyTiming);
   const setScale = useStore((s) => s.setScale);
   const startTour = useStore((s) => s.startTour);
+  const startHelper = useStore((s) => s.startHelper);
   const showSongs = useStore((s) => s.showSongs);
   const toggleSongs = useStore((s) => s.toggleSongs);
 
@@ -200,7 +201,7 @@ export function Transport() {
         <span className="lbl">bar.beat</span>
       </div>
 
-      <div className="field">
+      <div className="field" data-tour="tempo">
         <span className="lbl">Tempo</span>
         <div className="stepper">
           <button onClick={() => setBpm(bpm - 1)} aria-label="Slower">
@@ -219,7 +220,7 @@ export function Transport() {
         </div>
       </div>
 
-      <div className="field">
+      <div className="field" data-tour="mood">
         <span className="lbl">Mood</span>
         <select
           className="snap"
@@ -290,6 +291,14 @@ export function Transport() {
           </button>
           <SongsPanel />
         </div>
+        <button
+          className="tbtn"
+          onClick={startHelper}
+          title="Stuck? Get an idea for a song"
+          aria-label="Stuck? Get an idea for a song"
+        >
+          💡
+        </button>
         <button
           className="tbtn"
           onClick={startTour}

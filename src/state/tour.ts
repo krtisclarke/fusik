@@ -31,6 +31,10 @@ export interface TourContext {
   recordings: number;
   /** Whether recording from a microphone is possible here at all. */
   canRecordMic: boolean;
+  /** The song's tempo — the idea helper coaches setting it. */
+  bpm: number;
+  /** The song's scale (the Mood box) — likewise. */
+  scaleId: string;
 }
 
 export interface TourProgress {
@@ -59,10 +63,15 @@ export interface TourStep {
    * instruction that can never be followed.
    */
   applies?: (ctx: TourContext) => boolean;
+  /**
+   * A question step: buttons that branch instead of a goal. The idea helper
+   * asks what kind of song today's is before it starts pointing at controls.
+   */
+  choices?: { id: string; label: string }[];
 }
 
 /** Clamped progress towards `total` more of something than there was at `start`. */
-function moreThan(now: number, start: number, total: number): TourProgress {
+export function moreThan(now: number, start: number, total: number): TourProgress {
   return { done: Math.max(0, Math.min(total, now - start)), total };
 }
 

@@ -18,6 +18,8 @@ const EMPTY: TourContext = {
   parts: 1,
   recordings: 0,
   canRecordMic: true,
+  bpm: 120,
+  scaleId: 'majorPentatonic',
 };
 
 const step = (id: string) => {
@@ -60,6 +62,8 @@ describe('the first-song walkthrough', () => {
       parts: 4,
       recordings: 3,
       canRecordMic: true,
+      bpm: 120,
+      scaleId: 'majorPentatonic',
     };
     for (const s of TOUR_STEPS) {
       if (!s.goal || s.id === 'play') continue; // 'play' asks for a state, not a count

@@ -10,7 +10,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import {
-  TOUR_STEPS,
   isStepDone,
   nextCelebration,
   remainingLabel,
@@ -68,6 +67,8 @@ function useTourContext(): TourContext {
       parts: project.sections.length,
       recordings,
       canRecordMic,
+      bpm: project.bpm,
+      scaleId: project.scaleId,
     };
   }, [project, sectionId, isPlaying, playedNotes, canRecordMic]);
 }
@@ -163,11 +164,13 @@ function cardPosition(rect: Rect | null): { top: number; left: number; centred: 
 
 export function Tutorial() {
   const stepIndex = useStore((s) => s.tourStep);
+  const steps = useStore((s) => s.tourSteps);
   const nextTourStep = useStore((s) => s.nextTourStep);
   const endTour = useStore((s) => s.endTour);
+  const chooseHelperOption = useStore((s) => s.chooseHelperOption);
   const ctx = useTourContext();
 
-  const step = stepIndex == null ? null : TOUR_STEPS[stepIndex];
+  const step = stepIndex == null ? null : steps[stepIndex];
   const rect = useTargetRect(step?.target);
 
   // The snapshot each goal is measured against, tied to the step it belongs to
@@ -236,16 +239,28 @@ export function Tutorial() {
         aria-live="polite"
         aria-label={step.title}
       >
-        <div className="tour-dots">
-          {TOUR_STEPS.map((s, i) => (
-            <span key={s.id} className={`tour-dot ${i === stepIndex ? 'on' : ''} ${i < stepIndex ? 'past' : ''}`} />
-          ))}
-        </div>
+        {steps.length > 1 && (
+          <div className="tour-dots">
+            {steps.map((s, i) => (
+              <span key={s.id} className={`tour-dot ${i === stepIndex ? 'on' : ''} ${i < stepIndex ? 'past' : ''}`} />
+            ))}
+          </div>
+        )}
 
         <div className="tour-title">
           {celebrating ? 'Nice one!' : step.title}
         </div>
         <div className="tour-body">{celebrating ? <span>✅</span> : withEmphasis(step.body)}</div>
+
+        {step.choices && !celebrating && (
+          <div className="tour-choices">
+            {step.choices.map((c) => (
+              <button key={c.id} className="tour-choice" onClick={() => chooseHelperOption(c.id)}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="tour-actions">
           <button className="tour-skip" onClick={endTour}>
@@ -257,7 +272,7 @@ export function Tutorial() {
             <button className="tour-next" onClick={nextTourStep} disabled={celebrating}>
               {step.button}
             </button>
-          ) : (
+          ) : step.choices ? null : (
             // The child is meant to go and do the thing. Moving on without doing
             // it stays available, but quietly — a big bright button saying Skip
             // is an invitation to press it instead.

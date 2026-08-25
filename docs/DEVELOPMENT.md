@@ -1080,6 +1080,27 @@ controls by `data-tour` attribute rather than by CSS class, so restyling a
 button can't silently leave the walkthrough pointing at nothing — and when a
 target genuinely isn't there, the card centres itself instead of vanishing.
 
+### The idea helper (💡)
+
+For the child who opens the app and freezes. The 💡 button — it never offers
+itself; the walkthrough teaches the app, this one un-sticks a song — asks what
+kind of song today's is (a feeling, a style, or "surprise me"), lands on one
+of twelve recipes, and then coaches the *order of building*: mood and speed,
+then a beat, then the low end, then a tune, then a second part. It rides the
+walkthrough's own machinery — the same cards, the same highlight ring on the
+real control, the same do-the-thing goals — so each step ticks when the child
+actually does it, and the whole flow is plain data in `state/helper.ts`,
+tested beside the walkthrough's.
+
+**The line it never crosses, from the brief: it makes no music.** It places no
+note, sets no tempo, changes no mood — it points at the control and asks, and
+its tips teach conventions in words ("in rock the kick and snare take turns";
+"a kick on every beat is the dance-floor heartbeat") the way a person would.
+A test enforces the shape: a step is titles, bodies, targets and goals, with
+no way to reach the project at all. Recipes name instruments by their library
+labels, and a test holds those to the catalog so a renamed voice can't leave
+the helper pointing at nothing.
+
 ### Testing approach
 
 - **Automated (222 tests):** timing/beat math, snapping, scheduling windows,
@@ -1123,6 +1144,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Per-note velocity | ✅ | Played and recorded notes keep how hard they were hit — where on the key you land sets it. Drawn on every block. Editing a block's strength by hand is a later nicety. |
 | Save / load (`.beatbox`) | ✅ | Native dialogs on desktop; download/upload in browser. |
 | First-song walkthrough | ✅ | Interactive: highlights the real control, advances when the child actually does it. Offers itself once; the **?** button replays it. |
+| Idea helper (💡) | ✅ | For creative block: asks what kind of song (feeling / style / surprise), then coaches the build order — mood, speed, beat, bass, tune, second part — with the walkthrough's cards and highlights. Words and pointers only; it never places a note or touches a setting. |
 | Autosave & restore | ✅ | Songs are kept in local storage as they're worked on and the last one comes back at the next start. Local only. |
 | Several songs, named | ✅ | The song has a name you can type over, and 🎵 Songs lists everything kept on this computer — click one to open it. **New** keeps the one you were on rather than replacing it. On the desktop each song is a real file in `~/Documents/Beatbox Studio/`. |
 | Undo / redo | ✅ | Snapshot-based; keyboard + buttons + menu. |
@@ -1274,6 +1296,15 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       step is passed over rather than shown.
 - [ ] Press **?** on a song that already has plenty in it — it still asks for
       new beats rather than skipping ahead.
+- [ ] Press **💡** — a question card, not a lecture. Pick a feeling or a
+      style: the Mood box lights up and the card asks for that recipe's mood.
+      Set it — the step ticks and moves to Tempo; set that — it moves to the
+      beat, and placing three beats moves it on again.
+- [ ] "Surprise me!" lands on a real recipe, not always the same one.
+- [ ] Nothing in the helper ever changes the song by itself: mood, tempo and
+      every block are still the child's own clicks.
+- [ ] Close the helper mid-flow and press **?** — the walkthrough opens from
+      its own first step, unconfused.
 - [ ] Play the same key near the bottom and near the top — the bottom is
       noticeably louder. Hit the note *name* printed on the key near the bottom:
       still loud.

@@ -49,7 +49,8 @@ import { decodeSample, sampleSetFiles, sampleSetReady, setSample } from '../audi
 import { SAMPLE_SETS } from '../model/sampleSets';
 import { hasSeenTutorial, markTutorialSeen } from '../platform/prefs';
 import { flushAutosave } from './autosave';
-import { TOUR_STEPS } from './tour';
+import { TOUR_STEPS, type TourStep } from './tour';
+import { HELPER_START, nextHelperSteps } from './helper';
 import { renderProject } from '../audio/render';
 import { encodeWav } from '../audio/wav';
 
@@ -232,6 +233,12 @@ export interface StoreState {
   nextTourStep: () => void;
   /** Close it, and don't offer it again on its own. */
   endTour: () => void;
+  /** The steps on screen right now — the walkthrough's, or the helper's. */
+  tourSteps: TourStep[];
+  /** Open the idea helper (the 💡 button). */
+  startHelper: () => void;
+  /** Answer the helper's current question; the flow branches from it. */
+  chooseHelperOption: (id: string) => void;
   /** A key was pressed on the playable keyboard. */
   notePlayed: () => void;
 }
@@ -481,6 +488,7 @@ export const useStore = create<StoreState>((set, get) => {
     // and only when there is no song to come back to, so it can never appear
     // over work already in progress.
     tourStep: restored || hasSeenTutorial() ? null : 0,
+    tourSteps: TOUR_STEPS,
     playedNotes: 0,
 
     // ---- lifecycle -------------------------------------------------------
@@ -1094,11 +1102,16 @@ export const useStore = create<StoreState>((set, get) => {
       void engine.audition(voiceId, {}, 0.9, middlePitch(voiceId, get().history.present));
     },
     setStatus: (status) => set({ status }),
-    startTour: () => set({ tourStep: 0 }),
+    startTour: () => set({ tourSteps: TOUR_STEPS, tourStep: 0 }),
+    startHelper: () => set({ tourSteps: [HELPER_START], tourStep: 0 }),
+    chooseHelperOption: (id) => {
+      const steps = nextHelperSteps(id, Math.random);
+      if (steps) set({ tourSteps: steps, tourStep: 0 });
+    },
     nextTourStep: () => {
       const step = get().tourStep;
       if (step == null) return;
-      if (step + 1 >= TOUR_STEPS.length) {
+      if (step + 1 >= get().tourSteps.length) {
         get().endTour();
         return;
       }

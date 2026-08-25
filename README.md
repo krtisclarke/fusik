@@ -58,6 +58,11 @@ npm run package:mac   # build a macOS app bundle
   it yourself, and a second part — and each step ticks off when you actually do
   it, not when you press Next. The **?** button in the toolbar starts it again
   any time.
+- **Stuck for an idea?** Press **💡**. It asks what kind of song today's is —
+  a feeling (happy, spooky, epic…), a style (rock, hip-hop, latin…), or
+  "surprise me" — then walks you through building it in the right order: mood,
+  speed, beat, bass, tune, chorus. It points at the real buttons and waits for
+  you; every note is still yours.
 
 - **Real instruments.** The Piano is a recording of a real grand piano, the
   Bells a real glockenspiel, the Marimba, Vibraphone and Xylophone real mallet

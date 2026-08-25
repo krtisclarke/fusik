@@ -1357,6 +1357,32 @@ select.snap {
   color: var(--text-faint);
   margin-left: auto;
 }
+/* The idea helper's answers: big friendly buttons, two to a row. */
+.tour-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 12px;
+}
+.tour-choices .tour-choice {
+  border: 1px solid var(--line-strong);
+  background: var(--bg-elev);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 9px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.12s ease, background 0.12s ease, transform 0.05s ease;
+}
+.tour-choices .tour-choice:hover {
+  border-color: var(--accent);
+  background: #2f3448;
+}
+.tour-choices .tour-choice:active {
+  transform: scale(0.97);
+}
 .tour-actions .tour-next {
   margin-left: auto;
   background: var(--accent);
