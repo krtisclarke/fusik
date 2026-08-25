@@ -196,12 +196,21 @@ const SETS = [
     // upright: VCSL's bowed strings are a psaltery, not a section. minLayers 1
     // for the same reason as the upright — notes the library recorded at one
     // strength beat a hole in the middle of the grid.
+    //
+    // The key range starts at 60, excluding the section's bottom three notes
+    // (G3, A3, B3), and that is the pitch verifier being honest rather than a
+    // taste call: a bowed section's lowest fundamentals are so weak that two
+    // takes of the same note measured an octave apart (A3 take 1 read as A4,
+    // take 2 as A3), which is exactly the disagreement the per-source octave
+    // guard exists to refuse. Every note from D4 up verifies decisively, and
+    // the voice's grid starts at C4 — one stretched semitone below the lowest
+    // kept recording — so nothing a child can reach ever needed them.
     id: 'strings',
     library: 'vsco2ce',
     sfz: 'ViolinEnsSusVib.sfz',
     instrument: 'Violin Ensemble (sustain, vibrato)',
     pick: () => true,
-    pitched: { keyRange: [0, 127], keyStep: 1, layers: 2, minLayers: 1 },
+    pitched: { keyRange: [60, 127], keyStep: 1, layers: 2, minLayers: 1 },
     tail: 5.0,
   },
   // Each `pick` narrows a library instrument down to ONE way of playing it.

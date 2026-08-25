@@ -390,13 +390,10 @@ export const VOICE_CATALOG: VoiceDef[] = [
     defaults: { wave: 2, attack: 0.004, decay: 0.22, sustain: 0.45, release: 0.16, cutoff: 520, bite: 3.0, detune: 7, gain: 0.55 },
   },
   // ---- strings ------------------------------------------------------------
-  // Both synthesized for now, deliberately shippable that way: the Guitar is a
-  // built pluck the way the Bass is, and the Strings are the classic synth
-  // string pad. The Strings are slated to become a real recording (VSCO 2 CE's
-  // violin ensemble — sampleSet 'strings') once the source audio is fetched
-  // and levelled; neither library holds any guitar, so a recorded Guitar
-  // waits on vetting a new CC0 source. Imported MIDI songs land on these
-  // (model/gm.ts), which is why they exist before the recordings do.
+  // The Strings are a real violin section; the Guitar is a built pluck the way
+  // the Bass is, because neither pinned library holds any guitar — a recorded
+  // one waits on vetting a new CC0 source. Imported MIDI songs land on these
+  // (model/gm.ts), which is why the family exists.
   {
     id: 'guitar',
     label: 'Guitar',
@@ -420,9 +417,17 @@ export const VOICE_CATALOG: VoiceDef[] = [
     kind: 'pitched',
     baseMidi: 60,
     octaves: 2,
-    // A pad: the swell in, the held middle and the slow letting-go are the
-    // whole character; detune supplies the "many players" width.
-    defaults: { wave: 2, attack: 0.12, decay: 0.3, sustain: 0.8, release: 0.5, cutoff: 2200, bite: 1.2, detune: 10, gain: 0.4 },
+    // A real violin section (VSCO 2 CE), sustained with vibrato. The grid
+    // starts one stretched semitone below the lowest kept recording — see the
+    // key-range note in tools/build-samples.mjs for why the section's own
+    // bottom three notes are not shipped.
+    // 0.8 by measurement, not by ear: at the same strike, peak matches the
+    // piano's almost exactly (0.44 vs 0.439) with the modestly fuller RMS a
+    // sustained section should have (0.119 vs 0.090). Sampled defaults start
+    // higher (1.3+) for struck sounds; a bowed section holds its level for the
+    // whole note, so the same gain would read twice as loud.
+    sampleSet: 'strings',
+    defaults: { ...sampledDefaults(0.8, { pitched: true }), release: 0.4 },
   },
   {
     // A real upright, plucked — the one recording VCSL couldn't provide, from

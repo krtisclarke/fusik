@@ -269,6 +269,28 @@ export const SAMPLE_SETS: SampleSet[] = [
     ],
   },
   {
+    id: 'strings',
+    seconds: 5,
+    regions: [
+    { f: '62_0_1.m4a', root: 62, lo: 0, hi: 0.492188, cents: 2, rr: 1 },
+    { f: '62_63_1.m4a', root: 62, lo: 0.492188, hi: 1, cents: -9, rr: 1 },
+    { f: '66_0_1.m4a', root: 66, lo: 0, hi: 0.492188, cents: 3, rr: 1 },
+    { f: '66_63_1.m4a', root: 66, lo: 0.492188, hi: 1, cents: -1, rr: 1 },
+    { f: '69_0_1.m4a', root: 69, lo: 0, hi: 0.492188, cents: 0, rr: 1 },
+    { f: '69_63_1.m4a', root: 69, lo: 0.492188, hi: 1, cents: -4, rr: 1 },
+    { f: '72_0_1.m4a', root: 72, lo: 0, hi: 0.492188, cents: -6, rr: 1 },
+    { f: '72_63_1.m4a', root: 72, lo: 0.492188, hi: 1, cents: 8, rr: 1 },
+    { f: '76_0_1.m4a', root: 76, lo: 0, hi: 0.492188, cents: -1, rr: 1 },
+    { f: '76_63_1.m4a', root: 76, lo: 0.492188, hi: 1, cents: 1, rr: 1 },
+    { f: '79_0_1.m4a', root: 79, lo: 0, hi: 0.492188, cents: 8, rr: 1 },
+    { f: '79_63_1.m4a', root: 79, lo: 0.492188, hi: 1, cents: -4, rr: 1 },
+    { f: '83_0_1.m4a', root: 83, lo: 0, hi: 0.492188, cents: -5, rr: 1 },
+    { f: '83_63_1.m4a', root: 83, lo: 0.492188, hi: 1, cents: -8, rr: 1 },
+    { f: '86_0_1.m4a', root: 86, lo: 0, hi: 0.492188, cents: -3, rr: 1 },
+    { f: '86_63_1.m4a', root: 86, lo: 0.492188, hi: 1, cents: 1, rr: 1 },
+    ],
+  },
+  {
     id: 'kick',
     seconds: 2,
     regions: [

@@ -47,8 +47,8 @@
           "file": "public/samples/piano/45_55_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A1_v3_rr1_Player.wav",
           "sourceSha256": "cf7e30be0e31707723e471d306947ae1ae42adcec2c78dcf36f1c28178be0b7c",
-          "sha256": "2f78aaca85cd7b6024eac2a3f86ade04b3e101727ce8d1f8ddce03981e9eee60",
-          "bytes": 52646,
+          "sha256": "1dd333fa86e4872f5d580de96ab34be78c79c25bc37a74b380939e63e1efca5d",
+          "bytes": 52645,
           "seconds": 4
         },
         {
@@ -95,8 +95,8 @@
           "file": "public/samples/piano/50_55_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D2_v3_rr1_Player.wav",
           "sourceSha256": "2ea71684722787ed958e5449e742289f3aa7b6e4ebe6938c3b54efb07d3acc85",
-          "sha256": "60a04bd52e71a72179e897451a690d698e9a6824ee23505b87bf6e1405b2ad61",
-          "bytes": 55320,
+          "sha256": "b4638b648cbb7983af599d53d638066b99d99d27533e41d1477068d78ba34de0",
+          "bytes": 55319,
           "seconds": 4
         },
         {
@@ -143,8 +143,8 @@
           "file": "public/samples/piano/54_55_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_F#2_v3_rr1_Player.wav",
           "sourceSha256": "05eb81ba1f540dc7735e4ccb5ddacebeacb4acf4eb088176962db97246f30bac",
-          "sha256": "193b7bc88262123def069872548b0b68076bc4e2f09e5e81463c243e2efb3b6e",
-          "bytes": 58391,
+          "sha256": "c5986f9f65e7d0c9c201cfbbc3e494a67ce07778ccc39440abda75304dccfe01",
+          "bytes": 58392,
           "seconds": 4
         },
         {
@@ -167,7 +167,7 @@
           "file": "public/samples/piano/56_55_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#2_v3_rr1_Player.wav",
           "sourceSha256": "6d63d6d6872cd6432f372aa5871cfa5d205a75facc40e8b8a3339d612a9a3b48",
-          "sha256": "1003d05684b73962a4413e03ae769727f314a6b3f1df66581d0137216529566a",
+          "sha256": "0db80b4a980f5ab00cae3b1f1d3b626cf3882801430ee7ac67341e9e0e8f4934",
           "bytes": 61004,
           "seconds": 4
         },
@@ -175,8 +175,8 @@
           "file": "public/samples/piano/56_107_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#2_v4_rr1_Player.wav",
           "sourceSha256": "13e19eaad8fc5ca13813ef9a9e65164beb17391e3e781859a2c0702e81403a86",
-          "sha256": "a125e2de15a1de17dec54eadad626ae945a76b56290e198dbea1c111b1196f2a",
-          "bytes": 56753,
+          "sha256": "fd4835a6ecd17436f9e6c496e87ec18bebc09a814cbc2b1a28a4252d09d635f7",
+          "bytes": 56755,
           "seconds": 4
         },
         {
@@ -239,8 +239,8 @@
           "file": "public/samples/piano/62_55_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D3_v3_rr1_Player.wav",
           "sourceSha256": "ae308ead0da0713400e388d87949091c79189a1318c9b99ef437e563f9bba1e5",
-          "sha256": "18f1f188f2fbeae3c832b10651b000dd802dfff5b7e6f7f1b2574ecdb194b849",
-          "bytes": 62551,
+          "sha256": "1f05b1b780b8ab9307d6daf183034aad77fc41317e1e90089e3a135921b4d058",
+          "bytes": 62550,
           "seconds": 4
         },
         {
@@ -255,7 +255,7 @@
           "file": "public/samples/piano/64_0_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E3_v1_rr1_Player.wav",
           "sourceSha256": "3986177d766ad67acaeb8d0d53114c4380dea65bc1632938dc597006e5123771",
-          "sha256": "85533674769988de15ae84bf97eff1df40c24e8108677ce57e336a15ec871353",
+          "sha256": "90260c482d6061c43361bb1a92b4a4ef6422d89bdf5238d2b2e983d891612d52",
           "bytes": 75091,
           "seconds": 4
         },
@@ -263,16 +263,16 @@
           "file": "public/samples/piano/64_55_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E3_v3_rr1_Player.wav",
           "sourceSha256": "6001665682547238ecddd1b26c91f2f44363d381300e04b3a39dae14e6ffbda6",
-          "sha256": "a3a5197fcde8b85c1879b72a82d4b394961b9f4b44e310b1053e38e4321416d6",
-          "bytes": 54636,
+          "sha256": "986889d5f7eef117133e52130ee74d3659d7d3325562b4a1ffa66cc456516f05",
+          "bytes": 54635,
           "seconds": 4
         },
         {
           "file": "public/samples/piano/64_107_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_E3_v4_rr1_Player.wav",
           "sourceSha256": "9d50d6fe016967f4c5f4af0946c80f3ef215df30b72f1f90fd604244aac1f70e",
-          "sha256": "697e0fbbe4061d812cbdbffcde0ffc10e49d9b95623712c4b1b406fa220a8c81",
-          "bytes": 46285,
+          "sha256": "47b77dde272cee987d7fc1db619e868d183a29d86575a57d89bc03d64eac0bbe",
+          "bytes": 46288,
           "seconds": 4
         },
         {
@@ -311,8 +311,8 @@
           "file": "public/samples/piano/68_55_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_G#3_v3_rr1_Player.wav",
           "sourceSha256": "e28aebba2f2995ea1d5443a8f7eeaac8f81a342317d54c4c6781ae482b355f20",
-          "sha256": "450343fbfb3f3fb7e65379cd03c53558a75308010431742dc222993137a95e91",
-          "bytes": 55741,
+          "sha256": "86312ae7e1f2b6788481ad9855f04370f6dee506fc6a2c67a308eaada89fe8bb",
+          "bytes": 55745,
           "seconds": 4
         },
         {
@@ -335,8 +335,8 @@
           "file": "public/samples/piano/70_55_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#3_v3_rr1_Player.wav",
           "sourceSha256": "2148d254dc414ff1ca7f31519aa1caf9205c8fcdf32e962953ac8bd99f89c6ab",
-          "sha256": "5016a5b7690eee00647d13d2220fb77bf296691b35ba92501fdf704c88e26dd8",
-          "bytes": 59401,
+          "sha256": "aee5e73f1a9012ef71a723f9bf243ce0b771566db338f1a047cefd9ed6982379",
+          "bytes": 59402,
           "seconds": 4
         },
         {
@@ -359,8 +359,8 @@
           "file": "public/samples/piano/72_55_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C4_v3_rr1_Player.wav",
           "sourceSha256": "eb5faca3331cd32f15f6a2302dba69b073a2ca600fed606bf456e60260d06e5b",
-          "sha256": "1c94e4ecb9511695c5274526e7369601082f1a588724dd9fdcc7900328ea4df1",
-          "bytes": 53987,
+          "sha256": "8978f2e65c3bf772cf2d4678452f48eb179b28a5fbdb75a3fc986cdeb1f4ac73",
+          "bytes": 53986,
           "seconds": 4
         },
         {
@@ -391,7 +391,7 @@
           "file": "public/samples/piano/74_107_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_D4_v4_rr1_Player.wav",
           "sourceSha256": "bb7a183ff0948e60bb0b8162c6ffd0cc59110877880a217c224cc20dfc40688c",
-          "sha256": "4d3cad9c5b14d99578501d6bc0e893fb884fe111855734f484d44625ea229af1",
+          "sha256": "bd47b70e8d68307088f7dfd65fc9515dd1995665a4b954db096f6064ac08d9ee",
           "bytes": 34034,
           "seconds": 4
         },
@@ -479,7 +479,7 @@
           "file": "public/samples/piano/82_66_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_A#4_v2_rr1_Player.wav",
           "sourceSha256": "5fdd61e4eafa7ee90325ac6a7380c87f4115d30d88f722f3f8a0b9fbd39e0b6e",
-          "sha256": "ec5cdf1f2fd67bc4b4aa10cc417099c97a4de6299c7e9bfef5fc229f061f2073",
+          "sha256": "22648ff00491f352e5c2a4bef9dcba4fdb985b1a3239130d82f2de2d50f3f927",
           "bytes": 72965,
           "seconds": 4
         },
@@ -503,8 +503,8 @@
           "file": "public/samples/piano/84_55_1.m4a",
           "source": "Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C5_v3_rr1_Player.wav",
           "sourceSha256": "3cbb54ef6b504b2de8bd18c553001b974d5c5d3898e2a8c5a42d2e15cfcf9853",
-          "sha256": "f2bded897debec3ffe2819b56cd975f6d80ceef547a4062d392c842b0b4c0805",
-          "bytes": 52098,
+          "sha256": "eba8b1d338a146cb46ebaf521ed656dc76f117f116385e175c07d1de7a46b88d",
+          "bytes": 52097,
           "seconds": 4
         },
         {
@@ -767,7 +767,7 @@
           "file": "public/samples/bells/71_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_B3_v2_rr1_Main.wav",
           "sourceSha256": "8ae8f9a67ff3c5942bd796987ef96fbaaafadf4edfe5dc8734b8a1ab4e0ff7b4",
-          "sha256": "3712b66034dd4c0b3e4f6af8df4cafacd95d0b582c0183c71c9d4712f1e2f2f8",
+          "sha256": "0ff928ca913cf42fea11d5150145f997afbb5ec46749650d3e754105b9d7c711",
           "bytes": 48241,
           "seconds": 3.5
         },
@@ -775,7 +775,7 @@
           "file": "public/samples/bells/71_84_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_B3_v3_rr1_Main.wav",
           "sourceSha256": "357065002fa8e4f1af51a4214ccff71e964393068f1229c7be20647d05e98dcd",
-          "sha256": "0ea6e8f5907c2e1bc72b1d2bcb1a914b203aea2f6434c5eac6e64d6c9a8dedb5",
+          "sha256": "3f88e9c97c2ff6c5eb29599c5bbef95feda1f901b6ff41c9d48725afd84c2248",
           "bytes": 30840,
           "seconds": 3.5
         },
@@ -783,8 +783,8 @@
           "file": "public/samples/bells/74_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_D4_v2_rr1_Main.wav",
           "sourceSha256": "a0ff7c922a24fde71a675c57c69c222d619feaa4c91c25bdf6830e0dc1108a74",
-          "sha256": "3c71a987822e7e8993a1751ad51326f2b316562533dc382d865dd2ac567897c7",
-          "bytes": 51186,
+          "sha256": "79bdea36ceaf029692ec9aad622d9fbe3826e1474ad00a2cf918215b454b70e4",
+          "bytes": 51187,
           "seconds": 3.5
         },
         {
@@ -799,16 +799,16 @@
           "file": "public/samples/bells/77_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_F4_v2_rr1_Main.wav",
           "sourceSha256": "24e4a7a9d1e6dd221ab478fa57793e3575e3b5f666dc75a1ad5d58d05ac7f129",
-          "sha256": "ed4ec46872253f7c2c8a3110095fb652a8c5c0735605ba20df85cad86b15d7a3",
-          "bytes": 51345,
+          "sha256": "bc406acfaf883dc464905951efee142c8fc8969897edc6069d715728e3594d2a",
+          "bytes": 51348,
           "seconds": 3.5
         },
         {
           "file": "public/samples/bells/77_84_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_F4_v3_rr1_Main.wav",
           "sourceSha256": "b6bc7264f3cd0ed04487d4e9c6f7548d8a23f001f689ec5ec048d45c49e5941a",
-          "sha256": "f695645ba3b8a170803a7f1ccbd02d0dfeb26b5120d4389ba9ea02e138de754c",
-          "bytes": 23282,
+          "sha256": "95761f7a11f8f75945e32893ab12a007d0cfc39258c2445f0042b3fcbcf23955",
+          "bytes": 23283,
           "seconds": 3.5
         }
       ]
@@ -827,7 +827,7 @@
           "file": "public/samples/marimba/41_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F1_soft_01.wav",
           "sourceSha256": "eadaeb8bd491b3161197478119be60771e0e1d8620d4848e39595976f9c9c998",
-          "sha256": "86e671feafe2e2492e6aa7596d99d60092185c4aa6dca762295a8f5162dd23d9",
+          "sha256": "c008d5a9d79ecb0f2653bca4e08db8bc8f1eb6dfc37e54b7bf8f4a9afd1823e9",
           "bytes": 11157,
           "seconds": 3
         },
@@ -915,7 +915,7 @@
           "file": "public/samples/marimba/59_107_1.m4a",
           "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B2_loud_01.wav",
           "sourceSha256": "a329138008daae1c03652822d7079c0e1e9941071b8c22195e1985f0c685fdeb",
-          "sha256": "8634750992c0837447cf057890740f19ee9a0c72d44564c90b52935570a8cca8",
+          "sha256": "c84936cfd26859dee106e725df21bbe4ed85d94746e3b1f6332aef22eef34465",
           "bytes": 17718,
           "seconds": 3
         },
@@ -931,7 +931,7 @@
           "file": "public/samples/marimba/65_43_1.m4a",
           "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F3_med_01.wav",
           "sourceSha256": "a493b31ac2e588ed961c522a66b790acc584b59a08918bd7193d6e6fa8df4756",
-          "sha256": "9bbd33c7b36a6e6b702711ebaaeb34643269ac9ecf94c2011b5b2b8ba9a5e61d",
+          "sha256": "35cecd4455c473fc434ecfd89b5b25d1befd7691d0915dc86a2709ba5e57d3da",
           "bytes": 11141,
           "seconds": 3
         },
@@ -939,8 +939,8 @@
           "file": "public/samples/marimba/65_107_1.m4a",
           "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F3_loud_01.wav",
           "sourceSha256": "379e749add43b12959fae06cc272f1871899cc05460faf41ead77b93e5d01843",
-          "sha256": "de389c34754996a97b0927325d19b6384328635e6dd92bfbdfe7e779278fcf5d",
-          "bytes": 14413,
+          "sha256": "0b9f70c09bacc6347cdcfb2f8b00c166cf4b8285c681f64f6fde7de5d78ceff5",
+          "bytes": 14418,
           "seconds": 3
         },
         {
@@ -971,8 +971,8 @@
           "file": "public/samples/marimba/79_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_G4_soft_01.wav",
           "sourceSha256": "d3e23f018b091a60d91c3c93b38b605d02a9e26c7cf5830ffb866cfe84130cd0",
-          "sha256": "8971220cb3224c2f1cad16e142a8ac4d4a674bef24071cb897f0f210907b157c",
-          "bytes": 10231,
+          "sha256": "b5ac34dfc9363c7f42871e0d30e43016b3529a7224b679f0156ab74924dce893",
+          "bytes": 10232,
           "seconds": 3
         },
         {
@@ -1003,15 +1003,15 @@
           "file": "public/samples/marimba/83_43_1.m4a",
           "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B4_med_01.wav",
           "sourceSha256": "d676b76e3850d85333c85b1fc77d20f4524ff2e9e6f03551f52c5b22fbe8ab30",
-          "sha256": "07bb69405690a213bbf14aba9fbff529a31ceae781d13836add14d9db28da6a6",
-          "bytes": 9625,
+          "sha256": "dd5f8385f1ac62761bd5b58b312a18109440477b4cd6ab13f1cb05d71d1e96fb",
+          "bytes": 9624,
           "seconds": 1.635
         },
         {
           "file": "public/samples/marimba/83_107_1.m4a",
           "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B4_loud_01.wav",
           "sourceSha256": "d04aed26222822d14435fa61b88cdcce95606a5e94bb5e7167d266875343a39c",
-          "sha256": "4a06476e93ac67c61373662e2df1b247f186e4332e72e45a2157764f108271d0",
+          "sha256": "505a900fd40aa614902461a4224cf2fe2a6dadea867ace67825baeb94ad80a65",
           "bytes": 12597,
           "seconds": 2.621
         },
@@ -1043,8 +1043,8 @@
           "file": "public/samples/marimba/96_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C6_soft_01.wav",
           "sourceSha256": "55d5793308bb10feaf3c1e341c0e4e4dbf8ce7fbea805e118b55177389ec3a09",
-          "sha256": "bbc98750f84103c5fbb856fafd3fbed1deaa6adae76c46b59ef575e4b350273e",
-          "bytes": 18895,
+          "sha256": "d46d5a91aaad98b764a5530e5a662cd943ed60b1e68b068c6d4eeee34404abea",
+          "bytes": 18894,
           "seconds": 2.508
         },
         {
@@ -1127,8 +1127,8 @@
           "file": "public/samples/vibraphone/64_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_E3_v2_rr1_Main.wav",
           "sourceSha256": "c9d68a552bb9b9bc539f2e7b9083433dd5ae76a57cf838d586c2591b0711477e",
-          "sha256": "155c409b2aa4adfb4ee1101a75abffa4a9661840a99a932834d7908d04d1d4b0",
-          "bytes": 47790,
+          "sha256": "fe9cf593b608e9312582afafb29f01ab190cb04ae84a6e68b76ad3d5d1923ab6",
+          "bytes": 47792,
           "seconds": 3.5
         },
         {
@@ -1143,8 +1143,8 @@
           "file": "public/samples/vibraphone/67_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_G3_v2_rr1_Main.wav",
           "sourceSha256": "b657be5f347c5d86f7daa6b350e039e088ddf958a14eb23f25fd1b64a183f396",
-          "sha256": "97c923989e015bd2aa724827c1da8df0cd783d1d23650e3d0fe427c537355dab",
-          "bytes": 53454,
+          "sha256": "21da45c436491a3dc0c127b8a2f3388f9d547ed31f829f978700b29001b77250",
+          "bytes": 53451,
           "seconds": 3.5
         },
         {
@@ -1159,7 +1159,7 @@
           "file": "public/samples/vibraphone/71_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_B3_v2_rr1_Main.wav",
           "sourceSha256": "8ae8f9a67ff3c5942bd796987ef96fbaaafadf4edfe5dc8734b8a1ab4e0ff7b4",
-          "sha256": "3712b66034dd4c0b3e4f6af8df4cafacd95d0b582c0183c71c9d4712f1e2f2f8",
+          "sha256": "0ff928ca913cf42fea11d5150145f997afbb5ec46749650d3e754105b9d7c711",
           "bytes": 48241,
           "seconds": 3.5
         },
@@ -1167,7 +1167,7 @@
           "file": "public/samples/vibraphone/71_84_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_B3_v3_rr1_Main.wav",
           "sourceSha256": "357065002fa8e4f1af51a4214ccff71e964393068f1229c7be20647d05e98dcd",
-          "sha256": "0ea6e8f5907c2e1bc72b1d2bcb1a914b203aea2f6434c5eac6e64d6c9a8dedb5",
+          "sha256": "3f88e9c97c2ff6c5eb29599c5bbef95feda1f901b6ff41c9d48725afd84c2248",
           "bytes": 30840,
           "seconds": 3.5
         },
@@ -1175,8 +1175,8 @@
           "file": "public/samples/vibraphone/74_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_D4_v2_rr1_Main.wav",
           "sourceSha256": "a0ff7c922a24fde71a675c57c69c222d619feaa4c91c25bdf6830e0dc1108a74",
-          "sha256": "3c71a987822e7e8993a1751ad51326f2b316562533dc382d865dd2ac567897c7",
-          "bytes": 51186,
+          "sha256": "79bdea36ceaf029692ec9aad622d9fbe3826e1474ad00a2cf918215b454b70e4",
+          "bytes": 51187,
           "seconds": 3.5
         },
         {
@@ -1191,32 +1191,32 @@
           "file": "public/samples/vibraphone/77_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_F4_v2_rr1_Main.wav",
           "sourceSha256": "24e4a7a9d1e6dd221ab478fa57793e3575e3b5f666dc75a1ad5d58d05ac7f129",
-          "sha256": "ed4ec46872253f7c2c8a3110095fb652a8c5c0735605ba20df85cad86b15d7a3",
-          "bytes": 51345,
+          "sha256": "bc406acfaf883dc464905951efee142c8fc8969897edc6069d715728e3594d2a",
+          "bytes": 51348,
           "seconds": 3.5
         },
         {
           "file": "public/samples/vibraphone/77_84_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_F4_v3_rr1_Main.wav",
           "sourceSha256": "b6bc7264f3cd0ed04487d4e9c6f7548d8a23f001f689ec5ec048d45c49e5941a",
-          "sha256": "f695645ba3b8a170803a7f1ccbd02d0dfeb26b5120d4389ba9ea02e138de754c",
-          "bytes": 23282,
+          "sha256": "95761f7a11f8f75945e32893ab12a007d0cfc39258c2445f0042b3fcbcf23955",
+          "bytes": 23283,
           "seconds": 3.5
         },
         {
           "file": "public/samples/vibraphone/81_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_A4_v2_rr1_Main.wav",
           "sourceSha256": "9fa4d639ba513db9d02ae1d18c1258dc8ce391f37752a8fd096a99d6f8b7bb47",
-          "sha256": "aaccb0ff02a68eb2ed5251334ff9629a1d330e03d2d5250fe5840fa03d7e4173",
-          "bytes": 52988,
+          "sha256": "9645719f56b6a4568e0e5a9dbf63ef816b33971550ddb99311d396dd7717748c",
+          "bytes": 52985,
           "seconds": 3.5
         },
         {
           "file": "public/samples/vibraphone/81_84_1.m4a",
           "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_A4_v3_rr1_Main.wav",
           "sourceSha256": "651d8210d3f83596380481c46726bbf82bd07c24c5048a815aa5db218d094ae4",
-          "sha256": "33ec10db34a8413f71524ac74fc818590562f6633fe6620952f68911a033dbd9",
-          "bytes": 39920,
+          "sha256": "06b7887d1529b0a8dd67396df0c6f94924370eeab3ce70e58880181a7ba8940e",
+          "bytes": 39919,
           "seconds": 3.5
         },
         {
@@ -1315,15 +1315,15 @@
           "file": "public/samples/xylophone/84_0_1.m4a",
           "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C5_pp_01_far.wav",
           "sourceSha256": "cd9c4e1400e26d1e69806989b1b69b8d49f93466cca7c26dc370bfabcbf031f5",
-          "sha256": "a967798a59a83e8047b65fbe738a9d70728d26888ace683b5b52abbf3b329c25",
-          "bytes": 11168,
+          "sha256": "920d40a050d3b2ffb5569751a87dd4d916f30e6d9dd3dba60a22ba99b2d55710",
+          "bytes": 11169,
           "seconds": 1.857
         },
         {
           "file": "public/samples/xylophone/84_84_1.m4a",
           "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C5_ff_01_far.wav",
           "sourceSha256": "b2ceeb64877d9975afbdf2fafb8892c416ac760c63bb2bc544007ef2331d35fd",
-          "sha256": "bb7b8590d18f6f33a38b8c1328c8d3069526d1f915e09f4f2b5414fcb4b95bb0",
+          "sha256": "00c646ddb4305cfb87f7f688d3ec6d1d29ef1d981cb0c156803b75167896ff29",
           "bytes": 10968,
           "seconds": 1.887
         },
@@ -1355,7 +1355,7 @@
           "file": "public/samples/xylophone/96_84_1.m4a",
           "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C6_ff_01_far.wav",
           "sourceSha256": "183d04381c44705f65c3750383f28695f4b2576311ace8fdbe567134f416ff27",
-          "sha256": "4f8cb63606516af850aca25ebf5fea6972d7113bcceac1c0c461c4d4ca22e081",
+          "sha256": "fdda60a346d4f362b73d336880e2a94be48761c4bceb90eb07fbf8586c54f14b",
           "bytes": 10525,
           "seconds": 1.47
         },
@@ -1431,8 +1431,8 @@
           "file": "public/samples/upright/28_63_2.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E0_v3_rr2.wav",
           "sourceSha256": "f533b634b7f87d75234737b4acbf7bf6f9587f71ee93c12b0bda65bea3e40333",
-          "sha256": "23c85aa1230308aceac8a62ae9a13d47a62202520b7d72c2522467008f096761",
-          "bytes": 48832,
+          "sha256": "02b6174382f5f059c217f1312d9b3df237f0b8852de26a49b1a27af6a00c6637",
+          "bytes": 48831,
           "seconds": 3
         },
         {
@@ -1455,7 +1455,7 @@
           "file": "public/samples/upright/30_63_1.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_F#0_v3_rr1.wav",
           "sourceSha256": "4bfdab1976e121136ab5d0bfb1e4b79523d5b0c7adf0d35704c98f5cb26713d1",
-          "sha256": "2d18379ef8de911a60e2687350d769e60657c1fc2150af5f2e99af8b0ca3a120",
+          "sha256": "8061480a63399c913b81a6bb112d4f96a00cc0f0fce82325f22e1b1ad873d5c5",
           "bytes": 50153,
           "seconds": 3
         },
@@ -1487,32 +1487,32 @@
           "file": "public/samples/upright/31_63_1.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_G0_v3_rr1.wav",
           "sourceSha256": "9dc3c010e20999e524a7694abf27c12fb55296f2d9946d70917fa82b1d076136",
-          "sha256": "6c2c8058c5f9a784982237b2019d19586241e14a4265acd7ef5d2e2fa9917beb",
-          "bytes": 50305,
+          "sha256": "3f34b5f4f5643d0496d712b938e794c30307a970321ecb06c9877d97c226e327",
+          "bytes": 50304,
           "seconds": 3
         },
         {
           "file": "public/samples/upright/31_63_2.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_G0_v3_rr2.wav",
           "sourceSha256": "7f64d7d6f6309ab622cc0e070c6d50274f73d3f483e4067a05647fb89a6f51c8",
-          "sha256": "2d061fd66ec4055a6590853e0f4d0526d03a34f4e5dbf54c5fd863cc4e62397d",
-          "bytes": 49931,
+          "sha256": "0b13bc930123feb37226a3f074599b9ac5879cb85876ead69699b072a0f52fa1",
+          "bytes": 49926,
           "seconds": 3
         },
         {
           "file": "public/samples/upright/34_0_1.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_A#0_v1_rr1.wav",
           "sourceSha256": "c172382a1c8db63d1893e909da3c0f7f96a60371dce0cfe712e64fd622066fbe",
-          "sha256": "772ecbe5b338782e1ff9294a8446c2631ec7e1f78cf2713fc60d4501e6eba8a6",
-          "bytes": 34606,
+          "sha256": "4bbe46d257f4157184ab06c1243bd46cfa1507f7c42588827e6b650e46739968",
+          "bytes": 34603,
           "seconds": 1.951
         },
         {
           "file": "public/samples/upright/34_0_2.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_A#0_v1_rr2.wav",
           "sourceSha256": "a82a509344a7e03e81f937b0daf647d55c3d47ec01867deeb41463d1d39209af",
-          "sha256": "aef3a3557f9349d1ad2ffccb595b78674eb874b1476727496d53ba68d47715e4",
-          "bytes": 31828,
+          "sha256": "5562a8380397b0b5c47600dd7140ba132362be30efd887ecbb7ba75bf53cb92d",
+          "bytes": 31827,
           "seconds": 1.85
         },
         {
@@ -1543,7 +1543,7 @@
           "file": "public/samples/upright/36_0_2.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_C1_v1_rr2.wav",
           "sourceSha256": "d880b29cafc4b537a5097c9b65a7e20d1be15d60efaf7ceb15e20517b6ad455b",
-          "sha256": "2d9802037ab3f7fcdab7a405ad31c1a5f19edbc7f6ed76df8b816c3d3b0f1de1",
+          "sha256": "7f5d974a16ed6359342e8be264b10a8ecaddb4c7c4ebcc4b172a7c14d647c712",
           "bytes": 37652,
           "seconds": 2.301
         },
@@ -1567,7 +1567,7 @@
           "file": "public/samples/upright/38_0_1.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_D1_v1_rr1.wav",
           "sourceSha256": "c4db29ae6949cb6c0d24201bb444c1d5b3806505bae47785cb199f5f0f4f02d2",
-          "sha256": "8a8d2cb5ced93e90da1fae0b653a7aa643102b91367839a48c3faf0812742296",
+          "sha256": "a686a92289c42b0924ed4dc22e30165f15788db83dc337adabd9ad5cc151afd2",
           "bytes": 50670,
           "seconds": 3
         },
@@ -1599,8 +1599,8 @@
           "file": "public/samples/upright/40_63_1.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E1_v3_rr1.wav",
           "sourceSha256": "7628daebe4a9f8524d46e6d58eee811f437e73c77eb6c21396152af58a062506",
-          "sha256": "f91a27350155e6077f561cb3de8392a93a2d6076a023b96c9d85121b171f5d14",
-          "bytes": 46259,
+          "sha256": "702ca6a9346ec5c77f364c5ae2d325c90501f86426cc9b9fee38243b62b55bcb",
+          "bytes": 46258,
           "seconds": 2.941
         },
         {
@@ -1655,8 +1655,8 @@
           "file": "public/samples/upright/45_0_2.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_A1_v1_rr2.wav",
           "sourceSha256": "e7aaefac5eb3986fcec86040e1f7310e84ea38be5d13abe2b3de101c41f43b2b",
-          "sha256": "7402860b152b30daed0042266abdee17bffeeeb654b2ac4876b1465e9b414b8a",
-          "bytes": 45611,
+          "sha256": "6598ab8980e0ad3cf68a32a05b9a0f691aa8e2ec217762899c2ba062afb2ff02",
+          "bytes": 45612,
           "seconds": 2.752
         },
         {
@@ -1671,15 +1671,15 @@
           "file": "public/samples/upright/49_0_2.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_C#2_v1_rr2.wav",
           "sourceSha256": "326fa0536c5487af2a500423e6b6d1c2acfe005cb40268c7c2f152b6ca71517c",
-          "sha256": "cefb17551b96aa0543318d07333380fc3c75e20ec6b5da311851a239a82bf354",
-          "bytes": 48696,
+          "sha256": "4da536c3867c31ab4455905d2a4c3b899b5cc3872bb2b079275c5dae5e59a1ed",
+          "bytes": 48694,
           "seconds": 2.824
         },
         {
           "file": "public/samples/upright/52_0_1.m4a",
           "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E2_v1_rr1.wav",
           "sourceSha256": "b5c3dd4943ea9a3f1aa23ed07c827ec8851e28a7254bab7811b706c09fceb231",
-          "sha256": "48305a86885befcbfd0ccf2028b245d23b07639064e7c43a7774a6859ccb029e",
+          "sha256": "eb970183e01031509d23cb81ce41da5d41cb5f5895969e1d8d8f6bf3e1a8bc63",
           "bytes": 45344,
           "seconds": 2.483
         },
@@ -1726,6 +1726,146 @@
       ]
     },
     {
+      "id": "strings",
+      "library": "vsco2ce",
+      "sources": [
+        {
+          "instrument": "Violin Ensemble (sustain, vibrato)",
+          "map": "ViolinEnsSusVib.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/strings/62_0_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_D3_v1.wav",
+          "sourceSha256": "583e660bc5daa4e094aef5fc014fbb92751040be8741ed7a16847306a1fe0a99",
+          "sha256": "e11dff5ed663aeba9fafc0059a409c8f04bd4f8a7d13a9a05d0ecbabf409f337",
+          "bytes": 91845,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/62_63_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_D3_v2.wav",
+          "sourceSha256": "77893dbf1ea1be8c40ad756d16b916298e6b1b0742495e9853e020375592357c",
+          "sha256": "365b6cd9e56d487af3c2ab562c0e31e189ccb39c46078571753d6f9e8bcd9857",
+          "bytes": 87604,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/66_0_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_F#3_v1.wav",
+          "sourceSha256": "8dc13d197373f0d1fe1b0744de57796800bde372906d3667398c55d473a383ea",
+          "sha256": "694f40e83de4fd4546cf356a5ee54f073e3b58d70503929df2bdd45f867b9f2e",
+          "bytes": 86236,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/66_63_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_F#3_v2.wav",
+          "sourceSha256": "d7bc6b4c259b9543de4fe66228ee107205b8f539c8d7c1de71f5781d45a14fc7",
+          "sha256": "726f4874564a8ee265f113fe7e4926cc84e4779de47652aa181744674d935839",
+          "bytes": 82700,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/69_0_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_A3_v1.wav",
+          "sourceSha256": "72817a53dfd2eb61eca94658c14e1cab6017629ca2f27bab8e394c6675bfaad7",
+          "sha256": "6798ed595d27d03cb392ca42d51b9cbafb23f33a70b15e75c57a616cfe155870",
+          "bytes": 86194,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/69_63_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_A3_v2.wav",
+          "sourceSha256": "3fc4a9e22037643fce11e755da72c61c664893f83e637c24a7b5c2d3824ab986",
+          "sha256": "dcd176979ed925a78596025ec035c4381013f8363689d4ff02b792d64abf19a8",
+          "bytes": 82508,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/72_0_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_C4_v1.wav",
+          "sourceSha256": "c07edd5b2119fa1da2207aba996961b50dd616f69bbcf2300ab271bc6c16239f",
+          "sha256": "4ede908ba6f1b83bbe83d9a24f069cd1c4e4ce4140c1e4e46d0dbfc62525cc08",
+          "bytes": 86011,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/72_63_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_C4_v2.wav",
+          "sourceSha256": "5857387b40c412f756ef281c1171247664432a4e5078c98142d595d15cd92ef9",
+          "sha256": "6297fc914464a7df66bce2d232f00416ff9a111e385b8ce6b567badaeaca61d2",
+          "bytes": 80987,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/76_0_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_E4_v1.wav",
+          "sourceSha256": "787fb4bcfb47d5c88ee1573c8db15f32d345386301be4a8eea6a825847413ae2",
+          "sha256": "37a4015a87ddd9ed222cad52f37df9fcd9b068b8cd263021b9712266c4f9acde",
+          "bytes": 85290,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/76_63_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_E4_v2.wav",
+          "sourceSha256": "030c09a631ebbc7304fc0b47bb5c346cd646e7451d9fdc531870f2534c60d9e9",
+          "sha256": "3a612b8b5df1ba785c36fbd1eaa11e2e0ad31bdbc15f453963ff70c70428e78b",
+          "bytes": 79817,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/79_0_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_G4_v1.wav",
+          "sourceSha256": "ed2a89cf254432d2af073699fa43ebfa16cfbc5552c7fc964a184fc434eaaa39",
+          "sha256": "e373bde61f88655d28d8249a6de45a503ab2dc158c958c73600bbd6ebf3c20c6",
+          "bytes": 82000,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/79_63_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_G4_v2.wav",
+          "sourceSha256": "a1d6d5a0397541692e2f88a0cd9820eabe90407784ee631aa3bfa74772637a65",
+          "sha256": "29cd7d1af706a78870407cd6aa23ca414e5b61d20b2a1b081f4e2d3d7ba3f9cc",
+          "bytes": 81812,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/83_0_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_B4_v1.wav",
+          "sourceSha256": "ec4cea41ac77f251bf5f4158fe9cbeeae13755e3785106e505808de18fdddc0d",
+          "sha256": "d7fbd47ded186576cbcf868cde01cfc14fa29f82ef5db77124a19ff4100cd941",
+          "bytes": 85411,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/83_63_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_B4_v2.wav",
+          "sourceSha256": "bdb85532f47e4ebd681f9617a415116e7e5aeb786dce2eeab5ab9b93c1b31644",
+          "sha256": "4d881463c7f111a97c522ac416194e45646001b7003ba44fe4cbba0bd27b2a45",
+          "bytes": 79178,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/86_0_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_D5_v1.wav",
+          "sourceSha256": "f8d870457826c94270b9c3ead8e8ec02cb7e6c4a3481cded055641b7fab7df62",
+          "sha256": "ed988e44aeb5d5e16d20ae8909465bc5eec01d626a54d3302b4e33b43668e7fb",
+          "bytes": 84195,
+          "seconds": 5
+        },
+        {
+          "file": "public/samples/strings/86_63_1.m4a",
+          "source": "Strings/Violin Section/susVib/VlnEns_susVib_D5_v2.wav",
+          "sourceSha256": "0c2ca9de723bed0a0968e32126b934f778cd678b367a29e7fde91004daf84daf",
+          "sha256": "0e108a0e565969bef88ec22a69ede6293b404b7aa1935c8d36d72ab6bb468174",
+          "bytes": 87815,
+          "seconds": 5
+        }
+      ]
+    },
+    {
       "id": "kick",
       "library": "vcsl",
       "sources": [
@@ -1739,8 +1879,8 @@
           "file": "public/samples/kick/60_0_1.m4a",
           "source": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v2_rr1_Sum.wav",
           "sourceSha256": "56827fe9b55f282a0db851e242bc24660d339a0e358b182966aea047240c1136",
-          "sha256": "3933b647a943a7cb06f66c9378ef7211c2921077fba9c5c66dff2d8fdc4484f4",
-          "bytes": 25094,
+          "sha256": "9335d1998a3c0a73eecf7c4df6285e25d69cdd7945cb6cc0ceea2770f57a8496",
+          "bytes": 25095,
           "seconds": 1.596
         },
         {
@@ -1787,7 +1927,7 @@
           "file": "public/samples/kick/60_107_1.m4a",
           "source": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v7_rr1_Sum.wav",
           "sourceSha256": "7024054e68261d2cca0ee58fdf9d6f23b54370792d04aa2c1ccf41acc090bd2b",
-          "sha256": "3120ef322d9d7e73094ff525cf49398f7a65f0b69824c2d4a2f1c435e709aa17",
+          "sha256": "15783d70ac9e77f58bc1f534dd1fd946e6f330a36a944c981c0a8e1b7d3928f2",
           "bytes": 19876,
           "seconds": 2
         },
@@ -2139,8 +2279,8 @@
           "file": "public/samples/tomlow/60_100_2.m4a",
           "source": "Membranophones/Struck Membranophones/Tom 2/Stick/TomL_HitS_v4_rr1_Mid.wav",
           "sourceSha256": "d1cb91ccf2817e4c6f2e839530980554f63c232a3fa98f84a383a6cb1c4a98bd",
-          "sha256": "975384b60c1f0ef900968ec031c7d3c7250c320aeb8f359445d4518b40300791",
-          "bytes": 25753,
+          "sha256": "44396df56eb95a53f74b29156b28bf97460ae7500501e8c8ea022332ccf022ec",
+          "bytes": 25752,
           "seconds": 1.8
         }
       ]
@@ -2211,8 +2351,8 @@
           "file": "public/samples/ride/60_66_1.m4a",
           "source": "Idiophones/Struck Idiophones/Suspended Cymbal 1/susCymb1_hit_stick_mp1.wav",
           "sourceSha256": "17294cefa7f50367d1d9ae885a5f63a52eab372b90aeb7c3a8b400942cc95b9f",
-          "sha256": "0d1d8569c2444e4e6bd58cceee6e801279d7f383dd1f8187f20289c1ea63d90b",
-          "bytes": 55112,
+          "sha256": "862ac6431e5c1074a371c742f43b78b39f34914ec425bbe9dabd90e511d24240",
+          "bytes": 55111,
           "seconds": 3
         },
         {
@@ -2651,8 +2791,8 @@
           "file": "public/samples/triangle/60_84_2.m4a",
           "source": "Idiophones/Struck Idiophones/Triangles/Triangle3_Hit_v2_rr2_Mid.wav",
           "sourceSha256": "a5775203ae37aa63be7d54e6ee4b5bc1722bd2f2f29bb3a525c0591fd37428fb",
-          "sha256": "735ba9962984ade19577ae45c909a9b6691e0dd36614657c4e5d579ff7788ef1",
-          "bytes": 55311,
+          "sha256": "b17139f04035ec770730d6fab327b60380c0d9fab77c088f95b1657c40577091",
+          "bytes": 55310,
           "seconds": 3.5
         }
       ]

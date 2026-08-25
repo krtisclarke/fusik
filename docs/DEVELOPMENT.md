@@ -290,7 +290,7 @@ because they are what the sampled instruments *are* — a child who drops a snar
 and hears the fallback has been given the wrong impression of the app in its
 first second. Nothing there needs a user gesture: decoding goes through an
 `OfflineAudioContext`, which needs none, and an `AudioBuffer` is not tied to the
-context that made it. The whole set is 302 files and 10.9 MB, in well under a
+context that made it. The whole set is 318 files and 12.2 MB, in well under a
 second. A voice whose recordings never arrive falls back to its
 synthesized version, so the app is never silent, only less good — with its
 Volume capped on the way, because a sampled voice's Volume sits higher than a
@@ -307,12 +307,13 @@ before it even reached the limiter, and was loud enough to bury every other drum
 now that the rest are recordings.
 
 **Ear safety, re-measured.** The worst case a child can build — every voice
-(all 29, since the hand percussion and mallets arrived), a note on every
+(all 31, since the Strings section and the Guitar arrived), a note on every
 sixteenth, every slider at the end of its range, every track's echo at maximum,
 at 180 bpm, plus a microphone recording at the level a decoded take really
-comes back at — renders at peak **0.913–0.925 with zero clipped samples**
-across repeated renders. Eleven more voices in the stack did not raise the
-ceiling: the limiter is the thing being measured, and it holds.
+comes back at — renders at peak **0.900–0.912 with zero clipped samples**
+across repeated renders (0.913–0.925 at 29 voices before them). More voices in
+the stack keep failing to raise the ceiling: the limiter is the thing being
+measured, and it holds.
 
 Getting there took half a decibel off the master's final gain (0.9 → 0.85, in
 `audio/master.ts`). Recordings are hotter than synthesis, and the Volume slider's
@@ -792,11 +793,11 @@ here.
 ### Building the recordings (`tools/`)
 
 `node tools/build-samples.mjs` goes from "two pinned library commits" to "the
-files in `public/samples/` and the map in `src/model/sampleSets.ts`" — 396 MB
-of source recordings in, 10.9 MB shipped out. `--plan` prints the selection,
+files in `public/samples/` and the map in `src/model/sampleSets.ts`" — 428 MB
+of source recordings in, 12.2 MB shipped out. `--plan` prints the selection,
 fetching only the small text maps. Source recordings are cached outside the
 project, in `~/Library/Caches/beatbox-studio/vcsl`, keyed by the commit they
-came from — about 380 MB now, and this project lives in an iCloud-synced
+came from — about 430 MB now, and this project lives in an iCloud-synced
 folder, which is no place for it.
 
 **A set is usually one instrument from one map; the Bells are two.** Each set
@@ -901,8 +902,8 @@ tunings, take numbers, which recordings exist at all — lives in those maps, so
 branch name there would have meant a regenerated upstream could silently produce
 a different instrument from byte-identical audio and report success.
 
-**Format: AAC in an MP4 container (`.m4a`), stereo, 44.1 kHz.** 396 MB of source
-recordings become 10.9 MB shipped. Stereo rather than mono because these were
+**Format: AAC in an MP4 container (`.m4a`), stereo, 44.1 kHz.** 428 MB of source
+recordings become 12.2 MB shipped. Stereo rather than mono because these were
 recorded with a spaced pair, and for the piano and the cymbals that width *is*
 the realism — mono saves about 3 MB and makes a piano sit at a point rather than
 in a room. AAC was checked for the one thing that would have ruled it out:
@@ -1185,7 +1186,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Timeline (bars/beats/grid, snapping) | ✅ | One **Timing** toggle: Tidy (a 1/16 grid) or Free. The finer resolutions still exist in `model/time.ts` and are tested — they just aren't a choice a child is asked to make. |
 | Transport (play/pause/stop/loop, BPM, position) | ✅ | Two-clock scheduler; live tempo change. |
 | Drum kit (21 voices) | ✅ | Drums, cymbals and hand percussion — bongos, conga, triangle, tambourine, claves, agogo included. All real recordings (CC0 — see §5) except the Kick, which stays synthesized because a drum-machine kick is a built sound. |
-| Sampled instruments | ✅ | 26 of the 31 voices play real recordings, pitch-shifted per note with several strengths each. Sampled and synthesized voices sit in the same song and behave identically everywhere else. |
+| Sampled instruments | ✅ | 27 of the 31 voices play real recordings, pitch-shifted per note with several strengths each. Sampled and synthesized voices sit in the same song and behave identically everywhere else. |
 | Place / remove / move notes | ✅ | Click to place, click to remove, drag sideways to move in time and up/down to change the note. A dragged note lands on the scale, so it can't be dropped on a wrong one. |
 | Drag sound from library | ✅ | Creates or reuses the voice's track. |
 | Per-track volume / mute / solo | ✅ | |
@@ -1204,7 +1205,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Block length / resize | ✅ | Drag a selected block's right edge to change its length (snaps to grid). |
 | Per-track echo | ✅ | One slider per track, on the lane header. Tempo-synced (repeats land an eighth note apart at any tempo) and one control drives level, repeats and feedback together, so there's no way to set it to something unmusical. Same chain live and in Export. |
 | Other per-track effects (reverb send, filter) | ⬜ | The per-track chain (`audio/trackChain.ts`) is the place to add them. |
-| Melodic instruments (10 voices) | ✅ | Piano (Kawai grand), Bells (glockenspiel, backed low down by vibraphone), Marimba, Vibraphone, Xylophone and Upright Bass are recordings; Synth and Bass stay a pitched subtractive synth — 2 oscillators, ADSR, low-pass filter — because that is what they are. Guitar (a synth pluck) and Strings (a synth pad) arrived with MIDI import as its landing places; the Strings are slated to become the VSCO 2 CE violin ensemble (the set is already selected in `tools/build-samples.mjs` — run the build to fetch and level it, then flip the voice's `sampleSet` on and re-measure the ear-safety worst case), and a *recorded* guitar waits on vetting a new CC0 source, since neither pinned library has one. |
+| Melodic instruments (10 voices) | ✅ | Piano (Kawai grand), Bells (glockenspiel, backed low down by vibraphone), Marimba, Vibraphone, Xylophone, Upright Bass and Strings (VSCO 2 CE violin section, sustained; its unverifiable bottom three notes deliberately unshipped — see the key-range note in `tools/build-samples.mjs`) are recordings; Synth and Bass stay a pitched subtractive synth because that is what they are. Guitar is a synth pluck for now: neither pinned library holds any guitar, so a recorded one waits on vetting a new CC0 source. Guitar and Strings arrived as MIDI import's landing places. |
 | Swap a row's instrument | ✅ | The row's name is a picker. The tune comes with it, landing in the new instrument's own range. Drums stay drums. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
 | Change the song's mood | ✅ | Happy / Sad, each with a "more notes" version, from the toolbar. The tune already written moves with it, by scale degree, so it keeps its shape — and flipping between two scales of the same size is exactly reversible. |
@@ -1434,7 +1435,7 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - `npm run package:win` is pinned to `--x64` on purpose: electron-builder
   silently matches the build machine's chip, and this Mac's is ARM — the
   unpinned build produced a Windows-on-ARM installer most PCs can't run.
-- The installer has been built and its contents verified (all 302 recordings,
+- The installer has been built and its contents verified (every recording,
   byte-identical), but running it needs a real Windows machine — the last
   manual QA step whenever it changes.
 - The dev-only `window.beatbox` debug handle exists in development builds only
@@ -1447,7 +1448,8 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 Melodic instruments (originally Phase 4) were brought forward and are now in, as
 are song sections & arrangement, a playable keyboard, and recording what's played
 into the song. The sound library is now full: drums, mallets and keys as the
-brief asked, hand percussion, and a real upright bass — 31 voices, 26 of them
+brief asked, hand percussion, a real upright bass and a real violin section —
+31 voices, 27 of them
 recordings. Remaining, roughly following the brief: MIDI input through the
 same `noteOn`/`noteOff`, step sequencer & humanize, per-track effect sends,
 automation, and polish — accessibility.
