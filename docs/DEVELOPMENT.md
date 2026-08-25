@@ -956,6 +956,15 @@ dash-name 404s silently forever. And `electron-builder --publish never` stays
 in the package script — publishing is the workflow's job, and on CI the
 builder would otherwise try (and fail) to do it itself.
 
+The installer is **one-click and per-user** (`oneClick: true`,
+`perMachine: false`), and that is what makes the updates actually silent.
+The first build was a choose-a-folder wizard, which put the app in Program
+Files — all-users territory, where every self-update raised a Windows admin
+prompt and the reinstall cycle broke the child's pinned taskbar shortcut.
+Per-user installs live in the child's own profile: no elevation to update,
+and a stable path for pins to point at. Found the honest way, by a real
+update on a real kid's machine.
+
 ### A blank Electron window is almost always a stale dependency cache
 
 Vite pre-bundles dependencies into `node_modules/.vite/deps` and serves them

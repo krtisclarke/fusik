@@ -60,8 +60,8 @@
       "category": "public.app-category.music"
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "oneClick": true,
+      "perMachine": false
     },
     "publish": {
       "provider": "github",
