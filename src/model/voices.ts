@@ -13,7 +13,7 @@
 //
 // Every recording is CC0. Provenance, licence and hashes: docs/asset-manifest.json.
 
-export type VoiceCategory = 'Drums' | 'Bass' | 'Keys' | 'Mallets' | 'Cymbals' | 'Percussion';
+export type VoiceCategory = 'Drums' | 'Bass' | 'Keys' | 'Mallets' | 'Cymbals' | 'Percussion' | 'Strings';
 
 /** Drum voices play a fixed sound; pitched voices play melodic notes. */
 export type VoiceKind = 'drum' | 'pitched';
@@ -388,6 +388,41 @@ export const VOICE_CATALOG: VoiceDef[] = [
     baseMidi: 36,
     octaves: 2,
     defaults: { wave: 2, attack: 0.004, decay: 0.22, sustain: 0.45, release: 0.16, cutoff: 520, bite: 3.0, detune: 7, gain: 0.55 },
+  },
+  // ---- strings ------------------------------------------------------------
+  // Both synthesized for now, deliberately shippable that way: the Guitar is a
+  // built pluck the way the Bass is, and the Strings are the classic synth
+  // string pad. The Strings are slated to become a real recording (VSCO 2 CE's
+  // violin ensemble — sampleSet 'strings') once the source audio is fetched
+  // and levelled; neither library holds any guitar, so a recorded Guitar
+  // waits on vetting a new CC0 source. Imported MIDI songs land on these
+  // (model/gm.ts), which is why they exist before the recordings do.
+  {
+    id: 'guitar',
+    label: 'Guitar',
+    emoji: '🎸',
+    category: 'Strings',
+    color: '#b45309',
+    kind: 'pitched',
+    // Between the Bass and the Piano, where a guitar actually sits.
+    baseMidi: 48,
+    octaves: 2,
+    // A pluck: sharp attack, quick settle, little sustain, and enough bite
+    // that the filter envelope snaps the way a picked string does.
+    defaults: { wave: 2, attack: 0.003, decay: 0.5, sustain: 0.12, release: 0.2, cutoff: 1800, bite: 2.6, detune: 4, gain: 0.5 },
+  },
+  {
+    id: 'strings',
+    label: 'Strings',
+    emoji: '🎻',
+    category: 'Strings',
+    color: '#c4b5fd',
+    kind: 'pitched',
+    baseMidi: 60,
+    octaves: 2,
+    // A pad: the swell in, the held middle and the slow letting-go are the
+    // whole character; detune supplies the "many players" width.
+    defaults: { wave: 2, attack: 0.12, decay: 0.3, sustain: 0.8, release: 0.5, cutoff: 2200, bite: 1.2, detune: 10, gain: 0.4 },
   },
   {
     // A real upright, plucked — the one recording VCSL couldn't provide, from

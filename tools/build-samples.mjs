@@ -190,6 +190,20 @@ const SETS = [
     pitched: { keyRange: [0, 127], keyStep: 1, layers: 2, minLayers: 1 },
     tail: 3.0,
   },
+  {
+    // The Strings voice: a violin section, bowed and sustained — the sound
+    // "strings" means in a pop song. From the second library, like the
+    // upright: VCSL's bowed strings are a psaltery, not a section. minLayers 1
+    // for the same reason as the upright — notes the library recorded at one
+    // strength beat a hole in the middle of the grid.
+    id: 'strings',
+    library: 'vsco2ce',
+    sfz: 'ViolinEnsSusVib.sfz',
+    instrument: 'Violin Ensemble (sustain, vibrato)',
+    pick: () => true,
+    pitched: { keyRange: [0, 127], keyStep: 1, layers: 2, minLayers: 1 },
+    tail: 5.0,
+  },
   // Each `pick` narrows a library instrument down to ONE way of playing it.
   // That matters more than it looks: VCSL files every technique for an
   // instrument under the same folder — a hi-hat's closed hit, loose hit, open

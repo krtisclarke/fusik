@@ -136,6 +136,35 @@ export async function openProjectFromFile(): Promise<OpenResult | null> {
   return { project: parseProject(text) };
 }
 
+/**
+ * Pick a .mid file and hand back its bytes. One code path for both worlds on
+ * purpose: Electron's renderer shows the real OS picker for a file input just
+ * as a browser does, so the desktop needs no new wiring for this — and no
+ * change to the auto-update-sensitive shell.
+ */
+export function pickMidiFile(): Promise<{ name: string; bytes: Uint8Array } | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.mid,.midi,audio/midi';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return resolve(null);
+      const reader = new FileReader();
+      reader.onload = () =>
+        resolve({
+          name: file.name.replace(/\.[^.]+$/, ''),
+          bytes: new Uint8Array(reader.result as ArrayBuffer),
+        });
+      reader.onerror = () => resolve(null);
+      reader.readAsArrayBuffer(file);
+    };
+    // As with the picker above: dismissing the dialog fires no reliable event;
+    // the promise just never resolves and nothing is imported.
+    input.click();
+  });
+}
+
 function pickFileText(): Promise<string | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');

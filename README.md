@@ -146,6 +146,10 @@ npm run package:mac   # build a macOS app bundle
   the top, and **📁 My Songs** lists everything you've made: click one to open it.
   Starting a new song doesn't lose the old one. **Save to a file** still puts a
   copy somewhere you choose, to keep or to share.
+- **Import a song.** **🎼 Import a song…** (inside **📁 My Songs**) opens a
+  `.mid` music file — the note-instructions format keyboards and notation apps
+  save — and turns it into a Beatbox song: right speed, right mood, drums on
+  drum rows, ready to edit like anything you built yourself.
 - **Where your songs live.** In the desktop app they're ordinary files in
   `Documents/Beatbox Studio` — one per song, named after it. You can copy them,
   back them up, or move them to another computer.

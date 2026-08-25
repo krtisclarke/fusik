@@ -30,7 +30,9 @@ import {
   undo,
   type History,
 } from './history';
-import { openProjectFromFile, saveProjectToFile, saveAudioFile } from '../platform/files';
+import { openProjectFromFile, pickMidiFile, saveProjectToFile, saveAudioFile } from '../platform/files';
+import { parseMidi } from '../model/midi';
+import { projectFromMidi } from '../model/importMidi';
 import {
   deleteSong as deleteSongSlot,
   importBrowserShelf,
@@ -121,6 +123,7 @@ export interface StoreState {
   toggleSongs: () => void;
   saveCurrent: () => Promise<void>;
   openFromFile: () => Promise<void>;
+  importMidi: () => Promise<void>;
   /** Render the song and save it — MP3 (small, plays anywhere) unless asked for WAV. */
   exportSong: (format?: 'mp3' | 'wav') => Promise<void>;
 
@@ -631,6 +634,30 @@ export const useStore = create<StoreState>((set, get) => {
         }
       } catch (err) {
         set({ status: `Couldn't open: ${(err as Error).message}` });
+      }
+    },
+
+    importMidi: async () => {
+      try {
+        flushAutosave(); // the song being replaced is written out first
+        const picked = await pickMidiFile();
+        if (!picked) return;
+        const { project, dropped } = projectFromMidi(parseMidi(picked.bytes), picked.name);
+        // An import joins the shelf as its own song, exactly like a file open.
+        const songId = newSongId();
+        writeCurrentSongId(songId);
+        set({ currentSongId: songId });
+        get().loadProject(project);
+        set({
+          showSongs: false,
+          // What couldn't come along is said once, plainly, and never hidden.
+          status:
+            dropped.notes > 0 || dropped.tracks > 0
+              ? `Imported "${project.name}" — a few sounds it can't play were left out`
+              : `Imported "${project.name}"`,
+        });
+      } catch (err) {
+        set({ status: `Couldn't import: ${(err as Error).message}` });
       }
     },
 

@@ -8,7 +8,7 @@ import { VOICE_CATALOG, type VoiceCategory, type VoiceDef } from '../model/voice
 // see is a sound the app doesn't have. Headers stay put; only the open family
 // spends any height, so the panel never scrolls and never hides a family.
 // Beat-makers first, tune-makers after — the order a song tends to get built.
-const CATEGORY_ORDER: VoiceCategory[] = ['Drums', 'Cymbals', 'Percussion', 'Mallets', 'Keys', 'Bass'];
+const CATEGORY_ORDER: VoiceCategory[] = ['Drums', 'Cymbals', 'Percussion', 'Mallets', 'Keys', 'Strings', 'Bass'];
 
 const CATEGORY_EMOJI: Record<VoiceCategory, string> = {
   Drums: '🥁',
@@ -16,6 +16,7 @@ const CATEGORY_EMOJI: Record<VoiceCategory, string> = {
   Percussion: '👏',
   Mallets: '🎐',
   Keys: '🎹',
+  Strings: '🎻',
   Bass: '🎸',
 };
 

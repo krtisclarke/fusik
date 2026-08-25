@@ -1072,7 +1072,7 @@ trace caught as a flip that never landed.)
 The Sounds panel hit the same wall vertically at 29 sounds: one long list put
 more than half the library below the fold at an ordinary window height, with no
 scrollbar to say so — and a sound a child can't see is a sound the app doesn't
-have. It is now six family headers that are *always* on screen, with one family
+have. It is now seven family headers that are *always* on screen, with one family
 open at a time. The panel itself never scrolls, by construction: the open
 family flexes into whatever height is left and only its own tile list scrolls
 when that runs short, so no window height can ever hide a family. Finding a
@@ -1185,7 +1185,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Timeline (bars/beats/grid, snapping) | ✅ | One **Timing** toggle: Tidy (a 1/16 grid) or Free. The finer resolutions still exist in `model/time.ts` and are tested — they just aren't a choice a child is asked to make. |
 | Transport (play/pause/stop/loop, BPM, position) | ✅ | Two-clock scheduler; live tempo change. |
 | Drum kit (21 voices) | ✅ | Drums, cymbals and hand percussion — bongos, conga, triangle, tambourine, claves, agogo included. All real recordings (CC0 — see §5) except the Kick, which stays synthesized because a drum-machine kick is a built sound. |
-| Sampled instruments | ✅ | 26 of the 29 voices play real recordings, pitch-shifted per note with several strengths each. Sampled and synthesized voices sit in the same song and behave identically everywhere else. |
+| Sampled instruments | ✅ | 26 of the 31 voices play real recordings, pitch-shifted per note with several strengths each. Sampled and synthesized voices sit in the same song and behave identically everywhere else. |
 | Place / remove / move notes | ✅ | Click to place, click to remove, drag sideways to move in time and up/down to change the note. A dragged note lands on the scale, so it can't be dropped on a wrong one. |
 | Drag sound from library | ✅ | Creates or reuses the voice's track. |
 | Per-track volume / mute / solo | ✅ | |
@@ -1204,13 +1204,14 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Block length / resize | ✅ | Drag a selected block's right edge to change its length (snaps to grid). |
 | Per-track echo | ✅ | One slider per track, on the lane header. Tempo-synced (repeats land an eighth note apart at any tempo) and one control drives level, repeats and feedback together, so there's no way to set it to something unmusical. Same chain live and in Export. |
 | Other per-track effects (reverb send, filter) | ⬜ | The per-track chain (`audio/trackChain.ts`) is the place to add them. |
-| Melodic instruments (8 voices) | ✅ | Piano (Kawai grand), Bells (glockenspiel, backed low down by vibraphone), Marimba, Vibraphone, Xylophone and Upright Bass are recordings; Synth and Bass stay a pitched subtractive synth — 2 oscillators, ADSR, low-pass filter — because that is what they are. |
+| Melodic instruments (10 voices) | ✅ | Piano (Kawai grand), Bells (glockenspiel, backed low down by vibraphone), Marimba, Vibraphone, Xylophone and Upright Bass are recordings; Synth and Bass stay a pitched subtractive synth — 2 oscillators, ADSR, low-pass filter — because that is what they are. Guitar (a synth pluck) and Strings (a synth pad) arrived with MIDI import as its landing places; the Strings are slated to become the VSCO 2 CE violin ensemble (the set is already selected in `tools/build-samples.mjs` — run the build to fetch and level it, then flip the voice's `sampleSet` on and re-measure the ear-safety worst case), and a *recorded* guitar waits on vetting a new CC0 source, since neither pinned library has one. |
 | Swap a row's instrument | ✅ | The row's name is a picker. The tune comes with it, landing in the new instrument's own range. Drums stay drums. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
 | Change the song's mood | ✅ | Happy / Sad, each with a "more notes" version, from the toolbar. The tune already written moves with it, by scale degree, so it keeps its shape — and flipping between two scales of the same size is exactly reversible. |
 | Playable keyboard | ✅ | Play the scale live with mouse/touch (slide across the keys) or two rows of computer keys an octave apart, with an octave shift. Follows the selected melodic track, or pick a voice. |
 | Recording a performance | ✅ | Arm ⏺, press play, and what you play on the keyboard is written into the song — tidied to the grid when **Timing** is Tidy, into whichever part is sounding, on the track for that instrument (created if needed). A whole take is one undo step. |
 | MIDI input | ⬜ | The keyboard is in; a real MIDI controller would feed the same `noteOn`/`noteOff` and record through the same path. |
+| MIDI **import** | ✅ | 🎼 Import a song… in the 📁 My Songs panel turns a `.mid` file into an editable song: deterministic translation, never generation — every note in the result is a note from the file. The key is detected and the Mood set to match, so the tune lands on the no-wrong-notes grid; instruments arrive through the General MIDI table (`model/gm.ts`); the song is tidied to the 1/16 grid and cut into 8-bar parts. What has no honest voice (sound effects, rows past ten) is left out and said so in the status line. One file-input path serves browser and desktop alike — no Electron changes. See `model/midi.ts` (parser), `model/importMidi.ts` (translator). |
 | Song sections & arrangement | ✅ | Parts (A/B/…) with their own notes and lengths; a strip of chips shows the running order — click to edit, drag to rearrange, repeat/copy/rename/remove. Song vs. Part play modes. |
 | Automation | ⬜ | Phase 6. |
 | WAV export | ✅ | Renders the whole song offline through the master chain to a 16-bit stereo `.wav` (native Save dialog on desktop, download in browser). Verified: valid RIFF header, non-silent, no clipping. |
@@ -1299,6 +1300,11 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Export a song with echo: the repeats are in the file and aren't cut off.
 - [ ] Put a few beats in, close the tab, open it again — the song is back and
       the status line says so.
+- [ ] **🎼 Import a song…** on a real `.mid`: it opens as its own song named
+      after the file, the Mood and tempo match how it sounds, drums sit on drum
+      rows, and the parts strip shows 8-bar chips. Importing the same file
+      again produces the identical song. A `.mid` full of sound effects reports
+      what was left out rather than importing noise.
 - [ ] Name a song, press **New**, name that one too — 📁 My Songs lists both, and
       clicking the first brings it back exactly.
 - [ ] Delete a song you are *not* in: it goes, yours is untouched. Delete the one
@@ -1364,7 +1370,7 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Every sound in the library makes a noise when you click it, including
       **Big Drum**, **Low Tom**, **Wood Block**, **Conga**, **Claves**,
       **Marimba** and **Upright Bass**.
-- [ ] Every family header in the Sounds panel (Drums, Cymbals, Percussion,
+- [ ] Every family header in the Sounds panel (Drums, Cymbals, Percussion, Strings,
       Mallets, Keys, Bass) is visible without scrolling, at any window height.
       Open **Percussion** — the other five headers stay on screen; on a short
       window the tiles scroll inside the open family instead.
@@ -1441,7 +1447,7 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 Melodic instruments (originally Phase 4) were brought forward and are now in, as
 are song sections & arrangement, a playable keyboard, and recording what's played
 into the song. The sound library is now full: drums, mallets and keys as the
-brief asked, hand percussion, and a real upright bass — 29 voices, 26 of them
+brief asked, hand percussion, and a real upright bass — 31 voices, 26 of them
 recordings. Remaining, roughly following the brief: MIDI input through the
 same `noteOn`/`noteOff`, step sequencer & humanize, per-track effect sends,
 automation, and polish — accessibility.
