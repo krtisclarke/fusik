@@ -1004,6 +1004,23 @@ on, so a scroll ran out of background and the sticky row headers vanished with
 their parent — `.lanes` now spans `max-content`), and the playhead drew on top
 of the pinned headers instead of sliding under them.
 
+**The view follows the playhead — with manners.** While the song plays, the
+timeline turns pages after the line: the grid holds still (a child places
+blocks while it plays, and a grid always sliding under the pointer would make
+that a fairground game), and when a line the view was showing walks off the
+edge — or wraps home on loop — the view jumps to the page it went to, the
+instant flip grown-up programs use. The rule with the manners in it lives in
+`ui/follow.ts`, pure and tested: **the view follows a line it was showing,
+and never chases one the child scrolled away from.** Scroll elsewhere
+mid-play and the view stays put; when the loop carries the line back into
+whatever is on screen, following quietly resumes. No toggle to understand —
+the behaviour is the manners. Verified by tracing a 12-bar loop live: pages
+turned at beats ~18 and ~36, home on the wrap; a view dragged away mid-play
+held still for eighteen seconds until the line walked into it and out the
+far side. (The flip is deliberately instant rather than animated — smooth
+scrolling rides the same animation frames a hidden window suspends, which a
+trace caught as a flip that never landed.)
+
 The Sounds panel hit the same wall vertically at 29 sounds: one long list put
 more than half the library below the fold at an ordinary window height, with no
 scrollbar to say so — and a sound a child can't see is a sound the app doesn't
@@ -1178,6 +1195,12 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       across them.
 - [ ] While a long part plays, the strip's own playhead crosses it, so the
       line is visible even when the big one is past the edge of the window.
+- [ ] Play a 12-bar part and just watch: when the line reaches the right
+      edge, the view flips a page after it — and jumps home when the loop
+      wraps. The grid never slides while the line is on screen.
+- [ ] While it plays, drag the map to a different stretch of the part: the
+      view stays where you put it — no snapping back — until the line walks
+      into your view and off its far edge, when the pages resume.
 - [ ] Undo/redo across add, remove, move, tempo.
 - [ ] Save a song, start a new one, reopen the saved file — it returns identical.
 - [ ] Switch **Timing** to Free and place a block between two grid lines — it

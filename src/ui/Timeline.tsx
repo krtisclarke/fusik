@@ -532,7 +532,7 @@ export function Timeline() {
             );
           })}
 
-          <Playhead height={totalHeight} />
+          <Playhead height={totalHeight} scrollRef={scrollRef} />
 
           {noteCount === 0 && (
             <div className="empty-stage">

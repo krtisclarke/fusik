@@ -91,6 +91,10 @@ npm run package:mac   # build a macOS app bundle
   a bright window showing the bit you're looking at. On a long part, drag the
   map and the timeline follows — so nothing is ever lost past the edge of the
   screen.
+- **The view follows the song.** While it plays, the timeline turns the page
+  when the playhead reaches the edge, and jumps back to the start when the
+  loop comes round. Scroll somewhere else to work and it politely stays where
+  you put it until the line comes back to you.
 - **Play it yourself:** the keyboard along the bottom plays the notes of the
   scale, so nothing you hit sounds wrong. Use the mouse (hold and slide along the
   keys) or the computer keys — `z x c v b…` for the lower octave, `a s d f g…`
