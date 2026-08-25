@@ -1,0 +1,52 @@
+# Build the Windows installer on a real Windows machine.
+#
+# The app is developed on a Mac; this is how it reaches the machine it was
+# always for. Runs on demand (the Actions tab's "Run workflow" button), and on
+# any tag starting with v — a tagged run also publishes the installer as a
+# GitHub Release, which gives a stable download link.
+#
+# The installer is unsigned: there is no code-signing certificate, so Windows
+# SmartScreen shows its "protected your PC" notice on first run — More info,
+# then "Run anyway", once. Signing would need a paid identity-verified
+# certificate and is a decision for later, not a build step.
+
+name: Windows installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Build installer
+        run: npm run package:win
+
+      - name: Keep the installer as a downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Beatbox-Studio-Windows-Setup
+          path: release/*.exe
+          if-no-files-found: error
+
+      - name: Publish a Release on tags
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: gh release create $env:GITHUB_REF_NAME (Get-Item release/*.exe).FullName --title "Beatbox Studio $env:GITHUB_REF_NAME" --notes "Windows installer. Unsigned: SmartScreen will ask once — More info, then Run anyway."
+        env:
+          GH_TOKEN: ${{ github.token }}

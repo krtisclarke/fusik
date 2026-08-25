@@ -17,7 +17,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "samples": "node tools/build-samples.mjs",
-    "package:win": "npm run build && electron-builder --win",
+    "package:win": "npm run build && electron-builder --win --x64",
     "package:mac": "npm run build && electron-builder --mac"
   },
   "dependencies": {
