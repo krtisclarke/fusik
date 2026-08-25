@@ -42,7 +42,9 @@ export function normalise(set, regions) {
     const [loVel, hiVel] = velocityBand(r);
     return {
       repoPath: samplePath(set.sfz, r),
-      root: set.pitched ? num(r.pitch_keycenter, 60) : DRUM_ROOT,
+      // `key=` is SFZ shorthand for lokey+hikey+pitch_keycenter in one; the
+      // FreePats maps use it for almost every region.
+      root: set.pitched ? num(r.pitch_keycenter ?? r.key, 60) : DRUM_ROOT,
       loVel,
       hiVel,
       cents: num(r.tune, 0),

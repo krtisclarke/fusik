@@ -390,10 +390,12 @@ export const VOICE_CATALOG: VoiceDef[] = [
     defaults: { wave: 2, attack: 0.004, decay: 0.22, sustain: 0.45, release: 0.16, cutoff: 520, bite: 3.0, detune: 7, gain: 0.55 },
   },
   // ---- strings ------------------------------------------------------------
-  // The Strings are a real violin section; the Guitar is a built pluck the way
-  // the Bass is, because neither pinned library holds any guitar — a recorded
-  // one waits on vetting a new CC0 source. Imported MIDI songs land on these
-  // (model/gm.ts), which is why the family exists.
+  // Both real recordings. The Strings are a violin section from VSCO 2 CE;
+  // the Guitar is the one instrument from outside Versilian — a nylon-string
+  // Spanish classical from the FreePats project, whose maintainer recorded it
+  // and dedicated it CC0 (the dedication travels inside the archive; see the
+  // freepats entry in tools/build-samples.mjs). Imported MIDI songs land on
+  // these (model/gm.ts), which is why the family exists.
   {
     id: 'guitar',
     label: 'Guitar',
@@ -404,9 +406,11 @@ export const VOICE_CATALOG: VoiceDef[] = [
     // Between the Bass and the Piano, where a guitar actually sits.
     baseMidi: 48,
     octaves: 2,
-    // A pluck: sharp attack, quick settle, little sustain, and enough bite
-    // that the filter envelope snaps the way a picked string does.
-    defaults: { wave: 2, attack: 0.003, decay: 0.5, sustain: 0.12, release: 0.2, cutoff: 1800, bite: 2.6, detune: 4, gain: 0.5 },
+    // 1.6 by measurement: at the same strike the render sits level with the
+    // piano (RMS 0.094 vs 0.094, peak 0.43 vs 0.48) and stays even across
+    // the register.
+    sampleSet: 'guitar',
+    defaults: { ...sampledDefaults(1.6, { pitched: true }), release: 0.3 },
   },
   {
     id: 'strings',

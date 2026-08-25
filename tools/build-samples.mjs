@@ -59,7 +59,71 @@ const LIBRARIES = {
     raw: VSCO_RAW,
     sfzRaw: VSCO_SFZ_RAW,
   },
+  freepats: {
+    // The one library that isn't Versilian's, and the one that isn't a git
+    // repository: FreePats publishes versioned archives instead, so this
+    // entry pins an archive by its hash rather than a repo by its commit.
+    // The provenance chain is the same shape as VCSL's — the project's own
+    // maintainer recorded the instrument and dedicated it CC0, and the
+    // dedication (cc0.txt) and the recording story (readme.txt) travel
+    // inside the archive itself.
+    name: 'FreePats — Spanish Classical Guitar',
+    publisher: 'FreePats project (roberto@zenvoid.org)',
+    license: VCSL_LICENSE,
+    licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+    attribution:
+      'Spanish classical guitar recorded by roberto@zenvoid.org for the FreePats project (CC0 1.0 — no attribution required)',
+    url: 'https://freepats.zenvoid.org/Guitar/acoustic-guitar.html',
+    commit: '2019-06-18',
+    mapCommit: '2019-06-18',
+    licenseFile: 'cc0.txt',
+    archive: {
+      url: 'https://freepats.zenvoid.org/Guitar/SpanishClassicalGuitar/SpanishClassicalGuitar-SFZ-20190618.7z',
+      sha256: 'ef2fb7de0cc0ab561c4ebc28494f3fc2962596e4f32f16d6c96b8a385c7c098b',
+      root: 'SpanishClassicalGuitar-SFZ-20190618',
+    },
+  },
 };
+
+/**
+ * Read one file from an archive-pinned library, downloading and unpacking the
+ * archive on first use. The hash is verified on every run, downloaded or
+ * cached: a cache that no longer matches the pin is a lie about provenance,
+ * exactly like a repo path answered from the wrong commit. Extraction needs
+ * `7zz` (`brew install sevenzip`) — macOS's tar reads 7z listings but not the
+ * compression filter FreePats uses.
+ */
+async function archiveFile(libId, lib, repoPath) {
+  const dir = path.join(path.dirname(CACHE), libId);
+  const archivePath = path.join(dir, path.posix.basename(new URL(lib.archive.url).pathname));
+  if (!fs.existsSync(archivePath)) {
+    fs.mkdirSync(dir, { recursive: true });
+    const res = await fetch(lib.archive.url);
+    if (!res.ok) throw new Error(`${lib.archive.url}: HTTP ${res.status}`);
+    fs.writeFileSync(archivePath, Buffer.from(await res.arrayBuffer()));
+  }
+  const hash = sha256(fs.readFileSync(archivePath));
+  if (hash !== lib.archive.sha256) {
+    throw new Error(`${archivePath}: sha256 ${hash} does not match the pinned ${lib.archive.sha256}`);
+  }
+  const root = path.join(dir, lib.archive.root);
+  if (!fs.existsSync(root)) {
+    try {
+      execFileSync('7zz', ['x', '-y', archivePath], { cwd: dir, stdio: ['ignore', 'ignore', 'pipe'] });
+    } catch (err) {
+      throw new Error(`could not extract ${archivePath} — is 7zz installed? (brew install sevenzip): ${err.message}`);
+    }
+  }
+  return fs.readFileSync(path.join(root, repoPath));
+}
+
+/** One file from a library, whichever way that library is pinned. */
+async function libraryFile(libId, lib, kind, repoPath) {
+  if (lib.archive) return archiveFile(libId, lib, repoPath);
+  const base = kind === 'map' ? lib.sfzRaw : lib.raw;
+  const ref = kind === 'map' ? lib.mapCommit : lib.commit;
+  return cachedFetch(base + urlPath(repoPath), cachePath(ref, repoPath));
+}
 
 /**
  * Escape a repository path for a URL, segment by segment.
@@ -189,6 +253,23 @@ const SETS = [
     pick: () => true,
     pitched: { keyRange: [0, 127], keyStep: 1, layers: 2, minLayers: 1 },
     tail: 3.0,
+  },
+  {
+    // The Guitar: a nylon-string Spanish classical — warm, soft, the guitar
+    // an eight-year-old draws. The one instrument from outside Versilian; see
+    // the freepats entry in LIBRARIES for the provenance story. One take at
+    // one strength per note is all the bank has — a guitar's tone moves less
+    // with the strike than a struck instrument's, and levelling supplies the
+    // loudness curve. The key range starts at the instrument's real bottom
+    // string (E2): the map carries a few keys below any guitar's range, and
+    // the grid can't reach them anyway.
+    id: 'guitar',
+    library: 'freepats',
+    sfz: 'SpanishClassicalGuitar-20190618.sfz',
+    instrument: 'Spanish Classical Guitar',
+    pick: () => true,
+    pitched: { keyRange: [40, 96], keyStep: 1, layers: 1, minLayers: 1 },
+    tail: 3.5,
   },
   {
     // The Strings voice: a violin section, bowed and sustained — the sound
@@ -448,6 +529,9 @@ async function main() {
         url: lib.url,
         commit: lib.commit,
         mapCommit: lib.mapCommit,
+        // An archive-pinned library's whole provenance is the archive: record
+        // the url and hash so the manifest says exactly which bytes were used.
+        ...(lib.archive ? { archive: lib.archive } : {}),
         licenseTextSha256: null,
       }]),
     ),
@@ -456,7 +540,7 @@ async function main() {
 
   if (!PLAN_ONLY) {
     for (const [id, lib] of Object.entries(LIBRARIES)) {
-      const licenseText = await cachedFetch(lib.raw + 'LICENSE', cachePath(lib.commit, 'LICENSE'));
+      const licenseText = await libraryFile(id, lib, 'audio', lib.licenseFile ?? 'LICENSE');
       manifest.libraries[id].licenseTextSha256 = sha256(licenseText);
     }
   }
@@ -475,10 +559,7 @@ async function main() {
 
     const rows = [];
     for (const src of sources) {
-      const sfzBytes = await cachedFetch(
-        lib.sfzRaw + urlPath(src.sfz),
-        cachePath(lib.mapCommit, src.sfz),
-      );
+      const sfzBytes = await libraryFile(libId, lib, 'map', src.sfz);
       const cfg = {
         ...set,
         sfz: src.sfz,
@@ -507,7 +588,7 @@ async function main() {
     const shiftsBySource = new Map(sources.map((s) => [s, new Set()]));
     const sourcesWithTuning = new Set(rows.filter((r) => r.cents !== 0).map((r) => r.src));
     for (const row of rows) {
-      const wav = await cachedFetch(lib.raw + urlPath(row.repoPath), cachePath(lib.commit, row.repoPath));
+      const wav = await libraryFile(libId, lib, 'audio', row.repoPath);
       sourceBytes += wav.length;
       const decoded = decodeWav(wav);
 

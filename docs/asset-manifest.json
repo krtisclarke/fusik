@@ -22,6 +22,22 @@
       "commit": "440300901dfe9275fd84e0b7763af1f8443ae62e",
       "mapCommit": "6dd651d55dde97fd4028699be9d4481f26917891",
       "licenseTextSha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673"
+    },
+    "freepats": {
+      "name": "FreePats — Spanish Classical Guitar",
+      "publisher": "FreePats project (roberto@zenvoid.org)",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Spanish classical guitar recorded by roberto@zenvoid.org for the FreePats project (CC0 1.0 — no attribution required)",
+      "url": "https://freepats.zenvoid.org/Guitar/acoustic-guitar.html",
+      "commit": "2019-06-18",
+      "mapCommit": "2019-06-18",
+      "archive": {
+        "url": "https://freepats.zenvoid.org/Guitar/SpanishClassicalGuitar/SpanishClassicalGuitar-SFZ-20190618.7z",
+        "sha256": "ef2fb7de0cc0ab561c4ebc28494f3fc2962596e4f32f16d6c96b8a385c7c098b",
+        "root": "SpanishClassicalGuitar-SFZ-20190618"
+      },
+      "licenseTextSha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
     }
   },
   "sets": [
@@ -1722,6 +1738,330 @@
           "sha256": "6098002eeb09fd52454681b2d6b70433fb798e94f5554fd9acb50dd9b2b2df15",
           "bytes": 36300,
           "seconds": 1.883
+        }
+      ]
+    },
+    {
+      "id": "guitar",
+      "library": "freepats",
+      "sources": [
+        {
+          "instrument": "Spanish Classical Guitar",
+          "map": "SpanishClassicalGuitar-20190618.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/guitar/40_0_1.m4a",
+          "source": "samples/E2.wav",
+          "sourceSha256": "22a7c914051a82b2a461f998bcefccb9868e67887af036270664c370913732a0",
+          "sha256": "f27600a84fc60b766d1776c8b683f5d86c8738f8697e34fa6cd942cfb40225d9",
+          "bytes": 15127,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/41_0_1.m4a",
+          "source": "samples/F2.wav",
+          "sourceSha256": "81131f7e292a74893641777f5fe754873466e8e44a030dc57fd631c749ce8c2c",
+          "sha256": "fd1e2c73696888cf0b933cdda1ed073c36df14d6c49f4b31adb67602c1c7ab4b",
+          "bytes": 14236,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/43_0_1.m4a",
+          "source": "samples/G2.wav",
+          "sourceSha256": "06114b39af585030ba24c90a0cf213973e88c823fda2fc8ba976ddb74cf6aacc",
+          "sha256": "d10aeb7dbafc33346da7b13e112228f66817dba98f16803e434311c8ed11208a",
+          "bytes": 14712,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/45_0_1.m4a",
+          "source": "samples/A2.wav",
+          "sourceSha256": "1ed5725737f894444461e8778340c223e5ff1e0578ca08cd823582949d628db7",
+          "sha256": "ea3d5f5126937b3d56a6f0e1dcaad84180050e00ffb6198c7566ae6bf29199a5",
+          "bytes": 13193,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/47_0_1.m4a",
+          "source": "samples/B2.wav",
+          "sourceSha256": "aa5fa8000f0714a6e201617551add81f771af07eaf2340a3c68d12bbd388ed86",
+          "sha256": "3ac5be02f7573af09d057711412ce38a45df76e3304d1fee7f13d3ccd87162bd",
+          "bytes": 13194,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/48_0_1.m4a",
+          "source": "samples/C3.wav",
+          "sourceSha256": "d7b5d1f1bf9a1852859376a4e2ed462d5339b9128f8c682a3eed7661dea41c65",
+          "sha256": "fde3aa0e7a1e57a78e902955ce8b6753d7d42e0ba3b793317b9d1b1e90db403a",
+          "bytes": 11799,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/50_0_1.m4a",
+          "source": "samples/D3.wav",
+          "sourceSha256": "ad05903b63e490bacbd8f90d2ee4c3e763bf5675840ceef7374616c51421139a",
+          "sha256": "f0657dbc48e98162b144e2d6919289e00096428399aec4ff1cdc1a63e432530e",
+          "bytes": 13027,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/52_0_1.m4a",
+          "source": "samples/E3.wav",
+          "sourceSha256": "3b84c5f8d76f61b242e812c86bd0a876b065a8ff576a0769801bb2f690bff90b",
+          "sha256": "aa472a6ec3d3cb9eca3f6425542c1f51dcd45641d8e46b63a1633f5dee2cad62",
+          "bytes": 12699,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/53_0_1.m4a",
+          "source": "samples/F3.wav",
+          "sourceSha256": "e5fa4e9722a5042aa89b60bcdbb0756aaf8396ffdb18589d3a4368400cc09ee7",
+          "sha256": "7ab781b04da4b79c1bc06a1a205dab00828b3c126cceba417c5a6e9a1e3b5463",
+          "bytes": 13196,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/54_0_1.m4a",
+          "source": "samples/F#3.wav",
+          "sourceSha256": "c89e24f62497a67a5d8223a1b1af7eea20b47639c29a4b5a3536d5d88de89cf8",
+          "sha256": "123e68cd214d39cec0e5a5f9ecc822b6a338060c21f41b84f210207ecd304773",
+          "bytes": 12981,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/55_0_1.m4a",
+          "source": "samples/G3.wav",
+          "sourceSha256": "c2d1a00e90a4ce14756a45836be5a9f4bb379c4ac72f6a124f4227426e9e1541",
+          "sha256": "d53ea288187222801646c30b6ff7776afdbcf442c6f91e971d6e381333662986",
+          "bytes": 13941,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/56_0_1.m4a",
+          "source": "samples/G#3.wav",
+          "sourceSha256": "b26c8dcd839bf926d131a7276f35947794a6e4c28b469bbaa0fdaedc259fab69",
+          "sha256": "200dd373ff47db3004ff8a72a8a5e74339b9291b4aeeec9e014b80751cb4c8ee",
+          "bytes": 11150,
+          "seconds": 3.339
+        },
+        {
+          "file": "public/samples/guitar/57_0_1.m4a",
+          "source": "samples/A3.wav",
+          "sourceSha256": "a44a5f172bbd11dec66d4ac57b67ddbdecc0328883a9114fd0b676868f09d671",
+          "sha256": "25068febf749994df9b6c2e6fa33fb97b68bc8c988e731b2f1e00fa62cf36115",
+          "bytes": 10774,
+          "seconds": 2.525
+        },
+        {
+          "file": "public/samples/guitar/58_0_1.m4a",
+          "source": "samples/A#3.wav",
+          "sourceSha256": "64b0721878e1affa39f7c03382d1a95caa14316fa691dc499968d4a8d34ead78",
+          "sha256": "7c4d9c7b0974aaf5bce254119bed56b20d6b0a30371e5bd2e788172d086a3cdc",
+          "bytes": 10423,
+          "seconds": 2.49
+        },
+        {
+          "file": "public/samples/guitar/59_0_1.m4a",
+          "source": "samples/B3.wav",
+          "sourceSha256": "7e2c073fa60c7732024b07979286a7956ba7bbfd12c9a07ee032f3014073bdbb",
+          "sha256": "07e0beaece4f020f579de13c38dca08d775bd4022121fe62083733e15ee8ad4f",
+          "bytes": 10770,
+          "seconds": 2.271
+        },
+        {
+          "file": "public/samples/guitar/60_0_1.m4a",
+          "source": "samples/C4.wav",
+          "sourceSha256": "b37fb9279079aa3334cd217bb4e0eba8e2618219c9cd646c793fab685a4bed46",
+          "sha256": "cd6bdca207787abc83f4c94ba3826ec4976a178f5e62aaee71b4f17e36bac476",
+          "bytes": 11601,
+          "seconds": 2.418
+        },
+        {
+          "file": "public/samples/guitar/61_0_1.m4a",
+          "source": "samples/C#4.wav",
+          "sourceSha256": "b2b3dfdd7a2c883a97653be084e3237cacc716267b7c73eb18e2b8daa9b8a811",
+          "sha256": "7573db7d37d6b1479d3c70b458bed930f4e0d9749b1c34c88b064fba5beaaaa1",
+          "bytes": 11721,
+          "seconds": 2.89
+        },
+        {
+          "file": "public/samples/guitar/62_0_1.m4a",
+          "source": "samples/D4.wav",
+          "sourceSha256": "7301c859f712429a36baf56c37bc7f7808f2a913ae22e033c45938aede13c5f0",
+          "sha256": "c93c584156761d917fb192ddaa0baac16dad6c302e0444864b719258ff255e82",
+          "bytes": 12647,
+          "seconds": 3.058
+        },
+        {
+          "file": "public/samples/guitar/63_0_1.m4a",
+          "source": "samples/D#4.wav",
+          "sourceSha256": "251b7e827972bf3406e204ae158d1f7db8b9ea8ba503373438234bd0d02e4c80",
+          "sha256": "99453b22331f23f0e7f92c7e994d5e4315a40eece443db7cba84e273052478aa",
+          "bytes": 11417,
+          "seconds": 3.126
+        },
+        {
+          "file": "public/samples/guitar/64_0_1.m4a",
+          "source": "samples/E4.wav",
+          "sourceSha256": "b58da5a2a380a2facf051c71b8178711a676d6b8b1021e0ffc3691841fe34e3a",
+          "sha256": "0289d38f77c26b6133eeb5261610cdf1e52b26e1e57c6cebbfe28afe3048ec3d",
+          "bytes": 14553,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/65_0_1.m4a",
+          "source": "samples/F4.wav",
+          "sourceSha256": "ef6f34ad82b29469a535b38573ff478159cdf0abcf5ad354173304b3e014daad",
+          "sha256": "d671a1bac38b51c34c4877c2c26e3096effccda9e50ca34112f07062ed096acd",
+          "bytes": 12670,
+          "seconds": 3.11
+        },
+        {
+          "file": "public/samples/guitar/66_0_1.m4a",
+          "source": "samples/F#4.wav",
+          "sourceSha256": "5809556edc5a2de5bd0fbd5ec5985ea21f47805d1328a88ec3bb53104badca72",
+          "sha256": "6597bd44069346b60c8bf2ca5d5657fa7387f3ebd0b0882240e50886182e0f98",
+          "bytes": 11947,
+          "seconds": 3.144
+        },
+        {
+          "file": "public/samples/guitar/67_0_1.m4a",
+          "source": "samples/G4.wav",
+          "sourceSha256": "b1d36a1cc9863eed45bef4b7027c9b651ba8284dd7b325cba998fdb17638d02b",
+          "sha256": "ad7cacc44bd823fb64ee9225dd3fed1cf94f348e0e20d25213d2fda9ccc7418f",
+          "bytes": 12303,
+          "seconds": 2.41
+        },
+        {
+          "file": "public/samples/guitar/69_0_1.m4a",
+          "source": "samples/A4.wav",
+          "sourceSha256": "4347049a573a20e970c05913d7fce065adfd5365eaa651156004550e8ef5d175",
+          "sha256": "c9cca5a28040548144764c962bc9b53377050f3463a7896b77701f55114d2b7b",
+          "bytes": 12226,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/guitar/70_0_1.m4a",
+          "source": "samples/A#4.wav",
+          "sourceSha256": "743ee18e7f01b14e270698681ae1837506a7a1ef3d0f160c30dacadcf5786d60",
+          "sha256": "37d83cba0c30c92a0b1e78530e4de8b2dc384bdb0bc86ad0e530da881201603e",
+          "bytes": 12594,
+          "seconds": 2.37
+        },
+        {
+          "file": "public/samples/guitar/71_0_1.m4a",
+          "source": "samples/B4.wav",
+          "sourceSha256": "71c6336d7fee2f24f00b4b9b9bbe6de2c77daeb6ff5d1d87813aa93e0973a873",
+          "sha256": "0b7e65f76f44cdd6f1ca827abccb904cc12d71e3a88a8ac875de0abf0cc09d1c",
+          "bytes": 10598,
+          "seconds": 1.9
+        },
+        {
+          "file": "public/samples/guitar/72_0_1.m4a",
+          "source": "samples/C5.wav",
+          "sourceSha256": "d3b547c93fa6711647eaf921ec06f05171103f6ef04af3db2d52289a37e36764",
+          "sha256": "4062c3836665137e6d084adbf88ccc0f2bde61659ea2bca50340fd423cd2e85d",
+          "bytes": 10254,
+          "seconds": 1.563
+        },
+        {
+          "file": "public/samples/guitar/73_0_1.m4a",
+          "source": "samples/C#5.wav",
+          "sourceSha256": "586b35854d1a75ce32c8dd0faae5affd4b7d8e22b32276188b3c46ce3db1feab",
+          "sha256": "e6c62e0a637cdc0bfac4cba7e773a5ae45501bab9ad245fb9dbca8e1f1a0e2e7",
+          "bytes": 9595,
+          "seconds": 1.754
+        },
+        {
+          "file": "public/samples/guitar/74_0_1.m4a",
+          "source": "samples/D5.wav",
+          "sourceSha256": "1380dff1a61f6364c8971a39b11e734a98c4358492307febaa9341fb114bfb28",
+          "sha256": "aa5a7cd2d17675822093b8e115c2bade4743eeaeeff9d45374463d55f8219467",
+          "bytes": 9181,
+          "seconds": 1.262
+        },
+        {
+          "file": "public/samples/guitar/75_0_1.m4a",
+          "source": "samples/D#5.wav",
+          "sourceSha256": "012aef2b8ad3999aa472d57482047f90aea09ff8fb82cf1d4773a58e94152b6a",
+          "sha256": "bf35476ffa4d7cfbdc21be494021f2e7042351547fea21836d1f41b091b6a095",
+          "bytes": 8724,
+          "seconds": 1.257
+        },
+        {
+          "file": "public/samples/guitar/76_0_1.m4a",
+          "source": "samples/E5.wav",
+          "sourceSha256": "1eaf4b6548d96781caf3b26a3a1a569ca097d3bbdfbc8e6fc58ffe15f3febd56",
+          "sha256": "165a49c180c4672a98c00da61cf38071ef0ed62f6b303d244011f6106cc0213a",
+          "bytes": 9692,
+          "seconds": 1.339
+        },
+        {
+          "file": "public/samples/guitar/77_0_1.m4a",
+          "source": "samples/F5.wav",
+          "sourceSha256": "84f1e8db070649fbc2abcd525612b5bb49c8371ba196a421a70efec7a5518e61",
+          "sha256": "555bca6fff8efde9cf0eda117104435cbf454c0195460940db2b6c9eee0b7223",
+          "bytes": 9205,
+          "seconds": 1.546
+        },
+        {
+          "file": "public/samples/guitar/78_0_1.m4a",
+          "source": "samples/F#5.wav",
+          "sourceSha256": "3da6b8bc2bd4d56253937de6c68f8a4e985563b95e23f82a9b7efec69374131a",
+          "sha256": "04dfee5afddd3fcc5ee2fa83e0bf1f76f17111f1a08e60b2a9b276abe705c259",
+          "bytes": 9280,
+          "seconds": 1.383
+        },
+        {
+          "file": "public/samples/guitar/79_0_1.m4a",
+          "source": "samples/G5.wav",
+          "sourceSha256": "5612e7b0f421da28e673e7a02169777418dccb805d494e83ffda4dbbd3504fbc",
+          "sha256": "5bf599493920c3c762fc6c6f2a380f4bac70ea81071a06f2d947faf07c1c1167",
+          "bytes": 8649,
+          "seconds": 1.424
+        },
+        {
+          "file": "public/samples/guitar/80_0_1.m4a",
+          "source": "samples/G#5.wav",
+          "sourceSha256": "08704c9c1bdaecdb16d1b7b33586508d96f7ed523e0c28247af566bdaeb4fd04",
+          "sha256": "d83db617f002a3a73220d5602353af3cd8425b59865aa99a1a5493629ef0ce50",
+          "bytes": 7728,
+          "seconds": 0.95
+        },
+        {
+          "file": "public/samples/guitar/81_0_1.m4a",
+          "source": "samples/A5.wav",
+          "sourceSha256": "39d1cc6d041796e2bdb57f973b9f6bf80c6b19bd296ae99a6202065896677190",
+          "sha256": "90669cd434cd4662366367b03b1873d43c14ad81ed47ae044ddd6c58b42a15e2",
+          "bytes": 9140,
+          "seconds": 1.631
+        },
+        {
+          "file": "public/samples/guitar/82_0_1.m4a",
+          "source": "samples/A#5.wav",
+          "sourceSha256": "88ac184123e4fd187ccceda8e66f8137005313802cc09f594a7ecbfda7dc465d",
+          "sha256": "2e25378a3d27cef3f024ac6cef54cefdd5d98cc1192eb8cba0bfcc887b1914bf",
+          "bytes": 8695,
+          "seconds": 1.314
+        },
+        {
+          "file": "public/samples/guitar/83_0_1.m4a",
+          "source": "samples/B5.wav",
+          "sourceSha256": "9ef813bc3570c8042f06598df755ffa8ee049206e3dd14588c27b05557a49748",
+          "sha256": "da197a537bc2c9bbef163e8be1c9824335a21b420a7c1e0c1196e904d4de6723",
+          "bytes": 7662,
+          "seconds": 0.981
+        },
+        {
+          "file": "public/samples/guitar/84_0_1.m4a",
+          "source": "samples/C6.wav",
+          "sourceSha256": "a297c63a94eb823a2f7515b20c36c1760990cb33c699d3fe2d0b3b7da0135007",
+          "sha256": "4ea72a1fd9d9a9cb7df63f0bbed22d590009a675c246790ad81c45e01c4aa1dd",
+          "bytes": 7870,
+          "seconds": 0.895
         }
       ]
     },

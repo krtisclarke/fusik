@@ -52,8 +52,16 @@ describe('shipped recordings', () => {
     expect(libraries.length).toBeGreaterThan(0);
     for (const [id, lib] of libraries) {
       expect(lib.license, id).toBe('CC0-1.0');
-      expect(lib.commit, id).toMatch(/^[0-9a-f]{40}$/);
-      expect(lib.mapCommit, id).toMatch(/^[0-9a-f]{40}$/);
+      // Two ways to be pinned immutably, and every library must use one: a
+      // git repository by its 40-hex commit, or a published archive by the
+      // 64-hex sha256 of its bytes (FreePats has no repository to pin).
+      if (lib.archive) {
+        expect(lib.archive.sha256, id).toMatch(/^[0-9a-f]{64}$/);
+        expect(lib.archive.url, id).toMatch(/^https:\/\//);
+      } else {
+        expect(lib.commit, id).toMatch(/^[0-9a-f]{40}$/);
+        expect(lib.mapCommit, id).toMatch(/^[0-9a-f]{40}$/);
+      }
       expect(lib.licenseTextSha256, id).toMatch(/^[0-9a-f]{64}$/);
     }
     for (const set of manifest.sets) {

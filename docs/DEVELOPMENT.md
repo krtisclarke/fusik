@@ -290,7 +290,7 @@ because they are what the sampled instruments *are* — a child who drops a snar
 and hears the fallback has been given the wrong impression of the app in its
 first second. Nothing there needs a user gesture: decoding goes through an
 `OfflineAudioContext`, which needs none, and an `AudioBuffer` is not tied to the
-context that made it. The whole set is 318 files and 12.2 MB, in well under a
+context that made it. The whole set is 357 files and 12.6 MB, in well under a
 second. A voice whose recordings never arrive falls back to its
 synthesized version, so the app is never silent, only less good — with its
 Volume capped on the way, because a sampled voice's Volume sits higher than a
@@ -310,7 +310,7 @@ now that the rest are recordings.
 (all 31, since the Strings section and the Guitar arrived), a note on every
 sixteenth, every slider at the end of its range, every track's echo at maximum,
 at 180 bpm, plus a microphone recording at the level a decoded take really
-comes back at — renders at peak **0.900–0.912 with zero clipped samples**
+comes back at — renders at peak **0.900–0.913 with zero clipped samples**
 across repeated renders (0.913–0.925 at 29 voices before them). More voices in
 the stack keep failing to raise the ceiling: the limiter is the thing being
 measured, and it holds.
@@ -746,10 +746,12 @@ second.
 
 ## 5. Assets & licensing
 
-**Every third-party recording in this app is CC0**, from two libraries by the
-same publisher, Versilian Studios LLC: the Versilian Community Sample Library
-(VCSL, pinned to commit `c1ea7bc`) and — for the one instrument VCSL doesn't
-have, a bass — VSCO 2 Community Edition (pinned to `4403009`). CC0 is a
+**Every third-party recording in this app is CC0**, from three libraries and
+two publishers. From Versilian Studios LLC: the Versilian Community Sample
+Library (VCSL, pinned to commit `c1ea7bc`) and — for the bass and the violin
+section VCSL doesn't have — VSCO 2 Community Edition (pinned to `4403009`).
+From the FreePats project: one instrument, the Spanish classical guitar,
+because neither Versilian library contains any guitar at all. CC0 is a
 dedication to the public domain: no royalties, no attribution, no terms — which
 matters because an exported song is meant to be shareable without anyone
 reading a licence first. "Free for non-commercial use" would have failed
@@ -762,6 +764,19 @@ repository carries the full CC0 1.0 legal text, and Versilian's own site says
 layered on CC0, not terms, and the current official page drops even the
 requests. The recordings are Versilian's own, so the right to apply the label
 holds.
+
+The guitar was vetted to the same bar. FreePats' maintainer recorded the
+instrument himself (an AKG microphone, 2008 — the readme travelling inside the
+archive says so) and dedicated the result CC0; recorder, publisher and
+dedicator are the same person, which is the whole chain. The candidates that
+failed it: FreePats' own steel-string guitar derives from FlameStudios
+material under the GPL — a licence someone downstream would have to read — so
+it was rejected, and the usual GitHub "CC0 guitar" re-uploads never entered.
+FreePats publishes versioned archives rather than a git repository, so this
+library is pinned differently: by the sha256 of the archive itself, recorded
+in the manifest, verified on every rebuild. (Extracting it needs `7zz` —
+`brew install sevenzip` — because macOS's own tar cannot read the compression
+filter FreePats uses.)
 
 **One piece of bundled code carries its own licence: the MP3 encoder.**
 Export's MP3 comes from lamejs (`@breezystack/lamejs`), a pure-JavaScript port
@@ -793,11 +808,11 @@ here.
 ### Building the recordings (`tools/`)
 
 `node tools/build-samples.mjs` goes from "two pinned library commits" to "the
-files in `public/samples/` and the map in `src/model/sampleSets.ts`" — 428 MB
-of source recordings in, 12.2 MB shipped out. `--plan` prints the selection,
+files in `public/samples/` and the map in `src/model/sampleSets.ts`" — 438 MB
+of source recordings in, 12.6 MB shipped out. `--plan` prints the selection,
 fetching only the small text maps. Source recordings are cached outside the
 project, in `~/Library/Caches/beatbox-studio/vcsl`, keyed by the commit they
-came from — about 430 MB now, and this project lives in an iCloud-synced
+came from — about 440 MB now, and this project lives in an iCloud-synced
 folder, which is no place for it.
 
 **A set is usually one instrument from one map; the Bells are two.** Each set
@@ -902,8 +917,8 @@ tunings, take numbers, which recordings exist at all — lives in those maps, so
 branch name there would have meant a regenerated upstream could silently produce
 a different instrument from byte-identical audio and report success.
 
-**Format: AAC in an MP4 container (`.m4a`), stereo, 44.1 kHz.** 428 MB of source
-recordings become 12.2 MB shipped. Stereo rather than mono because these were
+**Format: AAC in an MP4 container (`.m4a`), stereo, 44.1 kHz.** 438 MB of source
+recordings become 12.6 MB shipped. Stereo rather than mono because these were
 recorded with a spaced pair, and for the piano and the cymbals that width *is*
 the realism — mono saves about 3 MB and makes a piano sit at a point rather than
 in a room. AAC was checked for the one thing that would have ruled it out:
@@ -1186,7 +1201,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Timeline (bars/beats/grid, snapping) | ✅ | One **Timing** toggle: Tidy (a 1/16 grid) or Free. The finer resolutions still exist in `model/time.ts` and are tested — they just aren't a choice a child is asked to make. |
 | Transport (play/pause/stop/loop, BPM, position) | ✅ | Two-clock scheduler; live tempo change. |
 | Drum kit (21 voices) | ✅ | Drums, cymbals and hand percussion — bongos, conga, triangle, tambourine, claves, agogo included. All real recordings (CC0 — see §5) except the Kick, which stays synthesized because a drum-machine kick is a built sound. |
-| Sampled instruments | ✅ | 27 of the 31 voices play real recordings, pitch-shifted per note with several strengths each. Sampled and synthesized voices sit in the same song and behave identically everywhere else. |
+| Sampled instruments | ✅ | 28 of the 31 voices play real recordings, pitch-shifted per note with several strengths each. Sampled and synthesized voices sit in the same song and behave identically everywhere else. |
 | Place / remove / move notes | ✅ | Click to place, click to remove, drag sideways to move in time and up/down to change the note. A dragged note lands on the scale, so it can't be dropped on a wrong one. |
 | Drag sound from library | ✅ | Creates or reuses the voice's track. |
 | Per-track volume / mute / solo | ✅ | |
@@ -1205,7 +1220,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Block length / resize | ✅ | Drag a selected block's right edge to change its length (snaps to grid). |
 | Per-track echo | ✅ | One slider per track, on the lane header. Tempo-synced (repeats land an eighth note apart at any tempo) and one control drives level, repeats and feedback together, so there's no way to set it to something unmusical. Same chain live and in Export. |
 | Other per-track effects (reverb send, filter) | ⬜ | The per-track chain (`audio/trackChain.ts`) is the place to add them. |
-| Melodic instruments (10 voices) | ✅ | Piano (Kawai grand), Bells (glockenspiel, backed low down by vibraphone), Marimba, Vibraphone, Xylophone, Upright Bass and Strings (VSCO 2 CE violin section, sustained; its unverifiable bottom three notes deliberately unshipped — see the key-range note in `tools/build-samples.mjs`) are recordings; Synth and Bass stay a pitched subtractive synth because that is what they are. Guitar is a synth pluck for now: neither pinned library holds any guitar, so a recorded one waits on vetting a new CC0 source. Guitar and Strings arrived as MIDI import's landing places. |
+| Melodic instruments (10 voices) | ✅ | Piano (Kawai grand), Bells (glockenspiel, backed low down by vibraphone), Marimba, Vibraphone, Xylophone, Upright Bass, Strings (VSCO 2 CE violin section, sustained; its unverifiable bottom three notes deliberately unshipped — see the key-range note in `tools/build-samples.mjs`) and Guitar (FreePats Spanish classical, nylon-string — the one recording from outside Versilian; licence story in §5) are recordings; Synth and Bass stay a pitched subtractive synth because that is what they are. Guitar and Strings arrived as MIDI import's landing places. |
 | Swap a row's instrument | ✅ | The row's name is a picker. The tune comes with it, landing in the new instrument's own range. Drums stay drums. |
 | Scale-snapped note-grid | ✅ | Instrument tracks offer only scale notes (default C major pentatonic), so melodies can't hit a "wrong" note. |
 | Change the song's mood | ✅ | Happy / Sad, each with a "more notes" version, from the toolbar. The tune already written moves with it, by scale degree, so it keeps its shape — and flipping between two scales of the same size is exactly reversible. |
@@ -1449,7 +1464,7 @@ Melodic instruments (originally Phase 4) were brought forward and are now in, as
 are song sections & arrangement, a playable keyboard, and recording what's played
 into the song. The sound library is now full: drums, mallets and keys as the
 brief asked, hand percussion, a real upright bass and a real violin section —
-31 voices, 27 of them
+31 voices, 28 of them
 recordings. Remaining, roughly following the brief: MIDI input through the
 same `noteOn`/`noteOff`, step sequencer & humanize, per-track effect sends,
 automation, and polish — accessibility.
