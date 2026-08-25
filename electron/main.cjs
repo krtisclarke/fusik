@@ -310,11 +310,13 @@ ipcMain.handle('project:open', async () => {
   return { ok: true, path: filePath, json };
 });
 
-ipcMain.handle('audio:save', async (_event, { suggestedName, bytes }) => {
+ipcMain.handle('audio:save', async (_event, { suggestedName, bytes, extension }) => {
+  // Older renderers sent no extension and always meant WAV.
+  const ext = extension === 'mp3' ? 'mp3' : 'wav';
   const result = await dialog.showSaveDialog(mainWindow ?? undefined, {
-    title: 'Export WAV',
-    defaultPath: `${suggestedName || 'My Song'}.wav`,
-    filters: [{ name: 'WAV Audio', extensions: ['wav'] }],
+    title: `Export ${ext.toUpperCase()}`,
+    defaultPath: `${suggestedName || 'My Song'}.${ext}`,
+    filters: [{ name: `${ext.toUpperCase()} Audio`, extensions: [ext] }],
   });
   if (result.canceled || !result.filePath) return { ok: false, canceled: true };
   await fs.writeFile(result.filePath, Buffer.from(bytes));

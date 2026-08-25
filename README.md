@@ -137,7 +137,9 @@ npm run package:mac   # build a macOS app bundle
   `Documents/Beatbox Studio` — one per song, named after it. You can copy them,
   back them up, or move them to another computer.
 - **Ctrl/Cmd+Z** to undo, **Ctrl/Cmd+S** to save, **Ctrl/Cmd+O** to open.
-- **Export** turns the song into a `.wav` audio file you can play or share anywhere.
+- **Export** turns the song into an `.mp3` — small enough to text or email, and
+  it plays anywhere. (A quiet "as WAV" option underneath gives the full
+  uncompressed file for grown-up audio tools.)
 
 ## Where the sounds come from
 

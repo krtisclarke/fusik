@@ -449,10 +449,10 @@ fact drives every decision here.
 
   It has to be asked for by name — `audio/mp4;codecs=mp4a.40.2`. Plain
   `audio/mp4` looks like the same request and is not: this engine answers that
-  with *Opus* inside an MP4, which nothing outside a browser will open. There is
-  no MP3 option; the engine cannot encode it and would need a bundled library to
-  offer one. (MP3's patents expired in 2017, so licensing is no longer the
-  obstacle an earlier note here claimed.)
+  with *Opus* inside an MP4, which nothing outside a browser will open. The
+  engine itself still cannot encode MP3 — captures stay AAC — but Export now
+  bundles an encoder of its own for the finished song; see §5 and
+  `audio/mp3.ts`.
 
   The first version decoded the capture and re-encoded it to WAV for
   openability — buying that one property at forty times the size. AAC buys both.
@@ -761,6 +761,17 @@ repository carries the full CC0 1.0 legal text, and Versilian's own site says
 layered on CC0, not terms, and the current official page drops even the
 requests. The recordings are Versilian's own, so the right to apply the label
 holds.
+
+**One piece of bundled code carries its own licence: the MP3 encoder.**
+Export's MP3 comes from lamejs (`@breezystack/lamejs`), a pure-JavaScript port
+of the LAME encoder, under the **LGPL-3.0**. That is a code licence, not a
+music one — it puts no terms of any kind on the songs the app exports, so the
+"share it with anybody, nobody reads a licence first" promise holds untouched.
+What the LGPL asks is about the library itself: keep its licence text and
+attribution with the app, and don't pretend the encoder is ours. Every MP3
+encoder worth having traces back to LAME, so this is the honest floor for the
+format — and the alternative (the operating system's AAC encoder) is different
+on every platform and absent in tests.
 
 Every shipped file is recorded in **`docs/asset-manifest.json`**: which library
 and which recording it came from, the hash of that recording, the hash of the
@@ -1166,7 +1177,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Song sections & arrangement | ✅ | Parts (A/B/…) with their own notes and lengths; a strip of chips shows the running order — click to edit, drag to rearrange, repeat/copy/rename/remove. Song vs. Part play modes. |
 | Automation | ⬜ | Phase 6. |
 | WAV export | ✅ | Renders the whole song offline through the master chain to a 16-bit stereo `.wav` (native Save dialog on desktop, download in browser). Verified: valid RIFF header, non-silent, no clipping. |
-| MP3 export | ⬜ | WAV is in. MP3 needs a bundled encoder — the engine can't make one — though the patents expired in 2017, so it's a size question, not a legal one. Recordings already use AAC, which needs no extra library. |
+| MP3 export | ✅ | Export's everyday output: about a tenth the size of the WAV, plays anywhere, small enough to send. Encoded in the app by a bundled pure-JS LAME port (lamejs, LGPL — see §5); measured round-trip on a real song: duration intact, level within a third of a decibel. "as WAV" stays beneath it for the full uncompressed audio. |
 
 Nothing above is faked: the disabled Record button is visibly disabled, and
 "partial" means exactly what the note says.
@@ -1271,6 +1282,10 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       plays. Delete the song — the folder goes too.
 - [ ] Export a song with a recording in it: the voice is in the file — including
       a take that runs well past the end of the song.
+- [ ] **Export as audio** produces a `.mp3` a fraction of the WAV's size that
+      plays in a normal player; the quiet **as WAV** beneath it still produces
+      the full `.wav`. The desktop save dialog offers the right extension for
+      each.
 - [ ] Press play with a recording in the song, then Stop part-way through: the
       voice stops with it. Press play again: one copy, not two.
 - [ ] Delete a recorded block and press undo — it comes back and still sounds.

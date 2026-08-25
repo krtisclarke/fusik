@@ -20,6 +20,7 @@ interface DesktopBridge {
   saveAudio?: (
     suggestedName: string,
     bytes: Uint8Array<ArrayBuffer>,
+    extension: string,
   ) => Promise<{ ok: boolean; canceled?: boolean; path?: string }>;
   /** The songs folder. Synchronous — see the handlers in electron/main.cjs. */
   songs?: {
@@ -85,21 +86,29 @@ export async function saveProjectToFile(project: Project): Promise<SaveResult> {
   return { saved: true, name: project.name };
 }
 
-/** Save rendered WAV bytes — native dialog on desktop, download in the browser. */
+export type AudioFormat = 'mp3' | 'wav';
+
+const AUDIO_MIME: Record<AudioFormat, string> = {
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+};
+
+/** Save rendered audio bytes — native dialog on desktop, download in the browser. */
 export async function saveAudioFile(
   name: string,
   bytes: Uint8Array<ArrayBuffer>,
+  format: AudioFormat,
 ): Promise<{ saved: boolean }> {
   const desktop = getDesktop();
   if (desktop?.isDesktop && desktop.saveAudio) {
-    const result = await desktop.saveAudio(name, bytes);
+    const result = await desktop.saveAudio(name, bytes, format);
     return { saved: result.ok };
   }
-  const blob = new Blob([bytes], { type: 'audio/wav' });
+  const blob = new Blob([bytes], { type: AUDIO_MIME[format] });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${sanitize(name)}.wav`;
+  a.download = `${sanitize(name)}.${format}`;
   document.body.appendChild(a);
   a.click();
   a.remove();

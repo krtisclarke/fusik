@@ -21,6 +21,7 @@
     "package:mac": "npm run build && electron-builder --mac"
   },
   "dependencies": {
+    "@breezystack/lamejs": "^1.2.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^4.5.5"

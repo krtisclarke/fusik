@@ -18,7 +18,8 @@ contextBridge.exposeInMainWorld('desktop', {
   openProject: () => ipcRenderer.invoke('project:open'),
 
   /** Save rendered WAV bytes via a native dialog. */
-  saveAudio: (suggestedName, bytes) => ipcRenderer.invoke('audio:save', { suggestedName, bytes }),
+  saveAudio: (suggestedName, bytes, extension) =>
+    ipcRenderer.invoke('audio:save', { suggestedName, bytes, extension }),
 
   /**
    * The songs folder on this machine. Answered synchronously because the app

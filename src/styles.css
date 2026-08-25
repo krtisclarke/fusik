@@ -1531,6 +1531,16 @@ select.tname:focus {
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
+/* The grown-up export: present, never the loud option. Tucked under Export. */
+.songs-actions .songs-wav {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  padding: 2px 8px 6px 27px;
+  margin-top: -4px;
+}
+.songs-actions .songs-wav:hover {
+  color: var(--text-dim);
+}
 .songs-actions button:hover {
   background: var(--bg-panel-2);
 }

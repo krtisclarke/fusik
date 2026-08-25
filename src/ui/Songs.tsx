@@ -95,7 +95,16 @@ export function SongsPanel() {
         <button onClick={newProject}>✚ New song</button>
         <button onClick={() => void openFromFile()}>📂 Open a file…</button>
         <button onClick={() => void saveCurrent()}>💾 Save to a file</button>
-        <button onClick={() => void exportSong()}>⬇ Export as audio</button>
+        <button onClick={() => void exportSong()} title="A small MP3 that plays and sends anywhere">
+          ⬇ Export as audio
+        </button>
+        <button
+          className="songs-wav"
+          onClick={() => void exportSong('wav')}
+          title="The full uncompressed audio — big, for grown-up audio tools"
+        >
+          as WAV
+        </button>
       </div>
       <div className="songs-head">Kept on this computer</div>
       {songs.length === 0 && <div className="songs-empty">Nothing kept yet.</div>}

@@ -53,6 +53,7 @@ import { TOUR_STEPS, type TourStep } from './tour';
 import { HELPER_START, nextHelperSteps } from './helper';
 import { renderProject } from '../audio/render';
 import { encodeWav } from '../audio/wav';
+import { encodeMp3 } from '../audio/mp3';
 
 export interface Selection {
   /** The track the selected blocks belong to (selection stays within one track). */
@@ -120,8 +121,8 @@ export interface StoreState {
   toggleSongs: () => void;
   saveCurrent: () => Promise<void>;
   openFromFile: () => Promise<void>;
-  /** Render the song to a .wav file and save it. */
-  exportSong: () => Promise<void>;
+  /** Render the song and save it — MP3 (small, plays anywhere) unless asked for WAV. */
+  exportSong: (format?: 'mp3' | 'wav') => Promise<void>;
 
   // history
   undo: () => void;
@@ -633,7 +634,7 @@ export const useStore = create<StoreState>((set, get) => {
       }
     },
 
-    exportSong: async () => {
+    exportSong: async (format = 'mp3') => {
       const project = get().history.present;
       try {
         set({ status: 'Rendering…' });
@@ -645,9 +646,15 @@ export const useStore = create<StoreState>((set, get) => {
         const buffer = await renderProject(project, { loops: 1, clips: engine.getClips() });
         const left = buffer.getChannelData(0);
         const right = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : left;
-        const bytes = encodeWav([left, right], buffer.sampleRate);
-        const result = await saveAudioFile(project.name, bytes);
-        set({ status: result.saved ? `Exported "${project.name}.wav"` : 'Export cancelled' });
+        // MP3 is the everyday choice — about a tenth the size, plays anywhere,
+        // small enough to send. WAV stays for grown-ups who want the full
+        // uncompressed audio.
+        const bytes =
+          format === 'wav'
+            ? encodeWav([left, right], buffer.sampleRate)
+            : encodeMp3([left, right], buffer.sampleRate);
+        const result = await saveAudioFile(project.name, bytes, format);
+        set({ status: result.saved ? `Exported "${project.name}.${format}"` : 'Export cancelled' });
       } catch (err) {
         set({ status: `Export failed: ${(err as Error).message}` });
       }
