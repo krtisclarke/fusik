@@ -28,6 +28,13 @@ export function UpdateStatus() {
 
   async function onClick() {
     if (!updates) return;
+    if (state?.stage === 'ready') {
+      // The one step nobody has ever watched happen is the swap at shutdown.
+      // This does it now instead, while somebody is looking.
+      setStatus('Restarting into the new version…');
+      await updates.install();
+      return;
+    }
     if (state?.stage === 'error') {
       // The one case worth handing a grown-up: what actually went wrong, and
       // where the rest of it is written down.

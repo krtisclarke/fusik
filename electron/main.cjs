@@ -468,6 +468,10 @@ function setUpdateState(stage, message, extra = {}) {
 let updaterStarted = false;
 /** Set once the updater is live, so the toolbar's "check now" has something to call. */
 let checkNow = null;
+/** Set once a new version is downloaded and waiting to be swapped in. */
+let updateReady = false;
+/** Restarts into the new version. Null until there is one to restart into. */
+let installNow = null;
 
 function startUpdater() {
   if (updaterStarted) return;
@@ -492,6 +496,10 @@ function startUpdater() {
 
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
+  // We ship one plain installer, not a web installer. Saying so silences a
+  // warning and stops the updater keeping a code path open that this app has
+  // no use for.
+  autoUpdater.disableWebInstaller = true;
   // electron-updater's own chatter goes to the same file, so a failure deep
   // inside it (a bad app-update.yml, a 404, a blocked connection) leaves a
   // trace rather than vanishing.
@@ -518,11 +526,18 @@ function startUpdater() {
       percent: p.percent,
     }),
   );
-  autoUpdater.on('update-downloaded', (info) =>
-    setUpdateState('ready', 'Ready — close the app and open it again to finish.', {
+  autoUpdater.on('update-downloaded', (info) => {
+    // Everything up to here is verified working. Swapping the new copy in when
+    // the app closes is the one step that only happens on Windows and only at
+    // shutdown, which makes it the one step nobody has ever watched. So say
+    // the update is sitting there ready, and offer to do it now — a restart
+    // that visibly works beats a quit that silently doesn't.
+    updateReady = true;
+    logUpdate(`downloaded to ${(info && info.downloadedFile) || 'the updater cache'}`);
+    setUpdateState('ready', 'Ready — click to restart and finish.', {
       version: info && info.version,
-    }),
-  );
+    });
+  });
   autoUpdater.on('error', (err) =>
     setUpdateState('error', String((err && err.message) || err)),
   );
@@ -535,6 +550,12 @@ function startUpdater() {
   };
 
   checkNow = check;
+  installNow = () => {
+    // isSilent, isForceRunAfter — no installer window, and come back up
+    // afterwards, so the child sees the app they were just using.
+    logUpdate('restarting to install');
+    autoUpdater.quitAndInstall(true, true);
+  };
   check();
   // A download abandoned because the app closed starts again next time, and a
   // release published mid-session is picked up without a restart.
@@ -545,6 +566,11 @@ ipcMain.handle('update:check', () => {
   if (!checkNow) return { ok: false, state: updateState };
   checkNow();
   return { ok: true, state: updateState };
+});
+ipcMain.handle('update:install', () => {
+  if (!updateReady || !installNow) return { ok: false };
+  installNow();
+  return { ok: true };
 });
 ipcMain.handle('update:state', () => updateState);
 ipcMain.handle('update:log', async () => {

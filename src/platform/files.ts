@@ -57,6 +57,7 @@ interface DesktopBridge {
   updates?: {
     state: () => Promise<UpdateState>;
     check: () => Promise<{ ok: boolean; state?: UpdateState }>;
+    install: () => Promise<{ ok: boolean }>;
     log: () => Promise<{ ok: boolean; path: string; text: string }>;
     onStatus: (handler: (state: UpdateState) => void) => () => void;
   };

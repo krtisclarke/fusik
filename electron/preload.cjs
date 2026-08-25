@@ -69,6 +69,7 @@ contextBridge.exposeInMainWorld('desktop', {
   updates: {
     state: () => ipcRenderer.invoke('update:state'),
     check: () => ipcRenderer.invoke('update:check'),
+    install: () => ipcRenderer.invoke('update:install'),
     log: () => ipcRenderer.invoke('update:log'),
     onStatus: (handler) => {
       const listener = (_event, state) => handler(state);
