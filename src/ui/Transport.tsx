@@ -108,7 +108,7 @@ export function Transport() {
       <div className="brand">
         <span className="logo">🎛️</span>
         <span>
-          Beatbox Studio
+          Beatbox Studio <span className="version">v{__APP_VERSION__}</span>
           <br />
           <small>music you can poke at</small>
         </span>

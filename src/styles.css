@@ -120,6 +120,13 @@ button {
   font-weight: 600;
   font-size: 11px;
 }
+/* The version, quiet beside the name. Doubles as the visible proof that the
+   silent auto-update ran: this number changes on its own. */
+.brand .version {
+  color: var(--text-faint);
+  font-weight: 600;
+  font-size: 10.5px;
+}
 
 .tgroup {
   display: flex;
