@@ -1,5 +1,6 @@
 // Build the app's sampled instruments from the Versilian Community Sample
-// Library (CC0). Run from the project root:
+// Library and VSCO 2 Community Edition (both CC0, both Versilian's own
+// recordings). Run from the project root:
 //
 //   node tools/build-samples.mjs            # build (uses the download cache)
 //   node tools/build-samples.mjs --plan     # print what it would be selected; fetches
@@ -22,9 +23,43 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   VCSL_REF, VCSL_RAW, VCSL_SFZ_RAW, VCSL_SFZ_REF, VCSL_HOME, VCSL_LICENSE, VCSL_ATTRIBUTION,
+  VSCO_REF, VSCO_RAW, VSCO_SFZ_RAW, VSCO_SFZ_REF, VSCO_HOME, VSCO_ATTRIBUTION,
   parseSfz, samplePath, decodeWav, encodeFloatWav, cachedFetch, verifyKeyCentre,
 } from './vcsl.mjs';
 import { normalise, validate, DRUM_ROOT } from './selection.mjs';
+
+/**
+ * The libraries recordings may come from. Both are Versilian's own recordings
+ * under CC0 — see the licence notes in vcsl.mjs. Each set below names its
+ * library (VCSL unless it says otherwise), and every fetch and cache path goes
+ * through that library's own pinned commits.
+ */
+const LIBRARIES = {
+  vcsl: {
+    name: 'Versilian Community Sample Library (VCSL)',
+    publisher: 'Versilian Studios LLC',
+    license: VCSL_LICENSE,
+    licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+    attribution: VCSL_ATTRIBUTION,
+    url: VCSL_HOME,
+    commit: VCSL_REF,
+    mapCommit: VCSL_SFZ_REF,
+    raw: VCSL_RAW,
+    sfzRaw: VCSL_SFZ_RAW,
+  },
+  vsco2ce: {
+    name: 'VSCO 2 Community Edition',
+    publisher: 'Versilian Studios LLC',
+    license: VCSL_LICENSE,
+    licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+    attribution: VSCO_ATTRIBUTION,
+    url: VSCO_HOME,
+    commit: VSCO_REF,
+    mapCommit: VSCO_SFZ_REF,
+    raw: VSCO_RAW,
+    sfzRaw: VSCO_SFZ_RAW,
+  },
+};
 
 /**
  * Escape a repository path for a URL, segment by segment.
@@ -88,12 +123,72 @@ const SETS = [
     tail: 4.0,
   },
   {
+    // Two instruments in one set, on purpose. The glockenspiel's lowest bar is
+    // G5 and the Bells grid runs seven semitones further down; those rows used
+    // to play the lowest bar stretched down, which reads as a larger, duller
+    // metallophone. The vibraphone is the closest sound in the library to a
+    // glockenspiel — struck metal bars, hard mallets — so its real notes back
+    // the rows the glockenspiel can't reach, and the engine's nearest-note rule
+    // does the rest. Its key range here is in *map* roots, chosen so the two
+    // instruments' notes stay disjoint after each map is checked against its
+    // own recordings (the glockenspiel's is filed an octave low; the
+    // vibraphone's is correct — which is why octave agreement is enforced per
+    // source, never across a whole merged set).
     id: 'bells',
-    sfz: 'Idiophones/Struck Idiophones/Glockenspiel.sfz',
-    instrument: 'Glockenspiel',
-    pick: () => true,
     pitched: { keyRange: [0, 127], keyStep: 1, layers: 3 },
     tail: 3.5,
+    sources: [
+      { sfz: 'Idiophones/Struck Idiophones/Glockenspiel.sfz', instrument: 'Glockenspiel', pick: () => true },
+      {
+        sfz: 'Idiophones/Struck Idiophones/Vibraphone - Hard Mallets.sfz',
+        instrument: 'Vibraphone (hard mallets)',
+        pick: () => true,
+        keyRange: [69, 78],
+      },
+    ],
+  },
+
+  // ---- mallets ------------------------------------------------------------
+  {
+    id: 'marimba',
+    sfz: 'Idiophones/Struck Idiophones/Marimba.sfz',
+    instrument: 'Marimba',
+    pick: () => true,
+    pitched: { keyRange: [0, 127], keyStep: 1, layers: 3 },
+    tail: 3.0,
+  },
+  {
+    id: 'vibraphone',
+    sfz: 'Idiophones/Struck Idiophones/Vibraphone - Hard Mallets.sfz',
+    instrument: 'Vibraphone (hard mallets)',
+    pick: () => true,
+    pitched: { keyRange: [0, 127], keyStep: 1, layers: 2 },
+    tail: 3.5,
+  },
+  {
+    id: 'xylophone',
+    sfz: 'Idiophones/Struck Idiophones/Xylophone - Medium Mallets.sfz',
+    instrument: 'Xylophone (medium mallets)',
+    pick: () => true,
+    pitched: { keyRange: [0, 127], keyStep: 1, layers: 2 },
+    tail: 2.0,
+  },
+
+  // ---- the bass -----------------------------------------------------------
+  {
+    // The one instrument that comes from the second library: VCSL has no bass
+    // of any kind. A real upright, plucked. Its lower notes were recorded at
+    // two strengths and its upper ones at one — minLayers 1 keeps those upper
+    // notes, because dropping them would leave the top of the grid stretched
+    // twenty semitones from the nearest survivor, which is far worse than a
+    // note whose tone doesn't change with the strike.
+    id: 'upright',
+    library: 'vsco2ce',
+    sfz: 'ContrabassPizz.sfz',
+    instrument: 'Solo Contrabass (pizzicato)',
+    pick: () => true,
+    pitched: { keyRange: [0, 127], keyStep: 1, layers: 2, minLayers: 1 },
+    tail: 3.0,
   },
   // Each `pick` narrows a library instrument down to ONE way of playing it.
   // That matters more than it looks: VCSL files every technique for an
@@ -113,6 +208,22 @@ const SETS = [
   { id: 'shaker',  sfz: 'Idiophones/Struck Idiophones/Shaker, Small.sfz',                instrument: 'Shaker, Small',         pick: has('ShakerHighFaster'),         tail: 0.8 },
   { id: 'cowbell', sfz: 'Idiophones/Struck Idiophones/Cowbells.sfz',                     instrument: 'Cowbells',              pick: has('Cowbell1_Hit_'),            tail: 1.2 },
   { id: 'perc',    sfz: 'Idiophones/Struck Idiophones/Woodblock.sfz',                    instrument: 'Woodblock',             pick: matches(/^wood_click_/),         tail: 0.8 },
+
+  // ---- hand percussion ----------------------------------------------------
+  // A bongo pair is two drums and the high–low pattern is the whole point of
+  // owning one, so it ships as two voices — the same shape as Tom / Low Tom.
+  // The conga is one voice (the middle drum's open hit); the pitch control
+  // covers the rest. Everything takes the plain open hit only: muted hits,
+  // rolls and shakes are other instruments wearing the same name.
+  { id: 'bongo',      sfz: 'Membranophones/Struck Membranophones/Bongos.sfz', instrument: 'Bongos (high drum)',   pick: has('BongoH_Hit1_'),        tail: 0.8 },
+  { id: 'bongolow',   sfz: 'Membranophones/Struck Membranophones/Bongos.sfz', instrument: 'Bongos (low drum)',    pick: has('BongoL_Hit1_'),        tail: 0.8 },
+  { id: 'conga',      sfz: 'Membranophones/Struck Membranophones/Conga.sfz',  instrument: 'Conga (open hit)',     pick: has('Conga_HitN_'),         tail: 1.0 },
+  // One triangle of the three, so the voice keeps one character; the middle
+  // one rings longest of the plain hits.
+  { id: 'triangle',   sfz: 'Idiophones/Struck Idiophones/Triangles.sfz',      instrument: 'Triangle (mid)',       pick: matches(/^Triangle3_Hit_v/), tail: 3.5 },
+  { id: 'tambourine', sfz: 'Idiophones/Struck Idiophones/Tambourine 1.sfz',   instrument: 'Tambourine 1 (hit)',   pick: has('Tamb1_Hit_'),          tail: 0.8 },
+  { id: 'claves',     sfz: 'Idiophones/Struck Idiophones/Claves.sfz',         instrument: 'Claves (pair 1)',      pick: has('Claves1_Hit_'),        tail: 0.5 },
+  { id: 'agogo',      sfz: 'Idiophones/Struck Idiophones/Agogo Bells.sfz',    instrument: 'Agogo Bells (high)',   pick: has('Agogo_High_'),         tail: 1.2 },
 ];
 
 
@@ -304,23 +415,27 @@ const sha256 = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
 async function main() {
   const manifest = {
     generatedBy: 'tools/build-samples.mjs',
-    library: {
-      name: 'Versilian Community Sample Library (VCSL)',
-      publisher: 'Versilian Studios LLC',
-      license: VCSL_LICENSE,
-      licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
-      attribution: VCSL_ATTRIBUTION,
-      url: VCSL_HOME,
-      commit: VCSL_REF,
-      mapCommit: VCSL_SFZ_REF,
-      licenseTextSha256: null,
-    },
+    libraries: Object.fromEntries(
+      Object.entries(LIBRARIES).map(([id, lib]) => [id, {
+        name: lib.name,
+        publisher: lib.publisher,
+        license: lib.license,
+        licenseUrl: lib.licenseUrl,
+        attribution: lib.attribution,
+        url: lib.url,
+        commit: lib.commit,
+        mapCommit: lib.mapCommit,
+        licenseTextSha256: null,
+      }]),
+    ),
     sets: [],
   };
 
   if (!PLAN_ONLY) {
-    const licenseText = await cachedFetch(VCSL_RAW + 'LICENSE', cachePath(VCSL_REF, 'LICENSE'));
-    manifest.library.licenseTextSha256 = sha256(licenseText);
+    for (const [id, lib] of Object.entries(LIBRARIES)) {
+      const licenseText = await cachedFetch(lib.raw + 'LICENSE', cachePath(lib.commit, 'LICENSE'));
+      manifest.libraries[id].licenseTextSha256 = sha256(licenseText);
+    }
   }
 
   const built = [];
@@ -328,18 +443,36 @@ async function main() {
   let sourceBytes = 0;
 
   for (const set of SETS) {
-    const sfzBytes = await cachedFetch(
-      VCSL_SFZ_RAW + urlPath(set.sfz),
-      cachePath(VCSL_SFZ_REF, set.sfz),
-    );
-    const rows = normalise(set, parseSfz(sfzBytes.toString('utf8')));
-    if (!rows.length) throw new Error(`${set.id}: selection matched no recordings`);
+    const libId = set.library ?? 'vcsl';
+    const lib = LIBRARIES[libId];
+    // A set is usually one instrument from one map; `sources` lets it be more
+    // than one (the Bells). Either way the selection below runs per source, so
+    // each map's own quirks stay its own.
+    const sources = set.sources ?? [{ sfz: set.sfz, instrument: set.instrument, pick: set.pick }];
+
+    const rows = [];
+    for (const src of sources) {
+      const sfzBytes = await cachedFetch(
+        lib.sfzRaw + urlPath(src.sfz),
+        cachePath(lib.mapCommit, src.sfz),
+      );
+      const cfg = {
+        ...set,
+        sfz: src.sfz,
+        pick: src.pick,
+        pitched: set.pitched && { ...set.pitched, keyRange: src.keyRange ?? set.pitched.keyRange },
+      };
+      const srcRows = normalise(cfg, parseSfz(sfzBytes.toString('utf8')));
+      if (!srcRows.length) throw new Error(`${set.id}: ${src.sfz} matched no recordings`);
+      for (const r of srcRows) r.src = src;
+      rows.push(...srcRows);
+    }
     validate(set.id, rows);
 
     if (PLAN_ONLY) {
       const roots = [...new Set(rows.map((r) => r.root))];
       console.log(
-        `  ${set.id.padEnd(8)} ${String(rows.length).padStart(3)} files, ` +
+        `  ${set.id.padEnd(10)} ${String(rows.length).padStart(3)} files, ` +
         `${roots.length} note${roots.length === 1 ? '' : 's'}, ` +
         `strengths ${[...new Set(rows.map((r) => `${r.bandLo}-${r.bandHi}`))].join(' ')}`,
       );
@@ -348,10 +481,10 @@ async function main() {
 
     // Pass one: decode and level, so the whole set can be scaled together.
     const shaped = [];
-    const shifts = new Set();
-    const mapHasTuning = rows.some((r) => r.cents !== 0);
+    const shiftsBySource = new Map(sources.map((s) => [s, new Set()]));
+    const sourcesWithTuning = new Set(rows.filter((r) => r.cents !== 0).map((r) => r.src));
     for (const row of rows) {
-      const wav = await cachedFetch(VCSL_RAW + urlPath(row.repoPath), cachePath(VCSL_REF, row.repoPath));
+      const wav = await cachedFetch(lib.raw + urlPath(row.repoPath), cachePath(lib.commit, row.repoPath));
       sourceBytes += wav.length;
       const decoded = decodeWav(wav);
 
@@ -365,7 +498,7 @@ async function main() {
             `${row.root} and the recording measures ${check.midi == null ? 'no clear pitch' : check.midi.toFixed(2)}`,
           );
         }
-        shifts.add(check.octaveShift);
+        shiftsBySource.get(row.src).add(check.octaveShift);
         row.root += 12 * check.octaveShift;
         // Where the map carries no tuning of its own, take it from the
         // measurement rather than leaving the note sharp or flat.
@@ -375,18 +508,32 @@ async function main() {
         // how far to move it. Getting that backwards doubles the error instead
         // of removing it — the glockenspiel came out a third of a semitone
         // sharp, which is enough to sound wrong against everything else.
-        if (!mapHasTuning) {
+        if (!sourcesWithTuning.has(row.src)) {
           row.cents = Math.max(-100, Math.min(100, -Math.round((check.midi - row.root) * 100)));
         }
       }
 
       shaped.push({ row, sourceSha: sha256(wav), audio: shape(decoded, { tailSeconds: set.tail }) });
     }
-    if (shifts.size > 1) {
-      throw new Error(`${set.id}: its recordings disagree about the octave (${[...shifts].join(', ')})`);
+    // Octave agreement is per source, not per set: a merged set is *expected*
+    // to mix a map filed an octave out with one filed correctly, and each
+    // source's correction must stand on its own.
+    for (const src of sources) {
+      const shifts = shiftsBySource.get(src);
+      if (shifts.size > 1) {
+        throw new Error(`${set.id}: ${src.sfz} — its recordings disagree about the octave (${[...shifts].join(', ')})`);
+      }
+      const shift = [...shifts][0] ?? 0;
+      if (shift) {
+        console.log(
+          `  ${set.id.padEnd(10)} ${path.posix.basename(src.sfz)} was ${Math.abs(shift)} octave(s) ` +
+          `${shift > 0 ? 'low' : 'high'} — corrected against the recordings`,
+        );
+      }
     }
-    const shift = [...shifts][0] ?? 0;
-    if (shift) console.log(`  ${set.id.padEnd(8)} map was ${Math.abs(shift)} octave(s) ${shift > 0 ? 'low' : 'high'} — corrected against the recordings`);
+    // The corrections moved roots, so check again that the sources still make
+    // one whole instrument — no note claimed twice, no strength uncovered.
+    if (set.pitched && sources.length > 1) validate(set.id, rows);
     const dir = path.join(OUT_AUDIO, set.id);
     fs.rmSync(dir, { recursive: true, force: true });
 
@@ -428,14 +575,14 @@ async function main() {
     built.push({ id: set.id, regions, seconds: +longest.toFixed(3) });
     manifest.sets.push({
       id: set.id,
-      instrument: set.instrument,
-      sourceMap: set.sfz,
+      library: libId,
+      sources: sources.map((s) => ({ instrument: s.instrument, map: s.sfz })),
       files,
     });
     const cappedCount = shaped.filter((s) => s.audio.capped).length;
     const peaks = shaped.map((s) => s.audio.peak);
     console.log(
-      `  ${set.id.padEnd(8)} ${String(regions.length).padStart(3)} files  ` +
+      `  ${set.id.padEnd(10)} ${String(regions.length).padStart(3)} files  ` +
       `${(files.reduce((n, f) => n + f.bytes, 0) / 1e6).toFixed(2)} MB  ` +
       `peak ${Math.min(...peaks).toFixed(2)}–${Math.max(...peaks).toFixed(2)}` +
       (cappedCount ? `  (${cappedCount} held back by the peak cap)` : ''),

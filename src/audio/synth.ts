@@ -617,6 +617,27 @@ export const VOICE_SYNTHS: Record<string, TriggerFn> = {
   // for the moment before those recordings arrive.
   bassdrum: (ctx, dest, time, p, vel) => kickVoice(ctx, dest, time, { ...p, tune: 45, pitchDrop: 60, decay: 0.6 }, vel),
   tomlow: (ctx, dest, time, p, vel) => membrane(ctx, dest, time, { tune: 80, pitchDrop: 50, decay: 0.5, ...p }, vel),
+  bongo: (ctx, dest, time, p, vel) => membrane(ctx, dest, time, { tune: 240, pitchDrop: 40, decay: 0.15, ...p }, vel),
+  bongolow: (ctx, dest, time, p, vel) => membrane(ctx, dest, time, { tune: 165, pitchDrop: 40, decay: 0.2, ...p }, vel),
+  conga: (ctx, dest, time, p, vel) => membrane(ctx, dest, time, { tune: 190, pitchDrop: 45, decay: 0.3, ...p }, vel),
+  triangle: (ctx, dest, time, p, vel) => {
+    blip(ctx, dest, time, { freq: 2960, type: 'sine', decay: Math.min(2, p.decay ?? 2), gain: (p.gain ?? 0.6) * 0.5 }, vel);
+    blip(ctx, dest, time, { freq: 5310, type: 'sine', decay: Math.min(1.2, p.decay ?? 1.2), gain: (p.gain ?? 0.6) * 0.25 }, vel);
+  },
+  tambourine: (ctx, dest, time, p, vel) => {
+    noiseBurst(ctx, dest, time, { type: 'highpass', freq: 6800, decay: p.decay ?? 0.12, gain: (p.gain ?? 0.6) * 0.8 }, vel);
+  },
+  claves: (ctx, dest, time, p, vel) => {
+    blip(ctx, dest, time, { freq: 1750, type: 'triangle', decay: 0.06, gain: p.gain ?? 0.7 }, vel);
+  },
+  agogo: (ctx, dest, time, p, vel) => {
+    blip(ctx, dest, time, { freq: 740, type: 'square', decay: p.decay ?? 0.4, gain: (p.gain ?? 0.6) * 0.4 }, vel);
+    blip(ctx, dest, time, { freq: 740 * 1.48, type: 'square', decay: (p.decay ?? 0.4) * 0.8, gain: (p.gain ?? 0.6) * 0.2 }, vel);
+  },
+  marimba: pitchedSynth,
+  vibraphone: pitchedSynth,
+  xylophone: pitchedSynth,
+  upright: pitchedSynth,
 };
 
 /**

@@ -6,7 +6,7 @@
 // bar, which has one partial and no fundamental where its map says.
 
 import { describe, it, expect } from 'vitest';
-import { verifyKeyCentre, parseSfz, decodeWav, encodeFloatWav } from './vcsl.mjs';
+import { verifyKeyCentre, parseSfz, samplePath, decodeWav, encodeFloatWav } from './vcsl.mjs';
 
 const SR = 44100;
 const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
@@ -64,6 +64,56 @@ describe('verifyKeyCentre', () => {
     expect(r.ok).toBe(false);
   });
 
+  it('does not re-file a note onto its own body thump an octave down', () => {
+    // A plucked upright: real sympathetic energy an octave below the note,
+    // measured at up to 60% of the claimed fundamental on these recordings.
+    // Re-filing down is only for maps filed an octave high, where the lower
+    // octave is louder than the claim — a thump never is.
+    const r = verifyKeyCentre(tone(hz(49), [[0.5, 0.35], [1, 1], [2, 0.4]]), SR, 49);
+    expect(r.ok).toBe(true);
+    expect(r.octaveShift).toBe(0);
+  });
+
+  it('never re-files a note onto subsonic rumble', () => {
+    // The upright's lowest pluck: 20 Hz rumble reached 60% of the peak while
+    // the true 41 Hz fundamental sat at 13%. Nothing musical lives below the
+    // bottom of a piano, so a candidate down there is not a candidate.
+    const r = verifyKeyCentre(tone(hz(28), [[0.5, 0.6], [1, 0.13], [2, 1]]), SR, 28);
+    expect(r.ok).toBe(true);
+    expect(r.octaveShift).toBe(0);
+  });
+
+  it('is not fooled by room rumble louder than the note', () => {
+    // A softly-struck top marimba bar, as recorded: the loudest thing in the
+    // file is subsonic room noise, and judged against it every real partial is
+    // a rounding error. Rumble far below the lowest candidate octave cannot be
+    // a fundamental and must not set the bar.
+    const r = verifyKeyCentre(tone(hz(96), [[0.0148, 12], [1, 1]]), SR, 96);
+    expect(r.ok).toBe(true);
+    expect(r.octaveShift).toBe(0);
+  });
+
+  it('believes a weak fundamental when no other octave offers anything', () => {
+    // A high marimba bar: the fundamental is real but small (measured 6–9% of
+    // the loudest partial, which is an overtone nowhere near an octave), and
+    // the octaves either side measure nothing at all. The strict share exists
+    // to choose between octaves; with only one on offer there is no choice to
+    // make, and refusing it stopped the build over a note that was right.
+    const r = verifyKeyCentre(tone(hz(89), [[1, 0.06], [5.4, 1.0]]), SR, 89);
+    expect(r.ok).toBe(true);
+    expect(r.octaveShift).toBe(0);
+    expect(r.midi).toBeCloseTo(89, 0);
+  });
+
+  it('still refuses a weak claim when another octave rings too', () => {
+    // The glockenspiel shape again, but with a whisper at the claimed note:
+    // two octaves offer energy, so the ambiguity is real and the strict rule
+    // must decide — and a 1% fundamental is not a fundamental.
+    const r = verifyKeyCentre(tone(hz(84), [[0.5, 0.01], [1, 1]]), SR, 72);
+    expect(r.ok).toBe(true);
+    expect(r.octaveShift).toBe(1);
+  });
+
   it('refuses to guess at an unpitched recording', () => {
     const n = SR;
     const noise = new Float32Array(n);
@@ -90,6 +140,35 @@ describe('parseSfz', () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].sample).toBe('a.wav');
+  });
+
+  it('keeps <control> and <global> settings when a <group> follows', () => {
+    // VSCO's maps are shaped exactly like this: the folder in <control>, the
+    // envelope in <global>, the strength bands in <group>. Flattening every
+    // header into one meant the group threw the folder away.
+    const rows = parseSfz(
+      '<control>\ndefault_path=Strings\\Solo Contrabass\\Pizz\\\n\n' +
+      '<global>\nampeg_release=3\n\n' +
+      '<group>\nlovel=0\nhivel=62\n\n<region>\nsample=a.wav\npitch_keycenter=28\n',
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].default_path).toBe('Strings\\Solo Contrabass\\Pizz\\');
+    expect(rows[0].ampeg_release).toBe('3');
+    expect(rows[0].lovel).toBe('0');
+  });
+});
+
+describe('samplePath', () => {
+  it('resolves against the map file its region came from', () => {
+    expect(samplePath('Idiophones/Struck Idiophones/Claves.sfz', { sample: 'Claves\\a.wav' }))
+      .toBe('Idiophones/Struck Idiophones/Claves/a.wav');
+  });
+
+  it('honours default_path for a map that sits at the repository root', () => {
+    expect(samplePath('ContrabassPizz.sfz', {
+      sample: 'BKCtbss_Pizz_E0_v1_rr1.wav',
+      default_path: 'Strings\\Solo Contrabass\\Pizz\\',
+    })).toBe('Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E0_v1_rr1.wav');
   });
 });
 

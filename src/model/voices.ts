@@ -13,7 +13,7 @@
 //
 // Every recording is CC0. Provenance, licence and hashes: docs/asset-manifest.json.
 
-export type VoiceCategory = 'Drums' | 'Bass' | 'Keys' | 'Cymbals' | 'Percussion';
+export type VoiceCategory = 'Drums' | 'Bass' | 'Keys' | 'Mallets' | 'Cymbals' | 'Percussion';
 
 /** Drum voices play a fixed sound; pitched voices play melodic notes. */
 export type VoiceKind = 'drum' | 'pitched';
@@ -223,6 +223,74 @@ export const VOICE_CATALOG: VoiceDef[] = [
     defaults: sampledDefaults(1.05, { seconds: 0.8 }),
   },
 
+  // ---- hand percussion ----------------------------------------------------
+  // The bongos are two voices because a bongo pair is two drums, and the
+  // high–low conversation between them is the whole point — same shape as
+  // Tom / Low Tom.
+  {
+    id: 'bongo',
+    label: 'Bongo',
+    emoji: '👐',
+    category: 'Drums',
+    color: '#fb7185',
+    sampleSet: 'bongo',
+    defaults: sampledDefaults(1.05, { seconds: 0.8 }),
+  },
+  {
+    id: 'bongolow',
+    label: 'Low Bongo',
+    emoji: '🤲',
+    category: 'Drums',
+    color: '#e11d48',
+    sampleSet: 'bongolow',
+    defaults: sampledDefaults(1.05, { seconds: 0.8 }),
+  },
+  {
+    id: 'conga',
+    label: 'Conga',
+    emoji: '🥥',
+    category: 'Drums',
+    color: '#fbbf24',
+    sampleSet: 'conga',
+    defaults: sampledDefaults(1.0, { seconds: 1.0 }),
+  },
+  {
+    id: 'triangle',
+    label: 'Triangle',
+    emoji: '🔺',
+    category: 'Percussion',
+    color: '#e2e8f0',
+    sampleSet: 'triangle',
+    defaults: sampledDefaults(1.15, { seconds: 3.5 }),
+  },
+  {
+    id: 'tambourine',
+    label: 'Tambourine',
+    emoji: '🎊',
+    category: 'Percussion',
+    color: '#fde047',
+    sampleSet: 'tambourine',
+    defaults: sampledDefaults(1.1, { seconds: 0.8 }),
+  },
+  {
+    id: 'claves',
+    label: 'Claves',
+    emoji: '🪃',
+    category: 'Percussion',
+    color: '#d4a373',
+    sampleSet: 'claves',
+    defaults: sampledDefaults(1.05, { seconds: 0.5 }),
+  },
+  {
+    id: 'agogo',
+    label: 'Agogo',
+    emoji: '🧲',
+    category: 'Percussion',
+    color: '#94a3b8',
+    sampleSet: 'agogo',
+    defaults: sampledDefaults(1.0, { seconds: 1.2 }),
+  },
+
   // ---- Pitched instruments ------------------------------------------------
   {
     id: 'piano',
@@ -240,20 +308,62 @@ export const VOICE_CATALOG: VoiceDef[] = [
     id: 'bells',
     label: 'Bells',
     emoji: '🛎️',
-    category: 'Keys',
+    category: 'Mallets',
     color: '#f0abfc',
     kind: 'pitched',
     // Left where it was, at 72, even though the glockenspiel's lowest recorded
-    // bar is G5 (79) and the bottom three rows of the grid are stretched down to
-    // reach it. Moving the grid up to meet the recordings sounded better and
-    // broke every song already written: a saved note below the new range keeps
-    // its pitch, has no row to be drawn on, and collapses onto the bottom one —
-    // so a tune shows as a stack of blocks on one row while still playing six
-    // different notes, and dragging any of them rewrites it for good.
+    // bar is G5 (79). Moving the grid up to meet the recordings sounded better
+    // and broke every song already written: a saved note below the new range
+    // keeps its pitch, has no row to be drawn on, and collapses onto the bottom
+    // one — so a tune shows as a stack of blocks on one row while still playing
+    // six different notes, and dragging any of them rewrites it for good.
+    // The rows below G5 used to play the lowest bar stretched down, which read
+    // as a larger, duller metallophone; they are now backed by real vibraphone
+    // notes in the same sample set instead.
     baseMidi: 72,
     octaves: 2,
     sampleSet: 'bells',
     defaults: sampledDefaults(1.25, { pitched: true }),
+  },
+
+  // ---- mallets ------------------------------------------------------------
+  {
+    id: 'marimba',
+    label: 'Marimba',
+    emoji: '🪵',
+    category: 'Mallets',
+    color: '#d97706',
+    kind: 'pitched',
+    // Two octaves below middle C's neighbourhood: the marimba's warm wooden
+    // middle, and the register the Bells can't reach.
+    baseMidi: 48,
+    octaves: 2,
+    sampleSet: 'marimba',
+    defaults: sampledDefaults(1.45, { pitched: true }),
+  },
+  {
+    id: 'vibraphone',
+    label: 'Vibraphone',
+    emoji: '🎐',
+    category: 'Mallets',
+    color: '#7dd3fc',
+    kind: 'pitched',
+    baseMidi: 60,
+    octaves: 2,
+    sampleSet: 'vibraphone',
+    defaults: sampledDefaults(1.25, { pitched: true }),
+  },
+  {
+    id: 'xylophone',
+    label: 'Xylophone',
+    emoji: '🌈',
+    category: 'Mallets',
+    color: '#fda4af',
+    kind: 'pitched',
+    baseMidi: 72,
+    octaves: 2,
+    sampleSet: 'xylophone',
+    defaults: sampledDefaults(1.2, { pitched: true }),
   },
   // Synthesized on purpose: these are synthesizers. There is no "real" version
   // of them to be more faithful to.
@@ -278,6 +388,22 @@ export const VOICE_CATALOG: VoiceDef[] = [
     baseMidi: 36,
     octaves: 2,
     defaults: { wave: 2, attack: 0.004, decay: 0.22, sustain: 0.45, release: 0.16, cutoff: 520, bite: 3.0, detune: 7, gain: 0.55 },
+  },
+  {
+    // A real upright, plucked — the one recording VCSL couldn't provide, from
+    // VSCO 2 CE (same publisher, same CC0; see docs/asset-manifest.json). Its
+    // own voice next to the synth Bass rather than a replacement, so no saved
+    // song changes sound.
+    id: 'upright',
+    label: 'Upright Bass',
+    emoji: '🎻',
+    category: 'Bass',
+    color: '#10b981',
+    kind: 'pitched',
+    baseMidi: 36,
+    octaves: 2,
+    sampleSet: 'upright',
+    defaults: sampledDefaults(1.5, { pitched: true }),
   },
 ];
 

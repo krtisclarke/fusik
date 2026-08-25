@@ -32,14 +32,43 @@ export const VCSL_LICENSE = 'CC0-1.0';
 export const VCSL_ATTRIBUTION =
   'Versilian Community Sample Library by Versilian Studios LLC (CC0 1.0 — no attribution required)';
 
+/**
+ * The second library: VSCO 2 Community Edition, by the same publisher.
+ *
+ * It exists here for one instrument VCSL simply doesn't have: a bass. The
+ * licence chain was checked the same way VCSL's was — the repository carries
+ * the full CC0 1.0 legal text, and Versilian's own site says "no rules, no
+ * royalties". (An old readme in the repo *asks* for credit; a request layered
+ * on CC0 is not a term, and their current site drops even the request.) The
+ * recordings are Versilian's own, so the right to apply the label holds.
+ *
+ * Same two-pin structure as VCSL, for the same reason: the audio lives on one
+ * branch and the maps on another, and either regenerating would otherwise
+ * silently change an instrument.
+ */
+export const VSCO_REF = '440300901dfe9275fd84e0b7763af1f8443ae62e';
+export const VSCO_RAW = `https://raw.githubusercontent.com/sgossner/VSCO-2-CE/${VSCO_REF}/`;
+export const VSCO_SFZ_REF = '6dd651d55dde97fd4028699be9d4481f26917891';
+export const VSCO_SFZ_RAW = `https://raw.githubusercontent.com/sgossner/VSCO-2-CE/${VSCO_SFZ_REF}/`;
+export const VSCO_HOME = 'https://github.com/sgossner/VSCO-2-CE';
+export const VSCO_ATTRIBUTION =
+  'VSCO 2 Community Edition by Versilian Studios LLC (CC0 1.0 — no attribution required)';
+
 // ---- SFZ ------------------------------------------------------------------
 
 /**
- * Parse the subset of SFZ this needs: `<group>` headers carrying defaults and
- * `<region>` bodies naming a sample. Everything is `key=value`, one per line,
- * and `//` starts a comment — VCSL's generated files comment *out* whole
- * regions, which is why a region with no opcodes is skipped rather than
- * inheriting the group and looking real.
+ * Parse the subset of SFZ this needs: headers carrying defaults and `<region>`
+ * bodies naming a sample. Everything is `key=value`, one per line, and `//`
+ * starts a comment — VCSL's generated files comment *out* whole regions, which
+ * is why a region with no opcodes is skipped rather than inheriting the group
+ * and looking real.
+ *
+ * Headers cascade rather than replace: `<control>` and `<global>` apply to
+ * everything after them, and a `<group>` narrows that. VCSL's maps only ever
+ * use `<group>`, so flattening every header into one worked — until VSCO's
+ * maps, which put the sample folder in `<control>` (`default_path`) and the
+ * envelope in `<global>`, and whichever header came last would have silently
+ * thrown the others away.
  */
 export function parseSfz(text) {
   const parts = [...text.matchAll(/<(group|region|global|master|control)>([^<]*)/g)];
@@ -53,23 +82,31 @@ export function parseSfz(text) {
     }
     return out;
   };
-  let group = {};
+  const scope = { control: {}, global: {}, master: {}, group: {} };
   const regions = [];
   for (const [, kind, body] of parts) {
     const opcodes = readBody(body);
     if (kind === 'region') {
-      if (opcodes.sample) regions.push({ ...group, ...opcodes });
+      if (opcodes.sample) {
+        regions.push({ ...scope.control, ...scope.global, ...scope.master, ...scope.group, ...opcodes });
+      }
     } else {
-      group = opcodes;
+      scope[kind] = opcodes;
     }
   }
   return regions;
 }
 
-/** Resolve a region's `sample=` against the folder its SFZ file lives in. */
+/**
+ * Resolve a region's `sample=` against the folder its SFZ file lives in —
+ * plus the map's `default_path`, when it names one. VCSL's maps sit beside
+ * their audio and use bare file names; VSCO's sit at the repository root and
+ * point into the tree with `default_path` instead.
+ */
 export function samplePath(sfzRepoPath, region) {
   const dir = path.posix.dirname(sfzRepoPath);
-  return path.posix.normalize(path.posix.join(dir, region.sample.replace(/\\/g, '/')));
+  const prefix = (region.default_path ?? '').replace(/\\/g, '/');
+  return path.posix.normalize(path.posix.join(dir, prefix + region.sample.replace(/\\/g, '/')));
 }
 
 // ---- WAV ------------------------------------------------------------------
@@ -199,51 +236,114 @@ const FUNDAMENTAL_SHARE = 0.2;
 const PROMINENCE = 6;
 
 /**
+ * What a *claimed* note must show for the map to be believed outright: 2% of
+ * the band's loudest partial, standing 40× above the band's own noise floor.
+ * Both numbers sit in measured gaps. Share: the faintest real fundamentals in
+ * these libraries — a softly-struck top marimba bar, the upright's lowest
+ * pluck — measure 4–9%, while the glockenspiel's false claims measure 0.1% or
+ * less. Prominence: a band with no real content still has a loudest point
+ * (window leakage measured 3–7× the band median; real notes 400× and up), so
+ * a share alone is not enough.
+ */
+const CLAIMED_MIN_SHARE = 0.02;
+const CLAIMED_MIN_PROMINENCE = 40;
+
+/**
+ * No candidate below this is ever considered: the bottom of a piano is 27.5 Hz
+ * and nothing in these libraries goes lower, so energy down there is the room,
+ * not a note. It is not hypothetical — on a softly-plucked low E, 20 Hz rumble
+ * reached 60% of the recording's peak, and "which octave is loudest" would
+ * have re-filed the note onto it.
+ */
+const CANDIDATE_FLOOR_HZ = 24;
+
+/**
+ * How much of the recording's loudest content must sit inside the candidate
+ * band at all. A recording whose energy lives nowhere near any candidate —
+ * a note two octaves from its claim, say — leaves only window leakage in the
+ * band, and leakage measured against an empty band can look "prominent": it
+ * cleared both passes' floors in testing. What it cannot do is amount to
+ * anything next to the recording's real content: measured, the leakage band
+ * peaks below 0.001% of the full spectrum's peak, while the faintest real
+ * note this check accepts (a softly-struck top marimba bar under heavy room
+ * rumble) reaches 0.9%. One in a thousand sits wide of both.
+ */
+const BAND_CONTENT_SHARE = 0.001;
+
+/**
  * Check a map's key centre against the recording, and say which octave is
  * actually right.
  *
- * This exists because a sample library's map can be wrong, and one here is:
- * VCSL's glockenspiel is filed an octave below where it actually rings, with no
- * energy whatsoever at the note its map names. Left alone, every Bells note
- * would have come out an octave low, and nothing but a measurement finds that.
+ * This exists because a sample library's map can be wrong, and two here are:
+ * VCSL's glockenspiel and xylophone are filed an octave below where they
+ * actually ring, with no energy whatsoever at the notes their maps name. Left
+ * alone, every note would have come out an octave low, and nothing but a
+ * measurement finds that.
  *
- * The test is: of the octave below the claim, the claim, and the octave above,
- * take the lowest that has real energy *at its own fundamental*. Three things
- * make it trustworthy rather than a guess:
+ * The rule: **believe the map unless the recording clearly outvotes it.**
  *
- * - Measured across this whole selection the two cases are nowhere near each
- *   other. Every piano recording has at least 28% of its loudest partial
- *   sitting at its fundamental; every glockenspiel recording has 0.1% or less
- *   at the note its map names, and 100% an octave up. The threshold below sits
- *   in a very wide gap.
- * - Walking upward is what makes a map that is too *high* fail as well. A piano
- *   note filed an octave high would find its second harmonic at the claimed
- *   note and look fine — but the octave below is tested first, and its
- *   fundamental is there.
- * - Only one octave either way is considered. The realistic mistake is a naming
- *   convention out by twelve semitones, and looking further afield costs
- *   accuracy for nothing: two octaves below a soft low piano note is 50 Hz,
- *   where room rumble alone reached a tenth of the peak on one recording here.
+ * - Re-file *down* only when the octave below holds a real fundamental AND is
+ *   louder than the claimed note. That is what a map filed an octave high
+ *   looks like: the claim lands on the true note's second harmonic, which has
+ *   real energy of its own — so "does the claim have energy" cannot catch it,
+ *   and only the louder fundamental underneath can. The louder-than test is
+ *   what protects the other direction: a plucked upright carries body thump
+ *   and sympathetic ringing an octave under its own note, measured at up to
+ *   60% of the claimed note — real energy, never louder than the note itself.
+ * - Otherwise, accept the claim if a real fundamental sits there (see
+ *   CLAIMED_MIN_SHARE). The map's authors named the note they recorded; the
+ *   measurement's job is to veto absurdities, not to out-vote a plausible map
+ *   on loudness — a low pizzicato's second harmonic is routinely louder than
+ *   its fundamental, and "which octave is loudest" re-files exactly those
+ *   correct notes.
+ * - Re-file *up* only when the claim is essentially empty — the glockenspiel
+ *   shape: 0.1% at the claim, everything an octave above.
+ * - Refuse when every octave is empty: an unpitched recording, or a claim
+ *   nowhere near the note.
  *
- * "The loudest partial" is emphatically not the test to use: a piano's second
- * harmonic is routinely louder than its fundamental, so that answer is an
- * octave high on notes that are perfectly correct.
+ * Only one octave either way is considered. The realistic mistake is a naming
+ * convention out by twelve semitones, and looking further afield costs
+ * accuracy for nothing.
  */
 export function verifyKeyCentre(channels, sampleRate, claimedMidi) {
-  const spec = spectrumOf(channels, sampleRate);
+  // The spectrum is judged from just below the lowest candidate octave up.
+  // Energy further down cannot be any candidate's fundamental — it is the room,
+  // not the note — and it must not set the bar the note has to clear: on a
+  // softly-struck top marimba bar, 31 Hz rumble was the loudest thing in the
+  // whole recording, and every real partial measured as a fraction of it.
+  const spec = spectrumOf(channels, sampleRate, { floorHz: midiToHz(claimedMidi - 12) * 0.8 });
   if (!spec || spec.peak <= 0) return { ok: false, midi: null, octaveShift: 0 };
-  for (let k = -1; k <= 1; k++) {
-    const hz = midiToHz(claimedMidi + 12 * k);
-    const floor = Math.max(spec.peak * FUNDAMENTAL_SHARE, spec.median * PROMINENCE);
-    if (energyNear(spec, hz) >= floor) {
-      return { ok: true, midi: 69 + 12 * Math.log2(peakHzNear(spec, hz) / 440), octaveShift: k };
-    }
+  // …but the band must hold a real piece of the recording, or there is nothing
+  // to measure: a claim two octaves from the truth leaves only window leakage
+  // here, which an empty band makes look prominent. See BAND_CONTENT_SHARE.
+  const full = spectrumOf(channels, sampleRate);
+  if (!full || full.peak <= 0 || spec.peak < full.peak * BAND_CONTENT_SHARE) {
+    return { ok: false, midi: null, octaveShift: 0 };
   }
+  const at = (k) => energyNear(spec, midiToHz(claimedMidi + 12 * k));
+  const found = (k) => {
+    const hz = midiToHz(claimedMidi + 12 * k);
+    return { ok: true, midi: 69 + 12 * Math.log2(peakHzNear(spec, hz) / 440), octaveShift: k };
+  };
+  const strictFloor = Math.max(spec.peak * FUNDAMENTAL_SHARE, spec.median * PROMINENCE);
+  const claimedFloor = Math.max(spec.peak * CLAIMED_MIN_SHARE, spec.median * CLAIMED_MIN_PROMINENCE);
+
+  if (midiToHz(claimedMidi - 12) >= CANDIDATE_FLOOR_HZ && at(-1) >= strictFloor && at(-1) > at(0)) {
+    return found(-1);
+  }
+  if (at(0) >= claimedFloor) return found(0);
+  if (at(1) >= strictFloor) return found(1);
   return { ok: false, midi: null, octaveShift: 0 };
 }
 
-/** Magnitude spectrum of a window taken just after the attack. */
-export function spectrumOf(channels, sampleRate, { skipSeconds = 0.06 } = {}) {
+/**
+ * Magnitude spectrum of a window taken just after the attack.
+ *
+ * `floorHz` sets where the analysis band starts: bins below it are zeroed and
+ * take no part in the peak or the median. The caller uses it to keep subsonic
+ * room rumble from out-powering the note being measured.
+ */
+export function spectrumOf(channels, sampleRate, { skipSeconds = 0.06, floorHz = 0 } = {}) {
   const N = 1 << 15;
   const start = Math.round(skipSeconds * sampleRate);
   const src = channels[0];
@@ -256,9 +356,10 @@ export function spectrumOf(channels, sampleRate, { skipSeconds = 0.06 } = {}) {
   }
   fft(re, im);
   const bins = N >> 1;
+  const kMin = Math.max(1, Math.ceil(floorHz / (sampleRate / N)));
   const mags = new Float64Array(bins);
   let peak = 0;
-  for (let k = 1; k < bins; k++) {
+  for (let k = kMin; k < bins; k++) {
     mags[k] = Math.hypot(re[k], im[k]);
     if (mags[k] > peak) peak = mags[k];
   }
@@ -266,7 +367,7 @@ export function spectrumOf(channels, sampleRate, { skipSeconds = 0.06 } = {}) {
   // Sampled rather than fully sorted: 32k bins sorted per recording is a lot of
   // work for a number that only needs to be roughly right.
   const sample = [];
-  for (let k = 1; k < bins; k += 16) sample.push(mags[k]);
+  for (let k = kMin; k < bins; k += 16) sample.push(mags[k]);
   sample.sort((a, b) => a - b);
   const median = sample[sample.length >> 1] || 0;
 

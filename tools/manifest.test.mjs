@@ -48,8 +48,20 @@ describe('shipped recordings', () => {
   });
 
   it('name their source and licence', () => {
-    expect(manifest.library.license).toBe('CC0-1.0');
-    expect(manifest.library.commit).toMatch(/^[0-9a-f]{40}$/);
+    const libraries = Object.entries(manifest.libraries);
+    expect(libraries.length).toBeGreaterThan(0);
+    for (const [id, lib] of libraries) {
+      expect(lib.license, id).toBe('CC0-1.0');
+      expect(lib.commit, id).toMatch(/^[0-9a-f]{40}$/);
+      expect(lib.mapCommit, id).toMatch(/^[0-9a-f]{40}$/);
+      expect(lib.licenseTextSha256, id).toMatch(/^[0-9a-f]{64}$/);
+    }
+    for (const set of manifest.sets) {
+      // Every set must name a library that is actually recorded above — an
+      // unknown key would mean recordings shipping with no licence behind them.
+      expect(manifest.libraries[set.library], set.id).toBeTruthy();
+      expect(set.sources.length, set.id).toBeGreaterThan(0);
+    }
     for (const f of listed) {
       expect(f.source, f.file).toBeTruthy();
       expect(f.sourceSha256, f.file).toMatch(/^[0-9a-f]{64}$/);

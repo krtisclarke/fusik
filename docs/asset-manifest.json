@@ -1,21 +1,39 @@
 {
   "generatedBy": "tools/build-samples.mjs",
-  "library": {
-    "name": "Versilian Community Sample Library (VCSL)",
-    "publisher": "Versilian Studios LLC",
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attribution": "Versilian Community Sample Library by Versilian Studios LLC (CC0 1.0 — no attribution required)",
-    "url": "https://github.com/sgossner/VCSL",
-    "commit": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
-    "mapCommit": "dfcf4a4918771eee884b96ad4493de82ef84daf6",
-    "licenseTextSha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+  "libraries": {
+    "vcsl": {
+      "name": "Versilian Community Sample Library (VCSL)",
+      "publisher": "Versilian Studios LLC",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Versilian Community Sample Library by Versilian Studios LLC (CC0 1.0 — no attribution required)",
+      "url": "https://github.com/sgossner/VCSL",
+      "commit": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "mapCommit": "dfcf4a4918771eee884b96ad4493de82ef84daf6",
+      "licenseTextSha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    "vsco2ce": {
+      "name": "VSCO 2 Community Edition",
+      "publisher": "Versilian Studios LLC",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "VSCO 2 Community Edition by Versilian Studios LLC (CC0 1.0 — no attribution required)",
+      "url": "https://github.com/sgossner/VSCO-2-CE",
+      "commit": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "mapCommit": "6dd651d55dde97fd4028699be9d4481f26917891",
+      "licenseTextSha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673"
+    }
   },
   "sets": [
     {
       "id": "piano",
-      "instrument": "Grand Piano, Kawai",
-      "sourceMap": "Chordophones/Zithers/Grand Piano, Kawai.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Grand Piano, Kawai",
+          "map": "Chordophones/Zithers/Grand Piano, Kawai.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/piano/45_0_1.m4a",
@@ -597,8 +615,17 @@
     },
     {
       "id": "bells",
-      "instrument": "Glockenspiel",
-      "sourceMap": "Idiophones/Struck Idiophones/Glockenspiel.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Glockenspiel",
+          "map": "Idiophones/Struck Idiophones/Glockenspiel.sfz"
+        },
+        {
+          "instrument": "Vibraphone (hard mallets)",
+          "map": "Idiophones/Struck Idiophones/Vibraphone - Hard Mallets.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/bells/79_0_1.m4a",
@@ -735,13 +762,978 @@
           "sha256": "0003b3b868e388776008b1f1fdd8e29ac0cc3b71c880a709b62a60b134d498fe",
           "bytes": 43989,
           "seconds": 2.634
+        },
+        {
+          "file": "public/samples/bells/71_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_B3_v2_rr1_Main.wav",
+          "sourceSha256": "8ae8f9a67ff3c5942bd796987ef96fbaaafadf4edfe5dc8734b8a1ab4e0ff7b4",
+          "sha256": "3712b66034dd4c0b3e4f6af8df4cafacd95d0b582c0183c71c9d4712f1e2f2f8",
+          "bytes": 48241,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/71_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_B3_v3_rr1_Main.wav",
+          "sourceSha256": "357065002fa8e4f1af51a4214ccff71e964393068f1229c7be20647d05e98dcd",
+          "sha256": "0ea6e8f5907c2e1bc72b1d2bcb1a914b203aea2f6434c5eac6e64d6c9a8dedb5",
+          "bytes": 30840,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/74_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_D4_v2_rr1_Main.wav",
+          "sourceSha256": "a0ff7c922a24fde71a675c57c69c222d619feaa4c91c25bdf6830e0dc1108a74",
+          "sha256": "3c71a987822e7e8993a1751ad51326f2b316562533dc382d865dd2ac567897c7",
+          "bytes": 51186,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/74_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_D4_v3_rr1_Main.wav",
+          "sourceSha256": "147cec54acf3a26fc985dcfb78d9593177369c9bd1a8cb3bc908f796616195e2",
+          "sha256": "dd1025eb14e6880d9c3910c08eefbea43e1a3755b79f8e2f378aa728ca487875",
+          "bytes": 21955,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/77_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_F4_v2_rr1_Main.wav",
+          "sourceSha256": "24e4a7a9d1e6dd221ab478fa57793e3575e3b5f666dc75a1ad5d58d05ac7f129",
+          "sha256": "ed4ec46872253f7c2c8a3110095fb652a8c5c0735605ba20df85cad86b15d7a3",
+          "bytes": 51345,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/bells/77_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_F4_v3_rr1_Main.wav",
+          "sourceSha256": "b6bc7264f3cd0ed04487d4e9c6f7548d8a23f001f689ec5ec048d45c49e5941a",
+          "sha256": "f695645ba3b8a170803a7f1ccbd02d0dfeb26b5120d4389ba9ea02e138de754c",
+          "bytes": 23282,
+          "seconds": 3.5
+        }
+      ]
+    },
+    {
+      "id": "marimba",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Marimba",
+          "map": "Idiophones/Struck Idiophones/Marimba.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/marimba/41_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F1_soft_01.wav",
+          "sourceSha256": "eadaeb8bd491b3161197478119be60771e0e1d8620d4848e39595976f9c9c998",
+          "sha256": "86e671feafe2e2492e6aa7596d99d60092185c4aa6dca762295a8f5162dd23d9",
+          "bytes": 11157,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/41_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F1_med_01.wav",
+          "sourceSha256": "484de6300831ebb267a867a4c435567bacfb77aed953f317fde5b1c312bafac4",
+          "sha256": "ccf80f84bba8f1fccf5583fae2a1b8fc9549e68a9705e5a611e7ede5eb4c26fe",
+          "bytes": 17144,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/41_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F1_loud_01.wav",
+          "sourceSha256": "c5cb5ce59540b0a23628a919e90153a6cee9bb35325b056e0710c12b64f0b193",
+          "sha256": "93f0bce69782cb28b02f288dcb88e0743af682b38793c4b923d07c8fe43e9cb2",
+          "bytes": 19313,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/48_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C2_soft_01.wav",
+          "sourceSha256": "5fd3c75ab7eafebc24a693793e2c4404922dfad37d8dd9bf80e8ca483500ed80",
+          "sha256": "1dfea486c53541c048d0dfd8affb760d9f0958eaaa6d62ca450fce4f645d44b8",
+          "bytes": 10709,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/48_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C2_med_01.wav",
+          "sourceSha256": "fd9c329513ed9d54c36174bbe45add471a80ffad411c686428bbf0bbc0121438",
+          "sha256": "2c3285ba1de73a69897dc1ce6d356cc7e132296c6d79222deafc51a7771f677e",
+          "bytes": 13771,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/48_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C2_loud_01.wav",
+          "sourceSha256": "bfad3b0e57d04c31e6079aba11fb0a6c5c84627fd4bc46e4e0923663586c460c",
+          "sha256": "46ac96391120b8bae7b2f6790fca138d7f8620dfecd320d7b7a65a1b4d62bbbc",
+          "bytes": 19442,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/55_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_G2_soft_01.wav",
+          "sourceSha256": "bb41b6fce6b5cf73086480754f83a4b33ae61a7e6f19c7e7ee3b01d0171e7f63",
+          "sha256": "d85a1df4662f93c42cab632e2489c36ee283e9ee8dde92311d12798f16107d3b",
+          "bytes": 11080,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/55_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_G2_med_01.wav",
+          "sourceSha256": "e9c2d33b9f50f0689b349dc9aee20a5b621961cf8294abb5ac4ba5a4674bd7c2",
+          "sha256": "b7ce4749c6be8436c796e79182d21699cbb2fbbdc10b14b26f9cd1a7e49d13f6",
+          "bytes": 13137,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/55_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_G2_loud_01.wav",
+          "sourceSha256": "3bd173f56481e537c3489a94d1e4dd59c304f9f98679c7c90890fc9f5795c25d",
+          "sha256": "c4998b9b323bfc1c005e84741d9c73637f12c8fc98a4371e7c9c09433331c9bd",
+          "bytes": 15924,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/59_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B2_soft_01.wav",
+          "sourceSha256": "10e4a47853920c93423fd72f224e46bf1bce60319d5e7ae501d1b8431ec7d78a",
+          "sha256": "3ab51b520981628730873f6c6cdd60b085c973191303de5b6f3bb676a6b242e0",
+          "bytes": 12069,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/59_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B2_med_01.wav",
+          "sourceSha256": "4d0ffc47858d0c4545191eef3240d470c40df1c090841c0fb2ae2f47900794ee",
+          "sha256": "8c146ec4a12c9193e0e137010d5d4bdc1b653e107ed2262a6d184cbb3220ca83",
+          "bytes": 13236,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/59_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B2_loud_01.wav",
+          "sourceSha256": "a329138008daae1c03652822d7079c0e1e9941071b8c22195e1985f0c685fdeb",
+          "sha256": "8634750992c0837447cf057890740f19ee9a0c72d44564c90b52935570a8cca8",
+          "bytes": 17718,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/65_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F3_soft_01.wav",
+          "sourceSha256": "6eb7ccf5fa10b1bdaf10f0cc7a50d8c42ef086636a9e88c6527fb3af58e5ee1f",
+          "sha256": "c5c4f07f5dde1e85ba90e3d63708fc2068820b407348971614e9b77d4cdd2141",
+          "bytes": 10953,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/65_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F3_med_01.wav",
+          "sourceSha256": "a493b31ac2e588ed961c522a66b790acc584b59a08918bd7193d6e6fa8df4756",
+          "sha256": "9bbd33c7b36a6e6b702711ebaaeb34643269ac9ecf94c2011b5b2b8ba9a5e61d",
+          "bytes": 11141,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/65_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F3_loud_01.wav",
+          "sourceSha256": "379e749add43b12959fae06cc272f1871899cc05460faf41ead77b93e5d01843",
+          "sha256": "de389c34754996a97b0927325d19b6384328635e6dd92bfbdfe7e779278fcf5d",
+          "bytes": 14413,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/72_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C4_soft_01.wav",
+          "sourceSha256": "4d03d005166e8b366e6a983b7a4a89e0847e1d58a6d34dda35ddf74289cace94",
+          "sha256": "08f9aaa0106e94ab5a0ff81d54ceada6fc4bce26326780493a9c74ce0ba3cb24",
+          "bytes": 11447,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/72_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C4_med_01.wav",
+          "sourceSha256": "3e88c006eef05e8f7891f8f6027042006199a4ec3b53a0ad7308f9782a52d4df",
+          "sha256": "0f89f57b713119a53261c778bdf8c3c2f761797f562d58a6ab737e1bda5b5ebc",
+          "bytes": 12311,
+          "seconds": 2.471
+        },
+        {
+          "file": "public/samples/marimba/72_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C4_loud_01.wav",
+          "sourceSha256": "4af539d47a452d7fad26e171b1c8adcca272cee97191f040d192680462c880b8",
+          "sha256": "d91e17ee03ba7161e9d9870e09731c156b2f2d539a67f26bb40d9c0ea535c339",
+          "bytes": 14508,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/79_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_G4_soft_01.wav",
+          "sourceSha256": "d3e23f018b091a60d91c3c93b38b605d02a9e26c7cf5830ffb866cfe84130cd0",
+          "sha256": "8971220cb3224c2f1cad16e142a8ac4d4a674bef24071cb897f0f210907b157c",
+          "bytes": 10231,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/79_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_G4_med_01.wav",
+          "sourceSha256": "278e738d8214cdc192e63c3350b1e464a72c86dc135ddf0c5ce035569be66c71",
+          "sha256": "afeaa0600870500f7372e87c58a1733e270294fdf8638910b58b9a6d769278ac",
+          "bytes": 10721,
+          "seconds": 2.193
+        },
+        {
+          "file": "public/samples/marimba/79_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_G4_loud_01.wav",
+          "sourceSha256": "36f39f9f24789001add2b4c440defb7641178b0e8449c5cb7f1960bccaf0aaaf",
+          "sha256": "618154101f71389e3f15b149a209ea04a4b4e1c222588609f7b0fb1a68e6fc26",
+          "bytes": 13243,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/marimba/83_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B4_soft_01.wav",
+          "sourceSha256": "278f5123442162e7946fa68a48ed650e3838b1ddcd3e2173d3ea69f30079c534",
+          "sha256": "be1a48bf2af672ce04da4d390b42f742772835404cd02555d0dcb73fcb3e5578",
+          "bytes": 9156,
+          "seconds": 1.862
+        },
+        {
+          "file": "public/samples/marimba/83_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B4_med_01.wav",
+          "sourceSha256": "d676b76e3850d85333c85b1fc77d20f4524ff2e9e6f03551f52c5b22fbe8ab30",
+          "sha256": "07bb69405690a213bbf14aba9fbff529a31ceae781d13836add14d9db28da6a6",
+          "bytes": 9625,
+          "seconds": 1.635
+        },
+        {
+          "file": "public/samples/marimba/83_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B4_loud_01.wav",
+          "sourceSha256": "d04aed26222822d14435fa61b88cdcce95606a5e94bb5e7167d266875343a39c",
+          "sha256": "4a06476e93ac67c61373662e2df1b247f186e4332e72e45a2157764f108271d0",
+          "bytes": 12597,
+          "seconds": 2.621
+        },
+        {
+          "file": "public/samples/marimba/89_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F5_soft_01.wav",
+          "sourceSha256": "f98ea1bd715aee0091ec8eaf61c9fc3c96440f403e9d32ec33f194fb70d9938c",
+          "sha256": "df81924954d6510cd10f4e0296582506e9d09d623563afe6006cfd6e1858c761",
+          "bytes": 17618,
+          "seconds": 1.412
+        },
+        {
+          "file": "public/samples/marimba/89_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F5_med_01.wav",
+          "sourceSha256": "430da3d4f0a323838b7495d9cc5a98bc3829e2f11be11335af526a48ea88b8e6",
+          "sha256": "be2604e20ff6a9ef96c27629a55858d1ea571cbc65ef49b26b6b112c68a44c46",
+          "bytes": 11530,
+          "seconds": 2.142
+        },
+        {
+          "file": "public/samples/marimba/89_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_F5_loud_01.wav",
+          "sourceSha256": "a434c15978b2ea4b8921feeb3fd1f177447324d06c177801e0e46c12a97abc86",
+          "sha256": "23ab68cb868876b5cc90dbdfee2cdcddf24ce181b46c8f134e3781067a762f3a",
+          "bytes": 13878,
+          "seconds": 2.08
+        },
+        {
+          "file": "public/samples/marimba/96_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C6_soft_01.wav",
+          "sourceSha256": "55d5793308bb10feaf3c1e341c0e4e4dbf8ce7fbea805e118b55177389ec3a09",
+          "sha256": "bbc98750f84103c5fbb856fafd3fbed1deaa6adae76c46b59ef575e4b350273e",
+          "bytes": 18895,
+          "seconds": 2.508
+        },
+        {
+          "file": "public/samples/marimba/96_43_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C6_med_01.wav",
+          "sourceSha256": "d93fc6f7b399ac28d1ecf91987e9eb55b34024c6033b7f0e3aaf35f49d51a2f2",
+          "sha256": "ea15aa4d338e0dcec10fdb1477d5dea507e135dbc8db178a5c498212abbd0504",
+          "bytes": 11770,
+          "seconds": 1.707
+        },
+        {
+          "file": "public/samples/marimba/96_107_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C6_loud_01.wav",
+          "sourceSha256": "2e42b1b6f6923f32e3daadc12b063e94d15af20fa410ddcb267eb906fd6e0e89",
+          "sha256": "2ac1ba2ac5e679e8d141215de5f7dc0d1fa8a89f3d703379d3844523eb37420c",
+          "bytes": 12955,
+          "seconds": 1.782
+        }
+      ]
+    },
+    {
+      "id": "vibraphone",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Vibraphone (hard mallets)",
+          "map": "Idiophones/Struck Idiophones/Vibraphone - Hard Mallets.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/vibraphone/53_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_F2_v2_rr1_Main.wav",
+          "sourceSha256": "5b58cb88a7989ec67428943473e5e9053b5f05507881b8ddee107867f557a28d",
+          "sha256": "3c05841809736a71f616dfc34de85e359ea3614751b308459a33ffc6682e3327",
+          "bytes": 50719,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/53_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_F2_v3_rr1_Main.wav",
+          "sourceSha256": "7bbacf51d62db2c76f56f4affd7a424e1184920c585df3726aa33c97ace76127",
+          "sha256": "c73df94d8cca21e92822872ddb1c6d3cc15889a2c3663fcd6b6533688e343a4a",
+          "bytes": 29327,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/57_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_A2_v2_rr1_Main.wav",
+          "sourceSha256": "bb888513871856e89b87d5db9c03be9763c3b524caeb36b6c2010613bec5bf2a",
+          "sha256": "f4441c9e26a5693588223949f452e855b1dd5dbee8eb9f5a1d3a2a7c13bbfa64",
+          "bytes": 44292,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/57_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_A2_v3_rr1_Main.wav",
+          "sourceSha256": "43e689cf8b096d8414fe0d1a7dbf1623ed80b30b26fd5bf5774b0b0db2777729",
+          "sha256": "f28c10281e97b12283a93157d784b8ac2d38ada2d092e8b2dfbccd779dc34599",
+          "bytes": 23901,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_C3_v2_rr1_Main.wav",
+          "sourceSha256": "26082761ea9b12fbe06d38bd4ea2826143958c29786948e50649e0478041b0fc",
+          "sha256": "0abcc6aacd3cc4d66d33a6d17e4025769dacec23f572a5180df22f7186c1a735",
+          "bytes": 51545,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/60_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_C3_v3_rr1_Main.wav",
+          "sourceSha256": "1e4c472f6630be1b0c4ff1e8a63ad61d2c1dc561bd764fedaf87e8e46bdd706d",
+          "sha256": "0f49c09a6280859ff6c6d9bc2c1c52bb520e0aa13cf73281997d7ea89c82345a",
+          "bytes": 28469,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/64_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_E3_v2_rr1_Main.wav",
+          "sourceSha256": "c9d68a552bb9b9bc539f2e7b9083433dd5ae76a57cf838d586c2591b0711477e",
+          "sha256": "155c409b2aa4adfb4ee1101a75abffa4a9661840a99a932834d7908d04d1d4b0",
+          "bytes": 47790,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/64_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_E3_v3_rr1_Main.wav",
+          "sourceSha256": "beb8a14c7e63fa22927c6566562f1eabd9eb42982bf344ea886e38fd50808e1c",
+          "sha256": "b1ecc52aefaabfa6a8f89a68dbebbdc33bfa6c1bf372aa71ed7337e5a1f21811",
+          "bytes": 41555,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/67_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_G3_v2_rr1_Main.wav",
+          "sourceSha256": "b657be5f347c5d86f7daa6b350e039e088ddf958a14eb23f25fd1b64a183f396",
+          "sha256": "97c923989e015bd2aa724827c1da8df0cd783d1d23650e3d0fe427c537355dab",
+          "bytes": 53454,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/67_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_G3_v3_rr1_Main.wav",
+          "sourceSha256": "c61be2354eb3f2b46de310ccb5c431cb8582436991c99e939ad98e14c3dba2b5",
+          "sha256": "abbf0fbd6305386a58adab420e729d84a6673342619ba6c7dd918b502972cd28",
+          "bytes": 44864,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/71_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_B3_v2_rr1_Main.wav",
+          "sourceSha256": "8ae8f9a67ff3c5942bd796987ef96fbaaafadf4edfe5dc8734b8a1ab4e0ff7b4",
+          "sha256": "3712b66034dd4c0b3e4f6af8df4cafacd95d0b582c0183c71c9d4712f1e2f2f8",
+          "bytes": 48241,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/71_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_B3_v3_rr1_Main.wav",
+          "sourceSha256": "357065002fa8e4f1af51a4214ccff71e964393068f1229c7be20647d05e98dcd",
+          "sha256": "0ea6e8f5907c2e1bc72b1d2bcb1a914b203aea2f6434c5eac6e64d6c9a8dedb5",
+          "bytes": 30840,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/74_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_D4_v2_rr1_Main.wav",
+          "sourceSha256": "a0ff7c922a24fde71a675c57c69c222d619feaa4c91c25bdf6830e0dc1108a74",
+          "sha256": "3c71a987822e7e8993a1751ad51326f2b316562533dc382d865dd2ac567897c7",
+          "bytes": 51186,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/74_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_D4_v3_rr1_Main.wav",
+          "sourceSha256": "147cec54acf3a26fc985dcfb78d9593177369c9bd1a8cb3bc908f796616195e2",
+          "sha256": "dd1025eb14e6880d9c3910c08eefbea43e1a3755b79f8e2f378aa728ca487875",
+          "bytes": 21955,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/77_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_F4_v2_rr1_Main.wav",
+          "sourceSha256": "24e4a7a9d1e6dd221ab478fa57793e3575e3b5f666dc75a1ad5d58d05ac7f129",
+          "sha256": "ed4ec46872253f7c2c8a3110095fb652a8c5c0735605ba20df85cad86b15d7a3",
+          "bytes": 51345,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/77_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_F4_v3_rr1_Main.wav",
+          "sourceSha256": "b6bc7264f3cd0ed04487d4e9c6f7548d8a23f001f689ec5ec048d45c49e5941a",
+          "sha256": "f695645ba3b8a170803a7f1ccbd02d0dfeb26b5120d4389ba9ea02e138de754c",
+          "bytes": 23282,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/81_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_A4_v2_rr1_Main.wav",
+          "sourceSha256": "9fa4d639ba513db9d02ae1d18c1258dc8ce391f37752a8fd096a99d6f8b7bb47",
+          "sha256": "aaccb0ff02a68eb2ed5251334ff9629a1d330e03d2d5250fe5840fa03d7e4173",
+          "bytes": 52988,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/81_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_A4_v3_rr1_Main.wav",
+          "sourceSha256": "651d8210d3f83596380481c46726bbf82bd07c24c5048a815aa5db218d094ae4",
+          "sha256": "33ec10db34a8413f71524ac74fc818590562f6633fe6620952f68911a033dbd9",
+          "bytes": 39920,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/84_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_C5_v2_rr1_Main.wav",
+          "sourceSha256": "774705f0da1e9c6299baa0343d1c12f82647f528f954096fdf9a75ba5694a2b1",
+          "sha256": "c418c00083bb06eedd632d30578bae18e80e30ad92444c52388f67ebe4291c22",
+          "bytes": 46238,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/84_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_C5_v3_rr1_Main.wav",
+          "sourceSha256": "2aa1bde8ca38dcfccb07641d7d8514f3df6e8f523287055f7fdc4b54d8224bdb",
+          "sha256": "a7fecacc3200a732a5cf434896f3671729fec156a0b7e76572d09c36f127cee7",
+          "bytes": 25340,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/88_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_E5_v2_rr1_Main.wav",
+          "sourceSha256": "3d29acd09dc641572c56ceb96a6dfff3ad043a378ae11a096eaa2281676defab",
+          "sha256": "329a5e44690584ddd52715ec71ca5e38273ad268d0c87e4047c5c134d899a433",
+          "bytes": 36520,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/vibraphone/88_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_E5_v3_rr1_Main.wav",
+          "sourceSha256": "4e9f3241020170f570b641410e317c7183bc5a567bfe91351711bbc7a21e79f5",
+          "sha256": "6fe6987ec03b7e59ad0e4adeb8837e76ebdfa9764b19911afa04bd1fd1908984",
+          "bytes": 19910,
+          "seconds": 3.5
+        }
+      ]
+    },
+    {
+      "id": "xylophone",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Xylophone (medium mallets)",
+          "map": "Idiophones/Struck Idiophones/Xylophone - Medium Mallets.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/xylophone/67_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_G3_pp_01_far.wav",
+          "sourceSha256": "71aed638f20118b13a1e0e282cc77b51fa45c63ab83f08142d6f258521adc581",
+          "sha256": "37f98c6b2eef70145fc28b366c717ef975e9b419a0074e471f5f26db4502d678",
+          "bytes": 14523,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/xylophone/67_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_G3_ff_01_far.wav",
+          "sourceSha256": "7fd42d4a659886367b7a54275e4050328385294e680de33eba5ee0007e53eb7c",
+          "sha256": "cca7265b5fce38e53c4f615b5250b7c426b68b3e7278c44699e8e151998526f0",
+          "bytes": 14761,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/xylophone/72_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C4_pp_01_far.wav",
+          "sourceSha256": "bea188b7a606c5e75ce78fb5d2b81643899caa7634e9b44afe326257261bb7ec",
+          "sha256": "95e431e15a770022682809fdcac2fe25bb47140de9fe7323a1ede1e8be0d3cc9",
+          "bytes": 13469,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/xylophone/72_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C4_ff_01_far.wav",
+          "sourceSha256": "ef8650516f0734369c5f409f726315db13544e508f59cb82cf46f4206c10518d",
+          "sha256": "7129efae6be1446b63582e527a03a557f8eb0ca2c68386eea35e3f2b61eaee9d",
+          "bytes": 15007,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/xylophone/79_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_G4_pp_01_far.wav",
+          "sourceSha256": "32157b9952f62c45db97546734e2a31069de29397702694cb1f6664b231803df",
+          "sha256": "15b9a0aad74b59aad6528ac1bb89121ad9ae7999f163d369dfb9df241d4d20c1",
+          "bytes": 12858,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/xylophone/79_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_G4_ff_01_far.wav",
+          "sourceSha256": "f7e72d629db9b1f7d37b050cc1abf18bbde9629d616c91647d7abe5d7fb249b8",
+          "sha256": "5f46e755cc05321ac1c2dd17edefaeaa67afef70aa5f53fd24d395844f9a4056",
+          "bytes": 14195,
+          "seconds": 2
+        },
+        {
+          "file": "public/samples/xylophone/84_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C5_pp_01_far.wav",
+          "sourceSha256": "cd9c4e1400e26d1e69806989b1b69b8d49f93466cca7c26dc370bfabcbf031f5",
+          "sha256": "a967798a59a83e8047b65fbe738a9d70728d26888ace683b5b52abbf3b329c25",
+          "bytes": 11168,
+          "seconds": 1.857
+        },
+        {
+          "file": "public/samples/xylophone/84_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C5_ff_01_far.wav",
+          "sourceSha256": "b2ceeb64877d9975afbdf2fafb8892c416ac760c63bb2bc544007ef2331d35fd",
+          "sha256": "bb7b8590d18f6f33a38b8c1328c8d3069526d1f915e09f4f2b5414fcb4b95bb0",
+          "bytes": 10968,
+          "seconds": 1.887
+        },
+        {
+          "file": "public/samples/xylophone/91_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_G5_pp_01_far.wav",
+          "sourceSha256": "74c7cf3c4ddba750a89ca168cb748aec24229ff5154bc212ce1fb6d424697814",
+          "sha256": "4987f2f44e123514a4e9cf9033a95c1d7679941250329144051713ca5d3cc45e",
+          "bytes": 11423,
+          "seconds": 1.322
+        },
+        {
+          "file": "public/samples/xylophone/91_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_G5_ff_01_far.wav",
+          "sourceSha256": "d5b45edd0c164356c0425b663b9307bbb77a647ba7554423c6a8aa455ac8b2b3",
+          "sha256": "7bc2f8569670aa07ed906421a41fdd1d391b0aaec9f3a1758698ebe482e7643e",
+          "bytes": 10681,
+          "seconds": 1.616
+        },
+        {
+          "file": "public/samples/xylophone/96_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C6_pp_01_far.wav",
+          "sourceSha256": "cd255a44972d733dd8d21a0244297e1ff1ca0482a828474923a25ddadd695c45",
+          "sha256": "9081505750d9e58aa334cb6b831ce38b2a68de2993f720996e6957cda2fa25fd",
+          "bytes": 10341,
+          "seconds": 1.259
+        },
+        {
+          "file": "public/samples/xylophone/96_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C6_ff_01_far.wav",
+          "sourceSha256": "183d04381c44705f65c3750383f28695f4b2576311ace8fdbe567134f416ff27",
+          "sha256": "4f8cb63606516af850aca25ebf5fea6972d7113bcceac1c0c461c4d4ca22e081",
+          "bytes": 10525,
+          "seconds": 1.47
+        },
+        {
+          "file": "public/samples/xylophone/103_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_G6_pp_01_far.wav",
+          "sourceSha256": "cf9d1796ab4a2cb182d1325af53e4090d77970d2d552cb448be13b97ee6e5bbf",
+          "sha256": "69358c0af4db326c9689571a5ab81b890dfb5c45ffeda9ec1cd207300a075ac6",
+          "bytes": 9289,
+          "seconds": 1.003
+        },
+        {
+          "file": "public/samples/xylophone/103_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_G6_ff_01_far.wav",
+          "sourceSha256": "8d46e7cb1d2f61f466458f042bd20ce6086802a2396cfc1dab13a5d72232d8bf",
+          "sha256": "40438c06e0dc40343d7eeb0b6c4d3e0dc9dc85461c6714698894a9728c678aba",
+          "bytes": 9744,
+          "seconds": 1.385
+        },
+        {
+          "file": "public/samples/xylophone/108_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C7_pp_01_far.wav",
+          "sourceSha256": "158cad742278f85a1e76b2fc6abc5a6415fd8427c380eb896b8c1cac54fea31e",
+          "sha256": "7b337d017c55f2d0debec5263cadc87936caf7f7aea78cca97adc1e7118dc1ae",
+          "bytes": 10065,
+          "seconds": 0.893
+        },
+        {
+          "file": "public/samples/xylophone/108_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C7_ff_01_far.wav",
+          "sourceSha256": "f922a9ca996341c3cd6d54d3f3c569812e5c4c3325b1bb19de503b113b9a9197",
+          "sha256": "8fe18909e198ddb6ae0b2d30e3a3698c1fe9b49d9c0631842e420293d3e5db40",
+          "bytes": 10745,
+          "seconds": 1.14
+        }
+      ]
+    },
+    {
+      "id": "upright",
+      "library": "vsco2ce",
+      "sources": [
+        {
+          "instrument": "Solo Contrabass (pizzicato)",
+          "map": "ContrabassPizz.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/upright/28_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E0_v1_rr1.wav",
+          "sourceSha256": "7901d4aa056d2a6057a264ce98fc9e66a7ce48575d077a30f14083aa798cd188",
+          "sha256": "67d90be20cd1a8c241accf833b52400d32d224d0400e3f412879d35fb7c1bf29",
+          "bytes": 43129,
+          "seconds": 2.403
+        },
+        {
+          "file": "public/samples/upright/28_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E0_v1_rr2.wav",
+          "sourceSha256": "5287fecaedbfce87737d53c77bc19aa78322ef498f143ca2b71bc1ee8dc17845",
+          "sha256": "58ea47eba1917ac340c9c217deb2ba78eccd3594d700275c314138aec980a286",
+          "bytes": 42653,
+          "seconds": 2.34
+        },
+        {
+          "file": "public/samples/upright/28_63_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E0_v3_rr1.wav",
+          "sourceSha256": "790d1a480a0f38216d30ad6e9152bd26a744d9d651a7e822e1fe58883a9c673f",
+          "sha256": "e9ae5b10b86e7f6f093207cddcdac5ec83abf8049a0739d8df85b9cfa3adedf2",
+          "bytes": 47183,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/28_63_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E0_v3_rr2.wav",
+          "sourceSha256": "f533b634b7f87d75234737b4acbf7bf6f9587f71ee93c12b0bda65bea3e40333",
+          "sha256": "23c85aa1230308aceac8a62ae9a13d47a62202520b7d72c2522467008f096761",
+          "bytes": 48832,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/30_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_F#0_v1_rr1.wav",
+          "sourceSha256": "8d1337d6ba2b8e65e52d0623df7afa66b4b8d1863116cc6f798f629b7e27634b",
+          "sha256": "be48ddba9972d0adf873ffa460afd3f99e5647eee42e172d511315b051240393",
+          "bytes": 26942,
+          "seconds": 1.453
+        },
+        {
+          "file": "public/samples/upright/30_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_F#0_v1_rr2.wav",
+          "sourceSha256": "4709783a0fbbbf7290cb19e7fb39686f9deecbefec1f736da912b60f7b01ca96",
+          "sha256": "38175f5637392528da4a464541dbfb06d666ebe10bb11347f7721635fb609d12",
+          "bytes": 31212,
+          "seconds": 1.684
+        },
+        {
+          "file": "public/samples/upright/30_63_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_F#0_v3_rr1.wav",
+          "sourceSha256": "4bfdab1976e121136ab5d0bfb1e4b79523d5b0c7adf0d35704c98f5cb26713d1",
+          "sha256": "2d18379ef8de911a60e2687350d769e60657c1fc2150af5f2e99af8b0ca3a120",
+          "bytes": 50153,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/30_63_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_F#0_v3_rr2.wav",
+          "sourceSha256": "e50e59367b9b6707dbb28f97834e1d9bceabc233c5c86d3a61e8af2f5dedaaf4",
+          "sha256": "2722bcdb6b22313230fbbe6cdc90ffb17f60ec7624a64993480ac9ce35108039",
+          "bytes": 49599,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/31_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_G0_v1_rr1.wav",
+          "sourceSha256": "6c8ed06c816b2aee6443a3df4d8c24dd05d1e6fa72595d47b0e3755cd251e60f",
+          "sha256": "0f1462e953da1d39e95293db336e8cdbb81bc2381f3adcf7f723d2731fe08469",
+          "bytes": 19635,
+          "seconds": 0.961
+        },
+        {
+          "file": "public/samples/upright/31_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_G0_v1_rr2.wav",
+          "sourceSha256": "805a41b3a153a8601c9308a106c33604030ff7f3c0c944a92b25663a1baa7873",
+          "sha256": "59442efc2a9eb6b64ce0bbcea252dd2bbcf14847841357ad5c1a39ff209a15a2",
+          "bytes": 26035,
+          "seconds": 1.363
+        },
+        {
+          "file": "public/samples/upright/31_63_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_G0_v3_rr1.wav",
+          "sourceSha256": "9dc3c010e20999e524a7694abf27c12fb55296f2d9946d70917fa82b1d076136",
+          "sha256": "6c2c8058c5f9a784982237b2019d19586241e14a4265acd7ef5d2e2fa9917beb",
+          "bytes": 50305,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/31_63_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_G0_v3_rr2.wav",
+          "sourceSha256": "7f64d7d6f6309ab622cc0e070c6d50274f73d3f483e4067a05647fb89a6f51c8",
+          "sha256": "2d061fd66ec4055a6590853e0f4d0526d03a34f4e5dbf54c5fd863cc4e62397d",
+          "bytes": 49931,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/34_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_A#0_v1_rr1.wav",
+          "sourceSha256": "c172382a1c8db63d1893e909da3c0f7f96a60371dce0cfe712e64fd622066fbe",
+          "sha256": "772ecbe5b338782e1ff9294a8446c2631ec7e1f78cf2713fc60d4501e6eba8a6",
+          "bytes": 34606,
+          "seconds": 1.951
+        },
+        {
+          "file": "public/samples/upright/34_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_A#0_v1_rr2.wav",
+          "sourceSha256": "a82a509344a7e03e81f937b0daf647d55c3d47ec01867deeb41463d1d39209af",
+          "sha256": "aef3a3557f9349d1ad2ffccb595b78674eb874b1476727496d53ba68d47715e4",
+          "bytes": 31828,
+          "seconds": 1.85
+        },
+        {
+          "file": "public/samples/upright/34_63_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_A#0_v3_rr1.wav",
+          "sourceSha256": "ffdcf783332627d78bb09c348ce5bbf64e833d529a1cfd48e05362f27a857c0a",
+          "sha256": "746f7f6d306431622e0ad8fae1a943068ecf2948334740c82639aa5ce25f610b",
+          "bytes": 36425,
+          "seconds": 2.365
+        },
+        {
+          "file": "public/samples/upright/34_63_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_A#0_v3_rr2.wav",
+          "sourceSha256": "47ca23f0950ab1ad7c07fd3d4743d826985cc3b79f997c372ead51ebd538a60b",
+          "sha256": "6a562cb6ec8d12cdc8654a22b7512329389d4d3a8781e8d805721b23fc208aa1",
+          "bytes": 41928,
+          "seconds": 2.598
+        },
+        {
+          "file": "public/samples/upright/36_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_C1_v1_rr1.wav",
+          "sourceSha256": "5591160a867b21ba193d601390c9e1f35ec8d5deb0de686a410d25a98a103b06",
+          "sha256": "93d37dac584ced42c5129388759777560a437647b9d64f9acd82aba2f4d79d69",
+          "bytes": 27529,
+          "seconds": 1.534
+        },
+        {
+          "file": "public/samples/upright/36_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_C1_v1_rr2.wav",
+          "sourceSha256": "d880b29cafc4b537a5097c9b65a7e20d1be15d60efaf7ceb15e20517b6ad455b",
+          "sha256": "2d9802037ab3f7fcdab7a405ad31c1a5f19edbc7f6ed76df8b816c3d3b0f1de1",
+          "bytes": 37652,
+          "seconds": 2.301
+        },
+        {
+          "file": "public/samples/upright/36_63_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_C1_v3_rr1.wav",
+          "sourceSha256": "706d82ca773408bb6cd6f22466d5d017c1d36a9055f3a6b6af864407b26c5a0d",
+          "sha256": "c3a914af746b84b748bbcb2df3d1142d09904168f1a29dd6adf59be8face02af",
+          "bytes": 36397,
+          "seconds": 2.269
+        },
+        {
+          "file": "public/samples/upright/36_63_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_C1_v3_rr2.wav",
+          "sourceSha256": "242a0638d0571084b3a40da3a21a3f2dd67585e31601babf85f4251b4f67a3d3",
+          "sha256": "ef3647cc2e7eeea480c5b1a6589fa9a5689a003b5a8f70822cef07b4d0c7b29f",
+          "bytes": 35577,
+          "seconds": 2.181
+        },
+        {
+          "file": "public/samples/upright/38_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_D1_v1_rr1.wav",
+          "sourceSha256": "c4db29ae6949cb6c0d24201bb444c1d5b3806505bae47785cb199f5f0f4f02d2",
+          "sha256": "8a8d2cb5ced93e90da1fae0b653a7aa643102b91367839a48c3faf0812742296",
+          "bytes": 50670,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/38_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_D1_v1_rr2.wav",
+          "sourceSha256": "4f17f7c828a9d9123c8c6498a27aa6b7a2772a5b937183f3d622f41f56ce21ce",
+          "sha256": "eb4edd60ca69c86a729103ca22edb8ca09ed97bfe4ba249ed6468c7d3dbb6257",
+          "bytes": 50337,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/40_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E1_v1_rr1.wav",
+          "sourceSha256": "818fd3e7cc5200774333fc5dbb37e021ed0f155918cafe129acc0e90d37f9d49",
+          "sha256": "1e6860ae27cb1f25a3d1609f4fbe9be0c1f7b032bdcdd5fa1ce5e114d40eea44",
+          "bytes": 31024,
+          "seconds": 1.668
+        },
+        {
+          "file": "public/samples/upright/40_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E1_v1_rr2.wav",
+          "sourceSha256": "9b87c1440edb95a70ca997ac83cff0d0e84c176f6269a59f86ce381f339f09ce",
+          "sha256": "881b0d8d356a84361e55c205df5a6f686c0682b9528de7326daecca009b847b3",
+          "bytes": 31892,
+          "seconds": 1.787
+        },
+        {
+          "file": "public/samples/upright/40_63_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E1_v3_rr1.wav",
+          "sourceSha256": "7628daebe4a9f8524d46e6d58eee811f437e73c77eb6c21396152af58a062506",
+          "sha256": "f91a27350155e6077f561cb3de8392a93a2d6076a023b96c9d85121b171f5d14",
+          "bytes": 46259,
+          "seconds": 2.941
+        },
+        {
+          "file": "public/samples/upright/40_63_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E1_v3_rr2.wav",
+          "sourceSha256": "496f50ac55ae948b2a155fd06a9bc430118b9725eb638c1673ae3c389203ae91",
+          "sha256": "11f9506fe70b3dd4f14f7a6c76249d803c0f6bb4b0c236f13fe0d1bfd4d59a17",
+          "bytes": 39870,
+          "seconds": 2.524
+        },
+        {
+          "file": "public/samples/upright/42_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_F#1_v1_rr1.wav",
+          "sourceSha256": "6f91a2747ce3cea061c670f7bf5dc8611eef1c3af8d6e2dca75b6dac5a65bfc6",
+          "sha256": "29ff5aa8063e74768c6eabfa0c0ed771863b8c77e1b8e0f3069bc9e4297b6c73",
+          "bytes": 54817,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/42_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_F#1_v1_rr2.wav",
+          "sourceSha256": "7aece8942bd894dd7f6ed899f11a6c6a5d15ab5266a4a32f68e32babc99c3a08",
+          "sha256": "cf1071fd8886c099fa8a3f20d028c981884d34424800aaee77382d593bbd0a6a",
+          "bytes": 55832,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/44_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_G#1_v1_rr1.wav",
+          "sourceSha256": "bf377a41759c17794901957edc89ff48fb405f98879549916d9b228492f7f8d1",
+          "sha256": "7c876314b13b41f74a8f6efbb999a1a7d810a72ed181630ec1914c94ed37f179",
+          "bytes": 48524,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/44_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_G#1_v1_rr2.wav",
+          "sourceSha256": "25ff38b5300151dd040fd4934e67dc668d3d63a66c4733d9971428116d1b08bc",
+          "sha256": "2a38d644dc253383ebb15f4872c71adaf549892e5115a143af625c29a11ab030",
+          "bytes": 48752,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/45_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_A1_v1_rr1.wav",
+          "sourceSha256": "c88e632ac4f716d4e85112d6ea5bbe2d27d67019296787c25d27178a9e5f18ac",
+          "sha256": "991bfc96612902e7e08b326c25214e899002de852e7a22f8a788b0b97299f176",
+          "bytes": 52028,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/45_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_A1_v1_rr2.wav",
+          "sourceSha256": "e7aaefac5eb3986fcec86040e1f7310e84ea38be5d13abe2b3de101c41f43b2b",
+          "sha256": "7402860b152b30daed0042266abdee17bffeeeb654b2ac4876b1465e9b414b8a",
+          "bytes": 45611,
+          "seconds": 2.752
+        },
+        {
+          "file": "public/samples/upright/49_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_C#2_v1_rr1.wav",
+          "sourceSha256": "41804fc70cf82bd1c475611e315b14b1adf5effbd3369028302a681b54064b3f",
+          "sha256": "f8f5b048b44227a7908edcdc74f019cd611af226481732efef7418b4bf29f602",
+          "bytes": 50879,
+          "seconds": 2.912
+        },
+        {
+          "file": "public/samples/upright/49_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_C#2_v1_rr2.wav",
+          "sourceSha256": "326fa0536c5487af2a500423e6b6d1c2acfe005cb40268c7c2f152b6ca71517c",
+          "sha256": "cefb17551b96aa0543318d07333380fc3c75e20ec6b5da311851a239a82bf354",
+          "bytes": 48696,
+          "seconds": 2.824
+        },
+        {
+          "file": "public/samples/upright/52_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E2_v1_rr1.wav",
+          "sourceSha256": "b5c3dd4943ea9a3f1aa23ed07c827ec8851e28a7254bab7811b706c09fceb231",
+          "sha256": "48305a86885befcbfd0ccf2028b245d23b07639064e7c43a7774a6859ccb029e",
+          "bytes": 45344,
+          "seconds": 2.483
+        },
+        {
+          "file": "public/samples/upright/52_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E2_v1_rr2.wav",
+          "sourceSha256": "24278fedd0c37885bc109bfa4620b32f447cd031d328f393cdc58898ff42cc37",
+          "sha256": "7912fe5d997d27126b711a06f0a963a87b6f6ef095860acb9455128233fc3299",
+          "bytes": 56367,
+          "seconds": 3
+        },
+        {
+          "file": "public/samples/upright/56_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_G#2_v1_rr1.wav",
+          "sourceSha256": "f5d495c2184e6dacec7783719fbe3f6c1254995abb95ccf307026ef3dd7d5439",
+          "sha256": "67c8c00398d6f82305d6db4bf17a180a6b612a8317ee12285b9ab5325c18c1e0",
+          "bytes": 39963,
+          "seconds": 2.131
+        },
+        {
+          "file": "public/samples/upright/56_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_G#2_v1_rr2.wav",
+          "sourceSha256": "a3a5250bc7f561670cd429b0c72ae3b3f3de575d887c69cee48cc7f587be206e",
+          "sha256": "dae88fde2510b1da9f5879f6b0414db500828c58dd401b3d320ae4c6806b3539",
+          "bytes": 29696,
+          "seconds": 1.548
+        },
+        {
+          "file": "public/samples/upright/59_0_1.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_B2_v1_rr1.wav",
+          "sourceSha256": "58d70398829e87b9bd3b43fb3d384d9bc3e0aa9bfe70175ec2f4e7a914226c8b",
+          "sha256": "b1c58841112e2784dca5761567c8aaf72a55483c6e5fc23c6686da9d5f0d9ee7",
+          "bytes": 43561,
+          "seconds": 2.366
+        },
+        {
+          "file": "public/samples/upright/59_0_2.m4a",
+          "source": "Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_B2_v1_rr2.wav",
+          "sourceSha256": "22722d1cc3d2a997ec12b37b5dda0221c8d5477669dfa5ff9f77fdde6fd2ba1d",
+          "sha256": "6098002eeb09fd52454681b2d6b70433fb798e94f5554fd9acb50dd9b2b2df15",
+          "bytes": 36300,
+          "seconds": 1.883
         }
       ]
     },
     {
       "id": "kick",
-      "instrument": "Bass Drum 1 (concert)",
-      "sourceMap": "Membranophones/Struck Membranophones/Bass Drum 1.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Bass Drum 1 (concert)",
+          "map": "Membranophones/Struck Membranophones/Bass Drum 1.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/kick/60_0_1.m4a",
@@ -811,8 +1803,13 @@
     },
     {
       "id": "snare",
-      "instrument": "Snare Drum, Modern 1",
-      "sourceMap": "Membranophones/Struck Membranophones/Snare Drum, Modern 1.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Snare Drum, Modern 1",
+          "map": "Membranophones/Struck Membranophones/Snare Drum, Modern 1.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/snare/60_0_1.m4a",
@@ -898,8 +1895,13 @@
     },
     {
       "id": "rim",
-      "instrument": "Snare Drum, Modern 1",
-      "sourceMap": "Membranophones/Struck Membranophones/Snare Drum, Modern 1.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Snare Drum, Modern 1",
+          "map": "Membranophones/Struck Membranophones/Snare Drum, Modern 1.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/rim/60_0_1.m4a",
@@ -921,8 +1923,13 @@
     },
     {
       "id": "hihat",
-      "instrument": "Hi-Hat Cymbal",
-      "sourceMap": "Idiophones/Struck Idiophones/Hi-Hat Cymbal.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Hi-Hat Cymbal",
+          "map": "Idiophones/Struck Idiophones/Hi-Hat Cymbal.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/hihat/60_0_1.m4a",
@@ -992,8 +1999,13 @@
     },
     {
       "id": "openhat",
-      "instrument": "Hi-Hat Cymbal",
-      "sourceMap": "Idiophones/Struck Idiophones/Hi-Hat Cymbal.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Hi-Hat Cymbal",
+          "map": "Idiophones/Struck Idiophones/Hi-Hat Cymbal.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/openhat/60_0_1.m4a",
@@ -1015,8 +2027,13 @@
     },
     {
       "id": "tom",
-      "instrument": "Tom 1 (high)",
-      "sourceMap": "Membranophones/Struck Membranophones/Tom 1.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Tom 1 (high)",
+          "map": "Membranophones/Struck Membranophones/Tom 1.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/tom/60_0_1.m4a",
@@ -1070,8 +2087,13 @@
     },
     {
       "id": "tomlow",
-      "instrument": "Tom 2 (low)",
-      "sourceMap": "Membranophones/Struck Membranophones/Tom 2.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Tom 2 (low)",
+          "map": "Membranophones/Struck Membranophones/Tom 2.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/tomlow/60_0_1.m4a",
@@ -1125,8 +2147,13 @@
     },
     {
       "id": "crash",
-      "instrument": "Suspended Cymbal 1",
-      "sourceMap": "Idiophones/Struck Idiophones/Suspended Cymbal 1.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Suspended Cymbal 1",
+          "map": "Idiophones/Struck Idiophones/Suspended Cymbal 1.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/crash/60_0_1.m4a",
@@ -1164,8 +2191,13 @@
     },
     {
       "id": "ride",
-      "instrument": "Suspended Cymbal 1",
-      "sourceMap": "Idiophones/Struck Idiophones/Suspended Cymbal 1.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Suspended Cymbal 1",
+          "map": "Idiophones/Struck Idiophones/Suspended Cymbal 1.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/ride/60_0_1.m4a",
@@ -1195,8 +2227,13 @@
     },
     {
       "id": "clap",
-      "instrument": "Claps (group)",
-      "sourceMap": "Idiophones/Struck Idiophones/Claps.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Claps (group)",
+          "map": "Idiophones/Struck Idiophones/Claps.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/clap/60_0_1.m4a",
@@ -1250,8 +2287,13 @@
     },
     {
       "id": "shaker",
-      "instrument": "Shaker, Small",
-      "sourceMap": "Idiophones/Struck Idiophones/Shaker, Small.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Shaker, Small",
+          "map": "Idiophones/Struck Idiophones/Shaker, Small.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/shaker/60_0_1.m4a",
@@ -1289,8 +2331,13 @@
     },
     {
       "id": "cowbell",
-      "instrument": "Cowbells",
-      "sourceMap": "Idiophones/Struck Idiophones/Cowbells.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Cowbells",
+          "map": "Idiophones/Struck Idiophones/Cowbells.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/cowbell/60_0_1.m4a",
@@ -1320,8 +2367,13 @@
     },
     {
       "id": "perc",
-      "instrument": "Woodblock",
-      "sourceMap": "Idiophones/Struck Idiophones/Woodblock.sfz",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Woodblock",
+          "map": "Idiophones/Struck Idiophones/Woodblock.sfz"
+        }
+      ],
       "files": [
         {
           "file": "public/samples/perc/60_0_1.m4a",
@@ -1378,6 +2430,330 @@
           "sha256": "f9650db796e7033c33a709a5d879ebd345a08f1406f700f5aaef1b9f8f0c6c0b",
           "bytes": 15133,
           "seconds": 0.743
+        }
+      ]
+    },
+    {
+      "id": "bongo",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Bongos (high drum)",
+          "map": "Membranophones/Struck Membranophones/Bongos.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/bongo/60_0_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoH_Hit1_v1_rr1_Mid.wav",
+          "sourceSha256": "7ebcd2149e8a75189446afba67c96b58f42757bf7aa355364f2e11cee705f33f",
+          "sha256": "e46a0ed584d193928bbace86c328221994fbef86d72ce0ea043230699d126bc2",
+          "bytes": 16476,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/bongo/60_0_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoH_Hit1_v1_rr2_Mid.wav",
+          "sourceSha256": "4905c0cee5db34c8edfc49aa51d93f4a7d2a823190eaa12d2500515639a42cf3",
+          "sha256": "e69e01a4094651fcd4faee5214e844b87af6b67829f036adcfaebc67dae1342f",
+          "bytes": 17354,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/bongo/60_66_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoH_Hit1_v2_rr1_Mid.wav",
+          "sourceSha256": "dd9b6239a151702966a995937f74ac022c9bb950c967277fbd16beaced0c9e1a",
+          "sha256": "db16b4590cc0fe8a0f56f8074e0dfa2bb44b3e517664b4f563e9935543488660",
+          "bytes": 16512,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/bongo/60_66_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoH_Hit1_v2_rr2_Mid.wav",
+          "sourceSha256": "03d4653d70e2180643872da4ebb94845f4da81b8d8f9ba2c7df3a611bd9d65ac",
+          "sha256": "3ee6633dd654363f2f63030d9031b74532b4749151454e587a4f7139b2aeeacf",
+          "bytes": 17210,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/bongo/60_100_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoH_Hit1_v3_rr1_Mid.wav",
+          "sourceSha256": "e93ed5c0fbafc3f122ced7c56c3f08021d8616e96c81c42aa62c5f368111d001",
+          "sha256": "427a97e3418438ae3fb77334a6eeb127367eb195059417d4b0ce6f748cb05763",
+          "bytes": 15139,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/bongo/60_100_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoH_Hit1_v3_rr2_Mid.wav",
+          "sourceSha256": "e0c143a2d32aca5430ffe2254c699b772ecfeaf6eef9d4c414365b538f693916",
+          "sha256": "ac8035a083c3f5f60a27bcd947daa3dd3de3231223053a33ee756131a445e623",
+          "bytes": 16024,
+          "seconds": 0.8
+        }
+      ]
+    },
+    {
+      "id": "bongolow",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Bongos (low drum)",
+          "map": "Membranophones/Struck Membranophones/Bongos.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/bongolow/60_0_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoL_Hit1_v1_rr1_Mid.wav",
+          "sourceSha256": "746f5c4d37cf956c083f0c98b74dd7b6f7daeda6405d7b1534bbc56f1b741e4a",
+          "sha256": "e5a12b8e8e6d7d784fdcc59ce5d439ac25947f385765af1d23efa4c229eb90e4",
+          "bytes": 17333,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/bongolow/60_0_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoL_Hit1_v1_rr2_Mid.wav",
+          "sourceSha256": "30c83a15eb158a8114ada571c196027691cf205d9fd55423d4405a65b94dc231",
+          "sha256": "972f35d230825fc71c808a5ce7b2aa1e00aac51ae6eb963f7e61b0353d54868c",
+          "bytes": 17727,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/bongolow/60_66_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoL_Hit1_v2_rr1_Mid.wav",
+          "sourceSha256": "0ee22ac30a27a1e91fbba58e0c4b36b28ea6c508dad5f11b10bdb9db07f2b443",
+          "sha256": "ce9783c6b99939f797afbb2f22b7132bca2ee89800704453c47c5a56d264014c",
+          "bytes": 16461,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/bongolow/60_66_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoL_Hit1_v2_rr2_Mid.wav",
+          "sourceSha256": "0933627d939145e57ff95e93ce3618b0c35f8de6ed6f0f4bfad42f8dd66f8fa5",
+          "sha256": "259c541dac0059605406880d1c596b7001e7a653c05c9d2926c5896f3f6b2e5b",
+          "bytes": 16028,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/bongolow/60_100_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoL_Hit1_v3_rr1_Mid.wav",
+          "sourceSha256": "07986a1bc54b31dafd9c7dc250e42a613977b320b33b2e4652d21332064de4eb",
+          "sha256": "2a9ab332c6bae56b394e715a726b9f37aa5e5c1f77e15bbdd6cb91315fae4a47",
+          "bytes": 15695,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/bongolow/60_100_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Bongos/BongoL_Hit1_v3_rr2_Mid.wav",
+          "sourceSha256": "da93f8eba020d57ec57c27505f4132c346900aee6a5f76e9754d01c93658a226",
+          "sha256": "a9c16766e7f63a205fd03d71cfa9216488ec07addfcb5bf4055a5921fd09c63e",
+          "bytes": 14760,
+          "seconds": 0.8
+        }
+      ]
+    },
+    {
+      "id": "conga",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Conga (open hit)",
+          "map": "Membranophones/Struck Membranophones/Conga.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/conga/60_0_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Conga/Conga_HitN_v1_rr1_Sum.wav",
+          "sourceSha256": "74bb1f4feb3ae739e229f47f54b66def0cd12adc0033e998091e6456a15eadd0",
+          "sha256": "67e35410c3580532142d41b4c99e3db0c81e94f6069a652963ccb924a274063c",
+          "bytes": 19115,
+          "seconds": 1
+        },
+        {
+          "file": "public/samples/conga/60_0_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Conga/Conga_HitN_v1_rr2_Sum.wav",
+          "sourceSha256": "08c13ec3aecfeca05762d696e67ec592f018898ed3969270c31fda6d249391f6",
+          "sha256": "b6b6b24c633d2e10c3253cc16b09e20482b8a0e24d8b57807d2aed9414b45668",
+          "bytes": 14419,
+          "seconds": 0.662
+        },
+        {
+          "file": "public/samples/conga/60_66_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Conga/Conga_HitN_v2_rr1_Sum.wav",
+          "sourceSha256": "13d322c0e7a830cdbcbdc5a6e05566dfe3f5a073b7b82a3262d3f6fc10f96764",
+          "sha256": "6cce5b0f0f046eff3bd11f1bb034bc2597b6c3c39b0c8c0a5f06e500e99cb047",
+          "bytes": 16034,
+          "seconds": 0.793
+        },
+        {
+          "file": "public/samples/conga/60_66_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Conga/Conga_HitN_v2_rr2_Sum.wav",
+          "sourceSha256": "4f52f6619fd12d1d0e1e942e67cdf77fcad06fef6de44eba8bab6df99ade4acd",
+          "sha256": "35d6b435174c1a8ba171130be1665c64c598e5fbf0259beee449edb6f8b7d006",
+          "bytes": 15290,
+          "seconds": 0.747
+        },
+        {
+          "file": "public/samples/conga/60_100_1.m4a",
+          "source": "Membranophones/Struck Membranophones/Conga/Conga_HitN_v3_rr1_Sum.wav",
+          "sourceSha256": "664365ac735d819c69cabbbae8a78d225fa73059e698ad8ca292c46cc03c6961",
+          "sha256": "16314fab23ce6417f08d1a2e62014e08f8d33c96dcf2e8766a3d7f85e66aa554",
+          "bytes": 18542,
+          "seconds": 1
+        },
+        {
+          "file": "public/samples/conga/60_100_2.m4a",
+          "source": "Membranophones/Struck Membranophones/Conga/Conga_HitN_v3_rr2_Sum.wav",
+          "sourceSha256": "d968cd98a8cf8238f244515a302b77adec88dae365bc9de9146ae8938225d142",
+          "sha256": "988804c2b7a8b20417ecac5a42a7f1fe6df18aed98b9b797f4d63ce3d116e7df",
+          "bytes": 18076,
+          "seconds": 1
+        }
+      ]
+    },
+    {
+      "id": "triangle",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Triangle (mid)",
+          "map": "Idiophones/Struck Idiophones/Triangles.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/triangle/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Triangles/Triangle3_Hit_v1_rr1_Mid.wav",
+          "sourceSha256": "9c83da63a2629f61a2408f647e38d33f6c05a3d374085ff749fe6d85efa6705d",
+          "sha256": "271ca6e548b724cfa810db583ec14a071350e16c024ea1901682ab5bdb55fce3",
+          "bytes": 61712,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/triangle/60_0_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Triangles/Triangle3_Hit_v1_rr2_Mid.wav",
+          "sourceSha256": "fa6e8039f172c64e4bc2aea15c99c4b268def75e332b08955f045b8d256c7481",
+          "sha256": "b055ce6d9225a2f0b7b1df4e02f23336c9e001a19958029401603e21e05dfde5",
+          "bytes": 63090,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/triangle/60_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Triangles/Triangle3_Hit_v2_rr1_Mid.wav",
+          "sourceSha256": "471239814ecb593400bb19ed3f436358db4157f7fd2e3996c0176a5c3d8de913",
+          "sha256": "6c5c05b7c84ca59a7b657f478e28557ca3b56a5657459cff29a58f5852dbd7b8",
+          "bytes": 53187,
+          "seconds": 3.5
+        },
+        {
+          "file": "public/samples/triangle/60_84_2.m4a",
+          "source": "Idiophones/Struck Idiophones/Triangles/Triangle3_Hit_v2_rr2_Mid.wav",
+          "sourceSha256": "a5775203ae37aa63be7d54e6ee4b5bc1722bd2f2f29bb3a525c0591fd37428fb",
+          "sha256": "735ba9962984ade19577ae45c909a9b6691e0dd36614657c4e5d579ff7788ef1",
+          "bytes": 55311,
+          "seconds": 3.5
+        }
+      ]
+    },
+    {
+      "id": "tambourine",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Tambourine 1 (hit)",
+          "map": "Idiophones/Struck Idiophones/Tambourine 1.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/tambourine/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Tambourine 1/Tamb1_Hit_v1_rr1_Mid.wav",
+          "sourceSha256": "6fd5af9ec2d94c3b66fa871aecbc2e2844eea155a668fd0f15f07d59ae67dd40",
+          "sha256": "870e273a43663d07c37b427072fcc8cf0f15ba461b6738fe8dc6fe4264444170",
+          "bytes": 19625,
+          "seconds": 0.8
+        },
+        {
+          "file": "public/samples/tambourine/60_84_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Tambourine 1/Tamb1_Hit_v2_rr1_Mid.wav",
+          "sourceSha256": "885ebf1d70f8e888f576682e4e4112b92b69649162f392c83b3379c91a09cf41",
+          "sha256": "3b4b44c61a8dbf5e1e3cb1f8d7a3ba7f6c7c8d23cafe9295438b2a0edf062ada",
+          "bytes": 18910,
+          "seconds": 0.8
+        }
+      ]
+    },
+    {
+      "id": "claves",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Claves (pair 1)",
+          "map": "Idiophones/Struck Idiophones/Claves.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/claves/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Claves/Claves1_Hit_v1_rr1_Mid.wav",
+          "sourceSha256": "19379cc794b9e50d4dc55200238e27091bedab63b7370eb625490c7a96631b34",
+          "sha256": "8c23b2159d4f929df085422114639bf01ad891abf1a27d6f29a30270242bf1fa",
+          "bytes": 13126,
+          "seconds": 0.5
+        },
+        {
+          "file": "public/samples/claves/60_66_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Claves/Claves1_Hit_v2_rr1_Mid.wav",
+          "sourceSha256": "bcabe27330761309eb4b4f6207e6e3b4be59815df86449ac05bfb9b81f19efc9",
+          "sha256": "1dceb20aa69861691a5bb0b3cd7c762d5231df0b851d584baa4427e17d141c8a",
+          "bytes": 12481,
+          "seconds": 0.5
+        },
+        {
+          "file": "public/samples/claves/60_100_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Claves/Claves1_Hit_v3_rr1_Mid.wav",
+          "sourceSha256": "12285f65ed125f4140d1e8a86b2d6a08bf3283b7bf30c10d68290b8e8230a927",
+          "sha256": "f160d568908ae8c7385c220b3bc7dc503893132993437294991fd69297f0e4ab",
+          "bytes": 11835,
+          "seconds": 0.5
+        }
+      ]
+    },
+    {
+      "id": "agogo",
+      "library": "vcsl",
+      "sources": [
+        {
+          "instrument": "Agogo Bells (high)",
+          "map": "Idiophones/Struck Idiophones/Agogo Bells.sfz"
+        }
+      ],
+      "files": [
+        {
+          "file": "public/samples/agogo/60_0_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Agogo Bells/Agogo_High_v1_rr1_Mid.wav",
+          "sourceSha256": "a319d68b2e38304d063531b2a152194871623bbce0dc55a870c0ab45570cbbdf",
+          "sha256": "4f09d12bd30ce090a312874d747c71e5b7adb7af3b65abe36609f48698a5ebec",
+          "bytes": 20723,
+          "seconds": 1.112
+        },
+        {
+          "file": "public/samples/agogo/60_66_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Agogo Bells/Agogo_High_v2_rr1_Mid.wav",
+          "sourceSha256": "f74a3100634a4372f2e2f81adf2f6a7839861ec4dcf13291001a3268e37806de",
+          "sha256": "312d36ba924721941e168fed02c384b5214e2a3c24cae455eb5544c50463c146",
+          "bytes": 20183,
+          "seconds": 1.131
+        },
+        {
+          "file": "public/samples/agogo/60_100_1.m4a",
+          "source": "Idiophones/Struck Idiophones/Agogo Bells/Agogo_High_v3_rr1_Mid.wav",
+          "sourceSha256": "c7f0d2b70c6cee34beea62d7566227da2687ca5c87d72d1245f444fbe2c76b43",
+          "sha256": "84d9665f0419aafa050a50b6bf1e85e99564c3f70af77dc5517df14f60426053",
+          "bytes": 19770,
+          "seconds": 1.11
         }
       ]
     }

@@ -7,14 +7,16 @@ import { VOICE_CATALOG, type VoiceCategory, type VoiceDef } from '../model/voice
 // sounds sat below the fold with no scrollbar to say so — a sound a child can't
 // see is a sound the app doesn't have. Headers stay put; only the open family
 // spends any height, so the panel never scrolls and never hides a family.
-const CATEGORY_ORDER: VoiceCategory[] = ['Drums', 'Bass', 'Keys', 'Cymbals', 'Percussion'];
+// Beat-makers first, tune-makers after — the order a song tends to get built.
+const CATEGORY_ORDER: VoiceCategory[] = ['Drums', 'Cymbals', 'Percussion', 'Mallets', 'Keys', 'Bass'];
 
 const CATEGORY_EMOJI: Record<VoiceCategory, string> = {
   Drums: '🥁',
-  Bass: '🎸',
-  Keys: '🎹',
   Cymbals: '💥',
   Percussion: '👏',
+  Mallets: '🎐',
+  Keys: '🎹',
+  Bass: '🎸',
 };
 
 export const VOICE_DRAG_TYPE = 'application/x-beatbox-voice';
@@ -39,7 +41,7 @@ export function Library() {
       {CATEGORY_ORDER.map((cat) => {
         const isOpen = cat === open;
         return (
-          <div key={cat}>
+          <div key={cat} className={`cat-group ${isOpen ? 'open' : ''}`}>
             <button
               type="button"
               className={`cat ${isOpen ? 'open' : ''}`}

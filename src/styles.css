@@ -251,11 +251,28 @@ select.snap {
 
 /* ---- library ----------------------------------------------------------- */
 
+/* The panel itself never scrolls: every family's header must stay on screen at
+   any window height, or a family becomes invisible. The open family flexes
+   into whatever height is left, and only its own tile list scrolls when that
+   runs short. */
 .library {
   background: var(--bg-panel);
   border-right: 1px solid var(--line);
-  overflow-y: auto;
-  padding: 12px 12px 40px;
+  overflow: hidden;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.cat-group {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.cat-group.open {
+  /* Shrinkable, not greedy: the tiles give way (and scroll) when the window
+     is short, but never push the headers apart when it isn't. */
+  flex: 0 1 auto;
 }
 .library h2 {
   font-size: 12px;
@@ -270,13 +287,16 @@ select.snap {
   line-height: 1.45;
   margin: 0 4px 14px;
 }
+/* Sized so the *largest* family open still leaves every family's header on
+   screen at an ordinary window height — a header a child can't see is a family
+   the app doesn't have. That is why the rows are compact and single-column. */
 .cat {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
-  margin: 6px 0 0;
-  padding: 8px 10px;
+  margin: 4px 0 0;
+  padding: 6px 10px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: none;
@@ -294,7 +314,7 @@ select.snap {
 }
 .cat.open {
   color: var(--text);
-  margin-bottom: 7px;
+  margin-bottom: 4px;
 }
 .cat-emoji {
   font-size: 14px;
@@ -308,16 +328,18 @@ select.snap {
 }
 .tiles {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  overflow-y: auto;
+  min-height: 0;
+  align-content: start;
 }
 .tile {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px;
-  border-radius: var(--radius);
+  align-items: center;
+  gap: 9px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg-panel-2);
   border: 1px solid var(--line);
   cursor: grab;
@@ -332,12 +354,13 @@ select.snap {
   transform: scale(0.97);
 }
 .tile .dot {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 7px;
   display: grid;
   place-items: center;
-  font-size: 16px;
+  font-size: 13px;
 }
 .tile .name {
   font-size: 12.5px;
