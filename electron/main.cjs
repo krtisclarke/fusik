@@ -379,9 +379,36 @@ function buildMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+// ---- keeping the app current ---------------------------------------------
+//
+// Silent on purpose, and decided by the person who owns the machine, not the
+// child using it: at launch the app asks the GitHub Releases page (where the
+// installer already comes from) whether a newer version exists. If so it
+// downloads in the background and installs itself when the app next closes —
+// no pop-ups, no questions, the app is simply always the newest. A child
+// should never be handed an update decision they have no way to judge.
+//
+// Windows only: that is the machine the app actually ships to, and the Mac
+// copy is a development build (macOS also refuses to swap an unsigned app).
+// Every failure here is swallowed silently — being offline is a normal state
+// for this app, not an error, and an update can always happen next time.
+function checkForUpdatesQuietly() {
+  if (!app.isPackaged || process.platform !== 'win32') return;
+  try {
+    const { autoUpdater } = require('electron-updater');
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.on('error', () => {});
+    autoUpdater.checkForUpdates().catch(() => {});
+  } catch {
+    // The updater module missing or broken must never stop the app opening.
+  }
+}
+
 app.whenReady().then(() => {
   buildMenu();
   createWindow();
+  checkForUpdatesQuietly();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

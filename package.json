@@ -1,6 +1,6 @@
 {
   "name": "beatbox-studio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A music creation studio for curious kids. Drag, drop, tweak, and hear it instantly.",
   "author": "Beatbox Studio",
@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@breezystack/lamejs": "^1.2.7",
+    "electron-updater": "^6.8.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^4.5.5"
@@ -52,7 +53,7 @@
     },
     "win": {
       "target": "nsis",
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "Beatbox-Studio-Setup-${version}.${ext}"
     },
     "mac": {
       "target": "dir",
@@ -61,6 +62,15 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "krtisclarke",
+      "repo": "fusik"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krtisclarke/fusik.git"
   }
 }

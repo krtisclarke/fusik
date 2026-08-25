@@ -932,6 +932,30 @@ npm run package:win # NSIS installer for x64 (cross-builds fine from this Mac; C
 npm run package:mac # macOS app bundle
 ```
 
+### Shipping an update
+
+Installed Windows copies watch the GitHub Releases page and update themselves
+silently (download in the background at launch, install on quit). To ship:
+
+```bash
+npm version patch        # bumps package.json and makes the vX.Y.Z tag
+git push && git push --tags
+```
+
+The tag makes GitHub build the installer on a real Windows machine, run the
+whole test suite there, and publish the Release. Three files must land on
+every Release, and the workflow uploads all three: the installer, its
+`.blockmap` (so updates download only what changed), and `latest.yml` — the
+file installed apps actually read to learn a new version exists. A Release
+missing `latest.yml` is invisible to installed apps.
+
+Two name traps, both already hit and fixed. The artifact name must contain
+**no spaces**: electron-builder writes spaces as dashes into `latest.yml`
+while GitHub renames uploaded assets with dots, and an updater chasing the
+dash-name 404s silently forever. And `electron-builder --publish never` stays
+in the package script — publishing is the workflow's job, and on CI the
+builder would otherwise try (and fail) to do it itself.
+
 ### A blank Electron window is almost always a stale dependency cache
 
 Vite pre-bundles dependencies into `node_modules/.vite/deps` and serves them
@@ -1178,6 +1202,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Automation | ⬜ | Phase 6. |
 | WAV export | ✅ | Renders the whole song offline through the master chain to a 16-bit stereo `.wav` (native Save dialog on desktop, download in browser). Verified: valid RIFF header, non-silent, no clipping. |
 | MP3 export | ✅ | Export's everyday output: about a tenth the size of the WAV, plays anywhere, small enough to send. Encoded in the app by a bundled pure-JS LAME port (lamejs, LGPL — see §5); measured round-trip on a real song: duration intact, level within a third of a decibel. "as WAV" stays beneath it for the full uncompressed audio. |
+| Silent auto-update (Windows) | ✅ | At launch the installed app quietly asks the GitHub Releases page for a newer version, downloads in the background, installs on quit. No pop-ups — a child is never handed an update decision. Windows + packaged builds only; offline is treated as normal, never an error. See "Shipping an update" below. |
 
 Nothing above is faked: the disabled Record button is visibly disabled, and
 "partial" means exactly what the note says.

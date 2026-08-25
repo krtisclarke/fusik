@@ -41,17 +41,26 @@ jobs:
       - name: Build installer
         run: npm run package:win
 
+      # The .blockmap and latest.yml ride along with the installer on purpose:
+      # installed apps read latest.yml from the newest Release to learn a new
+      # version exists, and the blockmap lets them download only what changed.
+      # A Release without them is an installer people can download but
+      # installed apps cannot see.
       - name: Keep the installer as a downloadable artifact
         uses: actions/upload-artifact@v4
         with:
           name: Beatbox-Studio-Windows-Setup
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/latest.yml
           if-no-files-found: error
 
       - name: Publish a Release on tags
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: |
-          gh release create $env:GITHUB_REF_NAME (Get-Item release/*.exe).FullName --title "Beatbox Studio $env:GITHUB_REF_NAME" --notes "Windows installer. Unsigned, so SmartScreen asks once - More info, then Run anyway."
+          $files = @(Get-Item release/*.exe) + @(Get-Item release/*.blockmap) + @(Get-Item release/latest.yml)
+          gh release create $env:GITHUB_REF_NAME @($files.FullName) --title "Beatbox Studio $env:GITHUB_REF_NAME" --notes "Windows installer. Unsigned, so SmartScreen asks once - More info, then Run anyway. Installed copies update themselves from this page."
         env:
           GH_TOKEN: ${{ github.token }}

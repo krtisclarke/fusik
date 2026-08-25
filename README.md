@@ -23,7 +23,9 @@ artifact). Run the installer; because it isn't code-signed, Windows will show
 a **"Windows protected your PC"** notice the first time — click **More info**,
 then **Run anyway**. That happens once. New installers can be built any time
 from the repo's Actions tab ("Run workflow"), or by pushing a `v*` tag, which
-also publishes a Release.
+also publishes a Release. After that first install the app keeps itself
+current on its own: it checks this Releases page quietly at launch and
+installs updates in the background.
 
 ## Run it (development)
 
