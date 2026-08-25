@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as P from './project';
 import { SCALES, pitchLadder } from './scales';
 import { getVoice } from './voices';
 import {
@@ -521,5 +522,127 @@ describe('edits that change nothing', () => {
 
     const atMaximum = setBpm(p, 300);
     expect(setBpm(atMaximum, 9000)).toBe(atMaximum); // pinned at the top
+  });
+});
+
+// ---- getting blocks on the beat -----------------------------------------
+
+describe('repeatNoteEvenly', () => {
+  function drumProject() {
+    let p = P.createDefaultProject();
+    const track = P.createTrackForVoice('kick');
+    p = P.addTrack(p, track);
+    return { p, trackId: track.id, sectionId: p.arrangement[0].sectionId };
+  }
+
+  it('fills the whole part on the block’s own offset, not just after it', () => {
+    const { p, trackId, sectionId } = drumProject();
+    // A 4-bar part in 4/4 is 16 beats. A block on beat 2, every beat, should
+    // fill 0..15 — including the beats *before* where the child clicked.
+    const note = P.createNote(sectionId, 2, 1);
+    const withNote = P.addNote(p, trackId, note);
+    const filled = P.repeatNoteEvenly(withNote, trackId, note.id, 1);
+    const starts = filled.tracks
+      .find((t) => t.id === trackId)!
+      .notes.map((n) => n.startBeat)
+      .sort((a, b) => a - b);
+    expect(starts).toEqual(Array.from({ length: 16 }, (_, i) => i));
+  });
+
+  it('every 4 beats lands one per bar', () => {
+    const { p, trackId, sectionId } = drumProject();
+    const note = P.createNote(sectionId, 0, 1);
+    const filled = P.repeatNoteEvenly(P.addNote(p, trackId, note), trackId, note.id, 4);
+    const starts = filled.tracks.find((t) => t.id === trackId)!.notes.map((n) => n.startBeat);
+    expect([...starts].sort((a, b) => a - b)).toEqual([0, 4, 8, 12]);
+  });
+
+  it('keeps the block’s own offset — a backbeat stays a backbeat', () => {
+    const { p, trackId, sectionId } = drumProject();
+    // On beat 3 of the bar (index 2), repeating every bar: 2, 6, 10, 14 —
+    // the offbeat it was placed on, in every bar, not shunted onto the downbeat.
+    const note = P.createNote(sectionId, 2, 1);
+    const filled = P.repeatNoteEvenly(P.addNote(p, trackId, note), trackId, note.id, 4);
+    const starts = filled.tracks.find((t) => t.id === trackId)!.notes.map((n) => n.startBeat);
+    expect([...starts].sort((a, b) => a - b)).toEqual([2, 6, 10, 14]);
+  });
+
+  it('pressing it twice does not stack a second copy on every beat', () => {
+    const { p, trackId, sectionId } = drumProject();
+    const note = P.createNote(sectionId, 0, 1);
+    const once = P.repeatNoteEvenly(P.addNote(p, trackId, note), trackId, note.id, 4);
+    const twice = P.repeatNoteEvenly(once, trackId, note.id, 4);
+    expect(twice).toBe(once); // nothing to add, so the same project back
+  });
+
+  it('leaves the song alone for a nonsense interval', () => {
+    const { p, trackId, sectionId } = drumProject();
+    const note = P.createNote(sectionId, 0, 1);
+    const withNote = P.addNote(p, trackId, note);
+    expect(P.repeatNoteEvenly(withNote, trackId, note.id, 0)).toBe(withNote);
+  });
+});
+
+describe('alignNotes', () => {
+  it('pulls off-beat blocks onto the nearest beat', () => {
+    let p = P.createDefaultProject();
+    const track = P.createTrackForVoice('kick');
+    p = P.addTrack(p, track);
+    const sectionId = p.arrangement[0].sectionId;
+    const a = P.createNote(sectionId, 0.9, 1);
+    const b = P.createNote(sectionId, 2.2, 1);
+    p = P.addNote(P.addNote(p, track.id, a), track.id, b);
+    const tidy = P.alignNotes(p, new Set([a.id, b.id]), 1);
+    const notes = tidy.tracks.find((t) => t.id === track.id)!.notes;
+    expect(notes.find((n) => n.id === a.id)!.startBeat).toBe(1);
+    expect(notes.find((n) => n.id === b.id)!.startBeat).toBe(2);
+  });
+
+  it('returns the same project when everything is already on the beat', () => {
+    let p = P.createDefaultProject();
+    const track = P.createTrackForVoice('kick');
+    p = P.addTrack(p, track);
+    const note = P.createNote(p.arrangement[0].sectionId, 3, 1);
+    p = P.addNote(p, track.id, note);
+    expect(P.alignNotes(p, new Set([note.id]), 1)).toBe(p);
+  });
+
+  it('never pushes a block past the end of its part', () => {
+    let p = P.createDefaultProject();
+    const track = P.createTrackForVoice('kick');
+    p = P.addTrack(p, track);
+    const sectionId = p.arrangement[0].sectionId;
+    const note = P.createNote(sectionId, 15.8, 1); // a 4-bar part ends at 16
+    p = P.addNote(p, track.id, note);
+    const tidy = P.alignNotes(p, new Set([note.id]), 1);
+    expect(tidy.tracks.find((t) => t.id === track.id)!.notes[0].startBeat).toBe(15);
+  });
+});
+
+describe('spreadNotes', () => {
+  it('evens out the gaps, leaving the first and last where they were', () => {
+    let p = P.createDefaultProject();
+    const track = P.createTrackForVoice('kick');
+    p = P.addTrack(p, track);
+    const sectionId = p.arrangement[0].sectionId;
+    const notes = [0, 1, 1.5, 12].map((b) => P.createNote(sectionId, b, 1));
+    for (const n of notes) p = P.addNote(p, track.id, n);
+    const spread = P.spreadNotes(p, new Set(notes.map((n) => n.id)));
+    const starts = spread.tracks
+      .find((t) => t.id === track.id)!
+      .notes.map((n) => n.startBeat)
+      .sort((a, b) => a - b);
+    expect(starts).toEqual([0, 4, 8, 12]);
+  });
+
+  it('needs three blocks to mean anything', () => {
+    let p = P.createDefaultProject();
+    const track = P.createTrackForVoice('kick');
+    p = P.addTrack(p, track);
+    const sectionId = p.arrangement[0].sectionId;
+    const a = P.createNote(sectionId, 0, 1);
+    const b = P.createNote(sectionId, 5, 1);
+    p = P.addNote(P.addNote(p, track.id, a), track.id, b);
+    expect(P.spreadNotes(p, new Set([a.id, b.id]))).toBe(p);
   });
 });

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { getVoice, resolveParams } from '../model/voices';
+import { beatsPerBar } from '../model/time';
 import { PARAM_SPECS, formatParamValue } from './soundParams';
 
 // The Sound Editor shapes the selected block(s). Each block has its own sound;
@@ -19,6 +20,9 @@ export function SoundEditor() {
   const chainSelected = useStore((s) => s.chainSelected);
   const unchainSelected = useStore((s) => s.unchainSelected);
   const select = useStore((s) => s.select);
+  const repeatSelectedEvery = useStore((s) => s.repeatSelectedEvery);
+  const alignSelected = useStore((s) => s.alignSelected);
+  const spreadSelected = useStore((s) => s.spreadSelected);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lastAudition = useRef(0);
@@ -48,6 +52,7 @@ export function SoundEditor() {
   if (!track || !note) return null;
 
   const count = selection.noteIds.length;
+  const perBar = beatsPerBar(project.timeSignature);
   const selectedNotes = track.notes.filter((n) => selection.noteIds.includes(n.id));
   const anyGrouped = selectedNotes.some((n) => !!n.groupId);
   const groupIds = new Set(selectedNotes.map((n) => n.groupId).filter(Boolean));
@@ -123,6 +128,45 @@ export function SoundEditor() {
         <button className="se-btn" onClick={() => select(null)} title="Close">
           ✕
         </button>
+      </div>
+
+      {/* Timing, before sound — because "why does it sound off?" is nearly
+          always spacing, and spacing is arithmetic rather than a steady hand.
+          One press turns a single block into a whole part's worth of them,
+          exactly a beat (or a bar) apart. */}
+      <div className="se-timing">
+        <span className="se-timing-label">Timing</span>
+        {count === 1 ? (
+          <>
+            <span className="se-timing-lead">Repeat it right across this part:</span>
+            <button className="se-btn" onClick={() => repeatSelectedEvery(0.5)} title="A copy every half beat, all the way across this part">
+              every ½ beat
+            </button>
+            <button className="se-btn" onClick={() => repeatSelectedEvery(1)} title="A copy on every beat, all the way across this part">
+              every beat
+            </button>
+            <button className="se-btn" onClick={() => repeatSelectedEvery(2)} title="A copy every two beats, all the way across this part">
+              every 2 beats
+            </button>
+            <button className="se-btn" onClick={() => repeatSelectedEvery(perBar)} title="A copy at the start of every bar of this part">
+              every bar
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="se-btn" onClick={() => alignSelected(1)} title="Pull each of these onto the nearest beat">
+              ⇥ On the beat
+            </button>
+            <button className="se-btn" onClick={() => alignSelected(0.5)} title="Pull each of these onto the nearest half beat">
+              ⇥ On the half beat
+            </button>
+            {count >= 3 && (
+              <button className="se-btn" onClick={spreadSelected} title="Same gap between every one of them — the first and last stay put">
+                ⇹ Same gaps
+              </button>
+            )}
+          </>
+        )}
       </div>
 
       <div className="se-hint">

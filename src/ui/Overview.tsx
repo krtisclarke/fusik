@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { engine } from '../audio/AudioEngine';
 import { getVoice, isPitched } from '../model/voices';
+import type { ResolvedEntry } from '../model/arrange';
 import { PX_PER_BEAT, HEADER_W, beatToX } from './layout';
 
-// The little map of the part: every block in miniature, the playhead, and a
+// The little map of the whole song: every block in miniature, the playhead, and a
 // bright window showing the slice of it the big timeline can see. Click or
 // drag anywhere on the map and the timeline pans there — which is how a child
 // discovers that there IS more song past the edge, something a scrollbar that
@@ -24,12 +25,13 @@ interface ScrollWindow {
 export function Overview({
   scrollRef,
   totalBeats,
+  entries,
 }: {
   scrollRef: React.RefObject<HTMLDivElement | null>;
   totalBeats: number;
+  entries: ResolvedEntry[];
 }) {
   const project = useStore((s) => s.project);
-  const currentSectionId = useStore((s) => s.currentSectionId);
   const [win, setWin] = useState<ScrollWindow>({ left: 0, width: 1 });
   const stripRef = useRef<HTMLDivElement>(null);
   const playRef = useRef<HTMLDivElement>(null);
@@ -67,12 +69,11 @@ export function Overview({
     };
   }, [scrollRef, syncWindow]);
 
-  // The playhead's twin, driven straight from the audio clock like the big
-  // one — and only while the part on screen is the part that is sounding.
+  // The playhead's twin, driven straight from the audio clock like the big one.
   useEffect(() => {
     let raf = 0;
     const tick = () => {
-      const beat = engine.getPlayheadIn(currentSectionId);
+      const beat = engine.getSongPlayheadBeat();
       if (playRef.current) {
         if (beat == null || totalBeats <= 0) {
           playRef.current.style.opacity = '0';
@@ -85,7 +86,7 @@ export function Overview({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [currentSectionId, totalBeats]);
+  }, [totalBeats]);
 
   /** Centre the timeline's view on this pointer position of the map. */
   const panTo = useCallback(
@@ -121,30 +122,43 @@ export function Overview({
     <div
       className="overview"
       ref={stripRef}
-      title="The whole part in miniature — click or drag to move the view below"
+      title="The whole song in miniature — click or drag to move the view below"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
     >
+      {/* Where one part ends and the next begins, so the map reads as a song
+          with a shape rather than a wall of dots. */}
+      {entries.map((e, i) =>
+        i === 0 ? null : (
+          <div
+            key={e.entryId}
+            className="ov-edge"
+            style={{ left: `${(e.startBeat / totalBeats) * 100}%` }}
+          />
+        ),
+      )}
       {tracks.map((track, i) => {
         const voice = getVoice(track.instrument.voiceId);
         const pitchedTrack = isPitched(voice);
-        return track.notes
-          .filter((n) => n.sectionId === currentSectionId)
-          .map((n) => (
-            <div
-              key={n.id}
-              className="ov-note"
-              style={{
-                left: `${(n.startBeat / totalBeats) * 100}%`,
-                width: `max(2px, ${(n.lengthBeats / totalBeats) * 100}%)`,
-                top: `${i * bandHeight + (pitchedTrack ? bandHeight * 0.2 : 0.5)}%`,
-                height: `${bandHeight * (pitchedTrack ? 0.6 : 0.9)}%`,
-                background: track.color,
-              }}
-            />
-          ));
+        return entries.flatMap((entry) =>
+          track.notes
+            .filter((n) => n.sectionId === entry.sectionId && n.startBeat < entry.lengthBeats)
+            .map((n) => (
+              <div
+                key={`${entry.entryId}:${n.id}`}
+                className="ov-note"
+                style={{
+                  left: `${((entry.startBeat + n.startBeat) / totalBeats) * 100}%`,
+                  width: `max(2px, ${(n.lengthBeats / totalBeats) * 100}%)`,
+                  top: `${i * bandHeight + (pitchedTrack ? bandHeight * 0.2 : 0.5)}%`,
+                  height: `${bandHeight * (pitchedTrack ? 0.6 : 0.9)}%`,
+                  background: track.color,
+                }}
+              />
+            )),
+        );
       })}
       <div
         className="ov-window"

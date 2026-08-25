@@ -7,6 +7,7 @@
 // clearer than deep-cloning everything.
 
 import { newEntryId, newGroupId, newNoteId, newSectionId, newTrackId } from './ids';
+import { barsToBeats } from './time';
 import type { Instrument, Note, Project, Section, TimeSignature, Track } from './types';
 import { PROJECT_FORMAT_VERSION } from './types';
 import { getVoice, isPitched } from './voices';
@@ -350,6 +351,12 @@ export function updateNote(
 }
 
 /** Move a note to a new track and/or beat position in one operation. */
+/**
+ * Move a block: in time, up or down the scale, to another row — and, since the
+ * timeline shows the whole song end to end, into another *part*. Dragging a
+ * block across a part boundary is the obvious thing to try once every part is
+ * on screen at once, and it has to mean what it looks like it means.
+ */
 export function moveNote(
   project: Project,
   fromTrackId: string,
@@ -357,12 +364,16 @@ export function moveNote(
   toTrackId: string,
   startBeat: number,
   pitch?: number,
+  sectionId?: string,
 ): Project {
   const fromTrack = project.tracks.find((t) => t.id === fromTrackId);
   const note = fromTrack?.notes.find((n) => n.id === noteId);
   if (!note) return project;
 
   const moved: Note = { ...note, startBeat: Math.max(0, startBeat) };
+  if (sectionId && project.sections.some((s) => s.id === sectionId)) {
+    moved.sectionId = sectionId;
+  }
   // Re-pitching is only meaningful for a block that has a pitch. Giving a drum
   // one would make it a note the drum voices don't read and the note-grid can't
   // draw — silently turning a kick into something with no row to live on.
@@ -377,6 +388,112 @@ export function moveNote(
   }
   const removed = removeNote(project, fromTrackId, noteId);
   return addNote(removed, toTrackId, moved);
+}
+
+// ---- getting blocks on the beat ------------------------------------------
+//
+// Placing a block is easy; placing eight of them the same distance apart is
+// fiddly, and getting it slightly wrong is exactly what makes a beat sound
+// wrong rather than sound like a style. These three do the arithmetic, so the
+// answer to "how do I make it even?" is a button rather than a steady hand.
+
+/** How long a section runs, in beats. */
+function sectionLengthBeats(project: Project, sectionId: string): number {
+  const section = project.sections.find((s) => s.id === sectionId);
+  return section ? barsToBeats(section.lengthBars, project.timeSignature) : 0;
+}
+
+/**
+ * Fill this block's part with copies of it, one every `everyBeats`.
+ *
+ * The copies land on the same *offset* as the block itself, not merely after
+ * it — a kick sitting on beat 3 asked to repeat every beat fills beats 1, 2, 3
+ * and 4, which is plainly what was meant, rather than leaving the first half
+ * of the bar empty because that is where the child happened to click. A spot
+ * already occupied by a matching block is left alone, so pressing the button
+ * twice doesn't stack two blocks in the same place.
+ */
+export function repeatNoteEvenly(
+  project: Project,
+  trackId: string,
+  noteId: string,
+  everyBeats: number,
+): Project {
+  const track = project.tracks.find((t) => t.id === trackId);
+  const note = track?.notes.find((n) => n.id === noteId);
+  if (!track || !note || everyBeats <= 0) return project;
+  const length = sectionLengthBeats(project, note.sectionId);
+  if (length <= 0) return project;
+
+  const phase = note.startBeat % everyBeats;
+  const copies: Note[] = [];
+  for (let beat = phase; beat < length - 1e-6; beat += everyBeats) {
+    const taken = track.notes.some(
+      (n) =>
+        n.sectionId === note.sectionId &&
+        Math.abs(n.startBeat - beat) < 1e-6 &&
+        n.pitch === note.pitch,
+    );
+    if (taken) continue;
+    copies.push({ ...note, id: newNoteId(), startBeat: beat, params: { ...note.params } });
+  }
+  if (copies.length === 0) return project;
+  return mapTrack(project, trackId, (t) => ({ ...t, notes: [...t.notes, ...copies] }));
+}
+
+/** Move each of these blocks to the nearest multiple of `stepBeats`. */
+export function alignNotes(project: Project, ids: Set<string>, stepBeats: number): Project {
+  if (ids.size === 0 || stepBeats <= 0) return project;
+  let changed = false;
+  const tracks = project.tracks.map((track) => ({
+    ...track,
+    notes: track.notes.map((n) => {
+      if (!ids.has(n.id)) return n;
+      const length = sectionLengthBeats(project, n.sectionId);
+      const snapped = clamp(
+        Math.round(n.startBeat / stepBeats) * stepBeats,
+        0,
+        Math.max(0, length - stepBeats),
+      );
+      if (Math.abs(snapped - n.startBeat) < 1e-9) return n;
+      changed = true;
+      return { ...n, startBeat: snapped };
+    }),
+  }));
+  return changed ? { ...project, tracks } : project;
+}
+
+/**
+ * Spread these blocks evenly between the first and the last of them.
+ *
+ * The two ends stay exactly where they were put — those are the decision; the
+ * ones in between are the arithmetic. Needs three to mean anything.
+ */
+export function spreadNotes(project: Project, ids: Set<string>): Project {
+  const all: Note[] = [];
+  for (const track of project.tracks) {
+    for (const n of track.notes) if (ids.has(n.id)) all.push(n);
+  }
+  if (all.length < 3) return project;
+  const sorted = [...all].sort((a, b) => a.startBeat - b.startBeat);
+  const first = sorted[0].startBeat;
+  const last = sorted[sorted.length - 1].startBeat;
+  if (last - first <= 0) return project;
+  const gap = (last - first) / (sorted.length - 1);
+  const target = new Map<string, number>();
+  sorted.forEach((n, i) => target.set(n.id, first + i * gap));
+
+  let changed = false;
+  const tracks = project.tracks.map((track) => ({
+    ...track,
+    notes: track.notes.map((n) => {
+      const at = target.get(n.id);
+      if (at == null || Math.abs(at - n.startBeat) < 1e-9) return n;
+      changed = true;
+      return { ...n, startBeat: at };
+    }),
+  }));
+  return changed ? { ...project, tracks } : project;
 }
 
 // ---- Song-level edits ----------------------------------------------------

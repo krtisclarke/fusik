@@ -63,6 +63,7 @@ export function SongsPanel() {
   const newProject = useStore((s) => s.newProject);
   const openFromFile = useStore((s) => s.openFromFile);
   const importMidi = useStore((s) => s.importMidi);
+  const toggleFindOnline = useStore((s) => s.toggleFindOnline);
   const saveCurrent = useStore((s) => s.saveCurrent);
   const exportSong = useStore((s) => s.exportSong);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -96,10 +97,16 @@ export function SongsPanel() {
         <button onClick={newProject}>✚ New song</button>
         <button onClick={() => void openFromFile()}>📂 Open a file…</button>
         <button
+          onClick={toggleFindOnline}
+          title="Look a song up on the internet and open it as something you can edit"
+        >
+          🌐 Find a song online…
+        </button>
+        <button
           onClick={() => void importMidi()}
           title="Turn a .mid music file into a Beatbox song you can edit"
         >
-          🎼 Import a song…
+          🎼 Import from a file…
         </button>
         <button onClick={() => void saveCurrent()}>💾 Save to a file</button>
         <button onClick={() => void exportSong()} title="A small MP3 that plays and sends anywhere">

@@ -7,6 +7,7 @@ import { Timeline } from './ui/Timeline';
 import { SoundEditor } from './ui/SoundEditor';
 import { Keyboard } from './ui/Keyboard';
 import { Tutorial } from './ui/Tutorial';
+import { FindOnline } from './ui/FindOnline';
 import { getDesktop } from './platform/files';
 import { startAutosave } from './state/autosave';
 
@@ -114,6 +115,7 @@ export function App() {
       <SoundEditor />
       {showKeyboard && <Keyboard />}
       {status && <div className="toast">{status}</div>}
+      <FindOnline />
       <Tutorial />
     </div>
   );

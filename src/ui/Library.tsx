@@ -20,8 +20,6 @@ const CATEGORY_EMOJI: Record<VoiceCategory, string> = {
   Bass: '🎸',
 };
 
-export const VOICE_DRAG_TYPE = 'application/x-beatbox-voice';
-
 function groupByCategory(): Record<VoiceCategory, VoiceDef[]> {
   const groups = {} as Record<VoiceCategory, VoiceDef[]>;
   for (const c of CATEGORY_ORDER) groups[c] = [];
@@ -31,13 +29,18 @@ function groupByCategory(): Record<VoiceCategory, VoiceDef[]> {
 
 export function Library() {
   const audition = useStore((s) => s.audition);
+  const startVoiceDrag = useStore((s) => s.startVoiceDrag);
+  const voiceDrag = useStore((s) => s.voiceDrag);
   const [open, setOpen] = useState<VoiceCategory>('Drums');
   const groups = groupByCategory();
 
   return (
     <div className="library" data-tour="library">
       <h2>Sounds</h2>
-      <p className="lib-hint">Drag a sound onto the timeline, or click it to hear it.</p>
+      <p className="lib-hint">
+        Drag a sound onto a row, or under the last row to give it a row of its own.
+        Click one to hear it.
+      </p>
 
       {CATEGORY_ORDER.map((cat) => {
         const isOpen = cat === open;
@@ -58,13 +61,23 @@ export function Library() {
                 {groups[cat].map((voice) => (
                   <div
                     key={voice.id}
-                    className="tile"
-                    draggable
-                    onClick={() => audition(voice.id)}
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData(VOICE_DRAG_TYPE, voice.id);
-                      e.dataTransfer.setData('text/plain', voice.id);
-                      e.dataTransfer.effectAllowed = 'copy';
+                    className={`tile ${
+                      voiceDrag?.voiceId === voice.id && voiceDrag.moved ? 'lifted' : ''
+                    }`}
+                    // Plain pointer events rather than the browser's own
+                    // drag-and-drop. Its ghost is a photograph of whatever was
+                    // pressed — this whole row — so a sound used to trail a
+                    // long grey rectangle behind it, nothing like the small
+                    // block it was about to become. The timeline owns the rest
+                    // of the gesture and draws the block where it will land;
+                    // see the drag section of ui/Timeline.tsx.
+                    onPointerDown={(e) => {
+                      if (e.button !== 0) return;
+                      startVoiceDrag(voice.id, e.pointerId, e.clientX, e.clientY);
+                    }}
+                    onPointerUp={() => {
+                      // A press that never went anywhere is a click: hear it.
+                      if (!useStore.getState().voiceDrag?.moved) audition(voice.id);
                     }}
                     title={`${voice.label} — drag onto the timeline, or click to hear it`}
                   >

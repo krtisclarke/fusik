@@ -46,7 +46,29 @@ interface DesktopBridge {
   samples?: {
     read: (setId: string, file: string) => Promise<{ ok: boolean; bytes?: ArrayBuffer }>;
   };
+  /**
+   * Fetching from the internet, done by the desktop shell rather than the page.
+   * Only the one host the shell allows; see the allowlist in electron/main.cjs.
+   */
+  web?: {
+    get: (url: string) => Promise<{ ok: boolean; bytes?: ArrayBuffer; error?: string }>;
+  };
+  /** Where the self-updater has got to, and its log when it went wrong. */
+  updates?: {
+    state: () => Promise<UpdateState>;
+    check: () => Promise<{ ok: boolean; state?: UpdateState }>;
+    log: () => Promise<{ ok: boolean; path: string; text: string }>;
+    onStatus: (handler: (state: UpdateState) => void) => () => void;
+  };
   onMenu: (channel: string, handler: () => void) => () => void;
+}
+
+/** What the app is doing about keeping itself current, in plain words. */
+export interface UpdateState {
+  stage: 'idle' | 'unsupported' | 'checking' | 'current' | 'downloading' | 'ready' | 'error';
+  message: string;
+  version: string | null;
+  percent: number;
 }
 
 declare global {

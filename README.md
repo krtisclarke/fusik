@@ -4,14 +4,15 @@ A music-creation studio for curious kids — drag sounds onto a timeline, build 
 beat, tweak it, and hear the result instantly. Built as a cross-platform desktop
 app (Windows and macOS) using web technology wrapped in Electron.
 
-> **Status:** Working timeline, transport, and **29 sounds** — a full drum kit,
+> **Status:** Whole-song timeline, transport, and **29 sounds** — a full drum kit,
 > hand percussion (bongos, conga, triangle, tambourine, claves, agogo),
 > mallets (marimba, vibraphone, xylophone, bells), piano, synth, and two
 > basses including a real plucked upright — **26 of them real recordings** of
 > real instruments, with scale-snapped melodies, **song parts you can arrange**
-> (verse/chorus-style, A A B A), per-block sound editing, MP3/WAV export, plus
-> save/load, **autosave**, an **interactive walkthrough** for first-timers, and
-> undo/redo. See
+> (verse/chorus-style, A A B A) laid end to end on one timeline you can scroll
+> and scrub, per-block sound editing, **song search and MIDI import**, MP3/WAV
+> export, plus save/load, **autosave**, an **interactive walkthrough** for
+> first-timers, and undo/redo. See
 > [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the full picture and roadmap.
 
 ## Install it on Windows
@@ -93,7 +94,10 @@ npm run package:mac   # build a macOS app bundle
 - **Instruments:** drop a Piano, Marimba, Bells or either Bass in, then click
   its note-grid to write a melody or bassline. The grid only offers notes from
   a musical scale, so whatever you place sounds right together.
-- Drag a sound from the left onto the timeline, or click it to hear it.
+- Drag a sound from the left onto a row — or onto the empty strip under the
+  last row, and it gets a row of its own. What you're carrying is drawn as the
+  block it's about to become, in the place it will actually land. Click a sound
+  instead of dragging it and you just hear it.
 - **Wrong note?** Drag the block up or down to change it — it slides through the
   scale, so wherever you drop it still sounds right. Drag sideways to move it in
   time.
@@ -101,12 +105,19 @@ npm run package:mac   # build a macOS app bundle
   select — shape them together, or **Link** them so they keep the same sound
   and length. Each row's **M** turns it off (it goes grey so you can see it's
   off) and **S** plays it alone.
-- **Parts:** the strip above the timeline is your song's running order. Add a
-  new part, play a part again (A A B A!), copy one to tweak, drag chips to
-  rearrange, double-click to rename. Play the whole **Song** or loop just the
-  **Part** you're working on.
-- **The little map.** Above the timeline is the whole part in miniature, with
-  a bright window showing the bit you're looking at. On a long part, drag the
+- **The timeline is the whole song.** Every part, laid end to end, left to
+  right — the way a video editor or GarageBand lays one out. Scroll through it,
+  and drag along the ruler at the top to move the song to any point, playing or
+  stopped.
+- **Parts are the coloured bands on the ruler**, each exactly as wide as the
+  music it covers. Click one to work on it, drag one sideways to change the
+  running order, double-click to rename, and a 🔁 on a band means that part
+  plays more than once (so a change to it changes all of them). The band that's
+  sounding lights up, so "which bit am I hearing?" answers itself. Play the
+  whole **Song**, or **Part** to loop just the one you're working on — the rest
+  of the song greys out so you can see why it's gone quiet.
+- **The little map.** Above the timeline is the whole song in miniature, with
+  a bright window showing the bit you're looking at. On a long song, drag the
   map and the timeline follows — so nothing is ever lost past the edge of the
   screen.
 - **The view follows the song.** While it plays, the timeline turns the page
@@ -125,9 +136,12 @@ npm run package:mac   # build a macOS app bundle
 - **Record your own voice.** Press 🎤, sing or beatbox, press it again. What you
   sang becomes a block in your song that plays along with everything else — and
   it's saved as an ordinary sound file next to the song. (Desktop app only.)
-- **Record what you play:** press ⏺ so it glows red, press play, and whatever you
-  play on the keyboard is written into the song, tidied up to the grid. Press ⏺
-  again to stop. One undo takes the whole take back.
+- **Record what you play:** the buttons at the left of the keyboard say what
+  happens to a note once you've played it. **⏺ Write what I play into the song**
+  starts the song and writes down everything you play, tidied up to the grid;
+  press it again to stop, and one undo takes the whole take back. **🎤 Sing into
+  the song** does the microphone. Until you press one of them, playing keeps
+  nothing — and the line under them says so.
 - **Try it on something else.** Click a row's name and pick a different
   instrument — your tune moves over as it is, so the melody you wrote on the
   piano comes out on the bells, or way down low on the bass.
@@ -139,6 +153,12 @@ npm run package:mac   # build a macOS app bundle
 - **Timing** is either **Tidy** — blocks line up with the beat and what you play
   gets straightened out — or **Free**, where everything lands exactly where you
   put it.
+- **Even spacing without a steady hand.** Select one block and the panel
+  underneath offers **every ½ beat · every beat · every 2 beats · every bar** —
+  one press fills that part with evenly spaced copies, keeping the offset you
+  put it on (so a backbeat stays a backbeat). Select several and you get
+  **On the beat** to pull them straight, and **Same gaps** to space three or
+  more out evenly between the first and the last.
 - **Echo:** each row has a 🔁 slider. Turn it up and that sound repeats in time
   with the song — great on a hi-hat or a bass note. All the way left is off.
 - **Your songs keep themselves.** Close the tab or shut the laptop and your song
@@ -146,10 +166,14 @@ npm run package:mac   # build a macOS app bundle
   the top, and **📁 My Songs** lists everything you've made: click one to open it.
   Starting a new song doesn't lose the old one. **Save to a file** still puts a
   copy somewhere you choose, to keep or to share.
-- **Import a song.** **🎼 Import a song…** (inside **📁 My Songs**) opens a
-  `.mid` music file — the note-instructions format keyboards and notation apps
-  save — and turns it into a Beatbox song: right speed, right mood, drums on
-  drum rows, ready to edit like anything you built yourself.
+- **Look a song up.** **🌐 Find a song online…** (inside **📁 My Songs**)
+  searches a public archive of `.mid` files — the note-instructions format
+  keyboards and notation apps save — and opens the one you pick as a Beatbox
+  song: right speed, right mood, drums on drum rows, ready to edit like
+  anything you built yourself. They're people's own written-out versions of
+  songs, not recordings, so what arrives is a starting point rather than a
+  finished thing. **🎼 Import from a file…** does the same with a `.mid` you
+  already have.
 - **Where your songs live.** In the desktop app they're ordinary files in
   `Documents/Beatbox Studio` — one per song, named after it. You can copy them,
   back them up, or move them to another computer.

@@ -6,15 +6,19 @@ import { followPlayhead } from './follow';
 
 /** The moving vertical line. Positions itself every animation frame straight
  *  from the audio clock, so it tracks the sound exactly and never triggers a
- *  React re-render. The timeline shows one part of the song, so the line only
- *  appears while that part is the one sounding (the strip above shows the
- *  rest). It also nudges the store to notice when playback has stopped on its
- *  own (e.g. a non-looping song reaching the end).
+ *  React re-render.
  *
- *  It also keeps itself seen: when the line it was showing walks off the edge
- *  of the view, the view turns the page after it (see follow.ts for the rule
- *  and its manners). The check runs on a timer rather than the animation
- *  frame: a flip decision needs a few looks a second, not sixty. */
+ *  It now runs the length of the whole song, because the timeline now shows
+ *  the whole song. Before, it could only be drawn while the one part on screen
+ *  happened to be the part sounding — so for most of a song there was no line
+ *  anywhere, and no way to tell which bit you were listening to. It also nudges
+ *  the store to notice when playback has stopped on its own (e.g. a non-looping
+ *  song reaching the end).
+ *
+ *  It keeps itself seen: when the line walks off the edge of the view, the view
+ *  turns the page after it (see follow.ts for the rule and its manners). The
+ *  check runs on a timer rather than the animation frame: a flip decision needs
+ *  a few looks a second, not sixty. */
 export function Playhead({
   height,
   scrollRef,
@@ -24,20 +28,19 @@ export function Playhead({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const syncTransport = useStore((s) => s.syncTransport);
-  const currentSectionId = useStore((s) => s.currentSectionId);
 
   useEffect(() => {
     let raf = 0;
     let wasPlaying = engine.getTransport().isPlaying;
     const tick = () => {
       const t = engine.getTransport();
-      const beat = engine.getPlayheadIn(currentSectionId);
+      const beat = engine.getSongPlayheadBeat();
       if (ref.current) {
         if (beat == null) {
           ref.current.style.opacity = '0';
         } else {
           ref.current.style.transform = `translateX(${HEADER_W + beatToX(beat)}px)`;
-          ref.current.style.opacity = t.isPlaying ? '1' : '0.28';
+          ref.current.style.opacity = t.isPlaying ? '1' : '0.5';
         }
       }
       if (t.isPlaying !== wasPlaying) {
@@ -48,7 +51,7 @@ export function Playhead({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [syncTransport, currentSectionId]);
+  }, [syncTransport]);
 
   // The page-turn. Movement of the view between checks that we didn't cause
   // is the child scrolling, and a line that leaves the view during it is left
@@ -61,7 +64,7 @@ export function Playhead({
       const el = scrollRef.current;
       if (!el) return;
       const f = follow.current;
-      const beat = engine.getPlayheadIn(currentSectionId);
+      const beat = engine.getSongPlayheadBeat();
       if (!engine.getTransport().isPlaying || beat == null) {
         f.tracking = false;
         f.lastScrollLeft = el.scrollLeft;
@@ -81,7 +84,39 @@ export function Playhead({
       f.lastScrollLeft = el.scrollLeft;
     }, 250);
     return () => clearInterval(id);
-  }, [scrollRef, currentSectionId]);
+  }, [scrollRef]);
 
   return <div ref={ref} className="playhead" style={{ height }} />;
+}
+
+/**
+ * The grab-handle at the top of the line, sitting in the ruler.
+ *
+ * The line itself lives among the blocks, where a press has to mean "select
+ * that block". This is the part you are meant to take hold of, and it is drawn
+ * big enough to be obvious — dragging the song to a spot is the first thing
+ * anybody tries and there was nothing there to try it on. The dragging itself
+ * belongs to the ruler underneath (any press along it seeks), so this is
+ * deliberately just a marker: it shows where the line is and where to grab.
+ */
+export function ScrubHandle() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const beat = engine.getSongPlayheadBeat();
+      if (ref.current) {
+        if (beat == null) {
+          ref.current.style.opacity = '0';
+        } else {
+          ref.current.style.opacity = '1';
+          ref.current.style.transform = `translateX(${beatToX(beat)}px)`;
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return <div ref={ref} className="scrub-handle" />;
 }

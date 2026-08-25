@@ -52,6 +52,31 @@ contextBridge.exposeInMainWorld('desktop', {
     read: (setId, file) => ipcRenderer.invoke('samples:read', { setId, file }),
   },
 
+  /**
+   * Fetching from the internet on the page's behalf — searching the MIDI
+   * archive, and downloading the file a child picked. The main process only
+   * allows the one host; see main.cjs.
+   */
+  web: {
+    get: (url) => ipcRenderer.invoke('web:get', url),
+  },
+
+  /**
+   * Keeping the app current. The app used to do this with no outward sign at
+   * all, which made "it didn't update" impossible to look into; these let the
+   * toolbar say where it has got to, and hand over the log when it went wrong.
+   */
+  updates: {
+    state: () => ipcRenderer.invoke('update:state'),
+    check: () => ipcRenderer.invoke('update:check'),
+    log: () => ipcRenderer.invoke('update:log'),
+    onStatus: (handler) => {
+      const listener = (_event, state) => handler(state);
+      ipcRenderer.on('update:status', listener);
+      return () => ipcRenderer.removeListener('update:status', listener);
+    },
+  },
+
   /** Subscribe to native menu commands. Returns an unsubscribe function. */
   onMenu: (channel, handler) => {
     const allowed = ['menu:new', 'menu:open', 'menu:save', 'menu:undo', 'menu:redo'];

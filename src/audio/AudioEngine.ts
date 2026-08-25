@@ -219,6 +219,25 @@ export class AudioEngine {
     return at.entry.sectionId === sectionId ? at.beatInSection : null;
   }
 
+  /**
+   * The playhead as an absolute beat in the whole song — what the timeline
+   * draws, now that it lays every part out end to end.
+   *
+   * In Part mode the transport counts inside the one part being looped, so
+   * that count is offset onto the first slot the part occupies. A part played
+   * three times therefore shows its line in the first of the three, which is
+   * the honest answer: Part mode is playing the part, not any one slot of it.
+   */
+  getSongPlayheadBeat(): number | null {
+    const project = this.project;
+    if (!project) return null;
+    const pos = this.getPositionBeats();
+    if (this.playMode === 'song') return pos;
+    const editing = this.editSectionId ?? project.arrangement[0]?.sectionId;
+    const entry = resolveArrangement(project).find((e) => e.sectionId === editing);
+    return entry ? entry.startBeat + pos : null;
+  }
+
   /** Which arrangement slot is sounding right now (song mode + playing only). */
   getPlayingEntryIndex(): number | null {
     if (!this.project || !this.isPlaying || this.playMode !== 'song') return null;
@@ -265,6 +284,33 @@ export class AudioEngine {
     this.isPlaying = false;
     this.pausedBeat = 0;
     this.lastPeriod = null;
+  }
+
+  /**
+   * Move the playhead. Works while stopped and while playing — dragging the
+   * line along the ruler mid-song is the ordinary way to hear a particular
+   * bit, and having to stop first is exactly the thing that makes a timeline
+   * feel dead.
+   *
+   * Playing, this re-anchors the beat/time mapping to *now*, so the sound
+   * follows the line within one scheduler tick. Up to a look-ahead's worth of
+   * already-scheduled notes (100ms) still sound from the old position; that is
+   * shorter than the gap between two sixteenth notes at any tempo the app
+   * allows, so it reads as the seek landing, not as a stray note.
+   */
+  seek(beat: number): void {
+    const project = this.project;
+    const len = project ? this.periodBeats(project) : 0;
+    const clamped = len > 0 ? Math.max(0, Math.min(beat, len - 1e-4)) : Math.max(0, beat);
+    if (this.isPlaying && this.ctx && project) {
+      this.stopLiveClips(); // a recording mid-flight would keep singing from where it was
+      this.startTime = this.ctx.currentTime;
+      this.startBeat = clamped;
+      this.lastScheduledBeat = clamped - START_EPSILON_BEATS;
+      this.lastPeriod = len;
+    } else {
+      this.pausedBeat = clamped;
+    }
   }
 
   setLooping(looping: boolean): void {

@@ -121,11 +121,40 @@ button {
   font-size: 11px;
 }
 /* The version, quiet beside the name. Doubles as the visible proof that the
-   silent auto-update ran: this number changes on its own. */
+   auto-update ran: this number changes on its own. Clicking it looks for a
+   newer one now, and it grows a short line beside it while something is
+   actually happening — see ui/UpdateStatus.tsx. */
+.version-block {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
 .brand .version {
   color: var(--text-faint);
   font-weight: 600;
   font-size: 10.5px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.brand .version:hover {
+  color: var(--text-dim);
+}
+.brand .version.upd-ready,
+.brand .upd-line.upd-ready {
+  color: var(--ok, #34d399);
+}
+.brand .version.upd-error,
+.brand .upd-line.upd-error {
+  color: var(--danger);
+}
+.brand .upd-line {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
 
 .tgroup {
@@ -416,6 +445,15 @@ select.snap {
   box-shadow: inset 0 0 0 1px rgba(108, 123, 255, 0.25);
   pointer-events: none;
 }
+.ov-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent);
+  opacity: 0.5;
+  pointer-events: none;
+}
 .ov-playhead {
   position: absolute;
   top: 0;
@@ -432,16 +470,19 @@ select.snap {
   position: relative;
 }
 
-.ruler {
+/* ---- the song's header: parts on top, bars underneath ------------------- */
+/* Both to scale and both sticky, so wherever you have scrolled to, the strip
+   above the music always says which part you are looking at and which bar. */
+
+.timeline-head {
   display: flex;
-  height: 30px;
   position: sticky;
   top: 0;
   z-index: 3;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--line);
 }
-.ruler .corner {
+.head-corner {
   width: var(--header-w);
   flex: none;
   border-right: 1px solid var(--line);
@@ -450,28 +491,167 @@ select.snap {
   background: var(--bg-panel);
   z-index: 5;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
   padding: 0 12px;
+}
+.head-title {
   font-size: 11px;
   color: var(--text-faint);
   text-transform: uppercase;
   letter-spacing: 0.8px;
+  font-weight: 700;
 }
-.ruler .bars {
+.head-sub {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+/* The whole strip seeks. Dragging along a ruler to move through what you are
+   listening to is the first thing anybody tries; there used to be nothing
+   here to try it on. */
+.head-track {
   position: relative;
-  height: 100%;
+  height: 48px;
+  cursor: ew-resize;
+  touch-action: none;
 }
-.ruler .bar-mark {
+
+.bars {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22px;
+}
+.bar-mark {
   position: absolute;
   top: 0;
   height: 100%;
   display: flex;
   align-items: center;
-  padding-left: 6px;
-  font-size: 11px;
+  padding-left: 5px;
+  font-size: 10.5px;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
   border-left: 1px solid var(--line-strong);
+  pointer-events: none;
+}
+
+/* ---- part bands (the song's running order, drawn over the music) -------- */
+
+.part-bands {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 26px;
+}
+.part-band {
+  position: absolute;
+  top: 2px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--band, #6c7bff) 32%, var(--bg-panel-2));
+  border: 1px solid color-mix(in srgb, var(--band, #6c7bff) 60%, transparent);
+  border-left: 3px solid var(--band, #6c7bff);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  white-space: nowrap;
+  touch-action: none;
+}
+.part-band:hover {
+  background: color-mix(in srgb, var(--band, #6c7bff) 45%, var(--bg-panel-2));
+}
+.part-band.current {
+  box-shadow: inset 0 0 0 1px var(--band, var(--accent));
+}
+/* The part sounding right now. This is the answer to "which bit am I
+   listening to?", and it used to have no answer at all. */
+.part-band.playing {
+  background: color-mix(in srgb, var(--band, #6c7bff) 70%, #fff 8%);
+  box-shadow: 0 0 0 2px var(--accent-2);
+}
+/* In Part mode the rest of the song is not playing. Say so. */
+.part-band.dimmed {
+  opacity: 0.4;
+}
+.band-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.band-repeat {
+  font-size: 9px;
+  opacity: 0.85;
+}
+.band-x {
+  margin-left: auto;
+  width: 15px;
+  height: 15px;
+  flex: none;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  place-items: center;
+  padding: 0;
+}
+.part-band:hover .band-x {
+  display: grid;
+}
+.band-x:hover {
+  background: var(--danger);
+  color: #fff;
+}
+.band-rename {
+  width: 100%;
+  min-width: 40px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 1px 4px;
+  outline: none;
+}
+
+/* The grab-handle riding on top of the playhead. */
+.scrub-handle {
+  position: absolute;
+  top: 26px;
+  left: -7px;
+  width: 14px;
+  height: 22px;
+  pointer-events: none;
+  z-index: 4;
+  will-change: transform;
+}
+.scrub-handle::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 10px;
+  background: var(--accent-2);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.scrub-handle::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent-2);
 }
 
 .lanes {
@@ -740,6 +920,108 @@ select.snap {
   z-index: 0;
 }
 
+/* Where one part ends and the next begins — the seam in the song, drawn
+   through every row so the parts above line up with the music below. */
+.lane-grid .part-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+}
+/* In Part mode, the stretches of song that aren't playing. */
+.lane-grid .part-off {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(10, 11, 16, 0.55);
+  pointer-events: none;
+  /* Over the blocks, not just the grid behind them — the point is that this
+     stretch of song is not being played, and half-dimming it says the opposite
+     of what it means. It stays click-through, so those blocks are still as
+     editable as any other. */
+  z-index: 3;
+}
+
+/* The sound being carried in from the library, drawn at the size and place it
+   will actually land — the whole point of doing the drag by hand. */
+.note.drop-ghost {
+  opacity: 0.72;
+  pointer-events: none;
+  z-index: 5;
+  box-shadow: inset 0 0 0 2px #fff, 0 3px 12px rgba(0, 0, 0, 0.5);
+  animation: ghost-pulse 0.9s ease-in-out infinite;
+}
+@keyframes ghost-pulse {
+  50% {
+    opacity: 0.92;
+  }
+}
+
+/* The same block, in the air, for the part of the trip where there is no row
+   under the pointer to show it in place. Same shape, same size — so it never
+   changes into something else on the way. */
+.voice-ghost {
+  position: fixed;
+  z-index: 60;
+  width: 46px;
+  height: 34px;
+  margin: -17px 0 0 -23px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4), 0 6px 18px rgba(0, 0, 0, 0.5);
+  opacity: 0.9;
+}
+
+/* Under the last row: dead space that used to swallow a drop without a word.
+   Now it is the way to give a sound a row of its own. */
+.new-row-zone {
+  position: relative;
+  height: 62px;
+  margin: 8px 0 28px;
+  border-top: 2px dashed var(--line-strong);
+  border-bottom: 2px dashed var(--line-strong);
+  min-width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.new-row-zone .new-row-label {
+  position: sticky;
+  left: 0;
+  display: inline-block;
+  padding: 22px 0 0 var(--header-w);
+  color: var(--text-faint);
+  font-size: 12.5px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.new-row-zone.armed {
+  border-color: var(--accent-2);
+  background: rgba(34, 211, 238, 0.09);
+}
+.new-row-zone.armed .new-row-label {
+  color: var(--text);
+}
+.new-row-zone .note {
+  top: 14px;
+  height: 34px;
+}
+
+/* A sound lifted out of the library shows it has left. */
+.tile.lifted {
+  opacity: 0.35;
+}
+.tile {
+  touch-action: none;
+  user-select: none;
+}
+
 .playhead {
   position: absolute;
   top: 0;
@@ -826,6 +1108,29 @@ select.snap {
 .se-spacer {
   flex: 1;
 }
+/* The timing row: getting blocks evenly spaced without a steady hand. Sits
+   above the sound sliders because bad spacing is what "it sounds wrong"
+   usually turns out to mean. */
+.se-timing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.se-timing-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.se-timing-lead {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
 .se-hint {
   padding: 8px 14px 0;
   font-size: 11.5px;
@@ -912,17 +1217,19 @@ select.snap {
   background-clip: padding-box;
 }
 
-/* ---- section strip (the song's running order) --------------------------- */
+/* ---- the "working on" bar ----------------------------------------------- */
+/* What used to be the running order (a row of chips) is now drawn on the
+   timeline itself as part bands. All that's left here is the actions and a
+   plain sentence saying which part they apply to. */
 
 .section-strip {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 7px 12px;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--line);
   flex: none;
-  overflow-x: auto;
 }
 
 .strip-label {
@@ -934,115 +1241,24 @@ select.snap {
   flex: none;
 }
 
-.strip-chips {
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-  min-width: 0;
-}
-
-.chip {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 64px;
-  padding: 5px 22px 5px 12px;
+.strip-current {
+  font-weight: 700;
+  font-size: 13px;
+  padding: 3px 10px;
   border-radius: var(--radius-sm);
+  background: var(--bg-panel-2);
   border: 1px solid var(--line-strong);
   border-left: 4px solid var(--chip, var(--accent));
-  background: var(--bg-panel-2);
-  cursor: pointer;
-  user-select: none;
+  white-space: nowrap;
   flex: none;
 }
-.chip:hover {
-  background: var(--bg-elev);
-}
-.chip.current {
-  border-color: var(--chip, var(--accent));
-  background: var(--bg-elev);
-  box-shadow: 0 0 0 1px var(--chip, var(--accent));
-}
-.chip.playing .chip-name::after {
-  content: ' ♪';
-}
-.chip.playing {
-  outline: 2px solid var(--accent-2);
-  outline-offset: 1px;
-}
 
-.chip-name {
-  font-weight: 700;
-  font-size: 13px;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-.chip-bars {
-  font-size: 10px;
+.strip-note {
+  font-size: 11.5px;
   color: var(--text-dim);
   white-space: nowrap;
-}
-
-/* Rename affordance on the part being edited. Double-click still works; this
-   is the visible way in. */
-.chip-edit {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border: none;
-  border-radius: 5px;
-  background: transparent;
-  font-size: 9px;
-  line-height: 1;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  opacity: 0.7;
-}
-.chip-edit:hover {
-  background: var(--bg-elev);
-  opacity: 1;
-}
-
-.chip-x {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 16px;
-  height: 16px;
-  border: none;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--text-faint);
-  font-size: 10px;
-  line-height: 1;
-  cursor: pointer;
-  display: none;
-  place-items: center;
-  padding: 0;
-}
-.chip:hover .chip-x {
-  display: grid;
-}
-.chip-x:hover {
-  background: var(--danger);
-  color: #fff;
-}
-
-.chip-rename {
-  width: 72px;
-  border: 1px solid var(--accent);
-  border-radius: 5px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 2px 6px;
-  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .strip-actions {
@@ -1071,30 +1287,34 @@ select.snap {
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
-.chip.drop-here {
-  box-shadow: -3px 0 0 0 var(--accent-2);
-}
-.chip {
-  touch-action: none;
-}
-
 /* ---- playable keyboard -------------------------------------------------- */
 
+/* Controls on top, keys underneath across the whole width. Side by side, the
+   controls — ten instruments, an octave shift, and the two ways of keeping
+   what you play — crowded the keys down to slivers on any ordinary window,
+   and the keys are the entire point of this row. */
 .keyboard {
   grid-area: keys;
   display: flex;
-  align-items: stretch;
-  gap: 12px;
-  padding: 10px 14px;
+  flex-direction: column;
+  gap: 7px;
+  padding: 8px 14px 10px;
   background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-2));
   border-top: 1px solid var(--line);
 }
 
+/* The controls beside the keys. They have grown — ten instruments, an octave
+   shift, and now the two ways of getting what you play into the song — so
+   they wrap and are capped, rather than squeezing the keys themselves down to
+   slivers. The keys are the point of this row; everything else gives way to
+   them. */
 .kb-side {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex: none;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .kb-title {
@@ -1105,18 +1325,69 @@ select.snap {
   color: var(--text-faint);
 }
 
+/* How what you play down here gets into the song up there — asked and
+   answered in the same place, instead of by a ⏺ at the far end of the
+   toolbar that nothing pointed at. */
+.kb-capture {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.kb-arm {
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: left;
+  color: var(--text-dim);
+  background: var(--bg-panel-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.kb-arm:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.kb-arm:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.kb-arm.armed {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.kb-capture-note {
+  font-size: 10.5px;
+  line-height: 1.3;
+  color: var(--text-faint);
+  max-width: 210px;
+}
+/* A thin rule between "how do I keep this?" and "what am I playing?" */
+.kb-side .kb-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--line-strong);
+  flex: none;
+}
+
 .kb-voices {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .kb-voice {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 9px;
+  gap: 4px;
+  padding: 5px 8px;
   font: inherit;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--text-dim);
   background: var(--bg-panel-2);
@@ -1167,9 +1438,9 @@ select.snap {
 .kb-keys {
   display: flex;
   gap: 4px;
-  flex: 1;
+  width: 100%;
   min-width: 0;
-  height: 76px;
+  height: 74px;
 }
 
 .kb-key {
@@ -1644,4 +1915,152 @@ select.tname:focus {
     rgba(255, 255, 255, 0.16) 0 3px,
     transparent 3px 9px
   );
+}
+
+/* ---- find a song online ------------------------------------------------- */
+/* The app could always turn a .mid into a song; getting hold of one was the
+   missing half. This is a search box over a public MIDI archive. */
+
+.find-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(6, 7, 11, 0.6);
+  display: grid;
+  place-items: start center;
+  padding-top: 8vh;
+}
+
+.find-panel {
+  width: min(520px, 92vw);
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.find-head {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.find-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+.find-close {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.find-close:hover {
+  background: var(--bg-elev);
+  color: var(--text);
+}
+
+.find-form {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px 8px;
+}
+.find-input {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+}
+.find-input:focus {
+  border-color: var(--accent);
+}
+.find-go {
+  padding: 9px 18px;
+  border-radius: 9px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.find-go:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.find-note {
+  margin: 0;
+  padding: 0 14px 10px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+.find-error {
+  margin: 0 14px 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.14);
+  color: var(--text);
+  font-size: 12.5px;
+}
+.find-empty {
+  padding: 10px 14px 16px;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+.find-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 10px;
+  overflow-y: auto;
+}
+.find-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.find-item:hover:not(:disabled) {
+  background: var(--bg-elev);
+}
+.find-item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.find-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.find-open {
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
 }

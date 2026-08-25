@@ -244,6 +244,48 @@ ipcMain.handle('clips:delete', async (_event, { songId, clipId }) => {
   return { ok: true };
 });
 
+// ---- fetching from the internet, on the page's behalf --------------------
+//
+// The app searches a public MIDI archive so a child can find a song to import
+// without going and finding a file first. The page could make that request
+// itself in a browser, but the packaged app's page is loaded from `file://`,
+// where Chromium's handling of cross-origin requests is its own inconsistent
+// story. Doing it here sidesteps that.
+//
+// One host, hard-coded. This is a bridge the renderer can ask to fetch things,
+// and a renderer that can name any address is a renderer that can be talked
+// into fetching anything — so it can't name one. Nothing is written to disk
+// here either; the bytes go back to the page, which parses them as music.
+
+const WEB_ALLOWED_HOSTS = new Set(['bitmidi.com', 'www.bitmidi.com']);
+const WEB_MAX_BYTES = 4 * 1024 * 1024; // a .mid is kilobytes; this is generous
+const WEB_TIMEOUT_MS = 15000;
+
+ipcMain.handle('web:get', async (_event, url) => {
+  let parsed;
+  try {
+    parsed = new URL(String(url || ''));
+  } catch {
+    return { ok: false, error: 'Not an address' };
+  }
+  if (parsed.protocol !== 'https:' || !WEB_ALLOWED_HOSTS.has(parsed.hostname)) {
+    return { ok: false, error: 'That address is not allowed' };
+  }
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), WEB_TIMEOUT_MS);
+    const res = await fetch(parsed.toString(), { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) return { ok: false, error: `The site answered ${res.status}` };
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.byteLength > WEB_MAX_BYTES) return { ok: false, error: 'That file is too big' };
+    return { ok: true, bytes: buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) };
+  } catch (err) {
+    // Being offline is an ordinary state for this app, not a fault.
+    return { ok: false, error: String((err && err.message) || err) };
+  }
+});
+
 /** @type {BrowserWindow | null} */
 let mainWindow = null;
 
@@ -381,34 +423,142 @@ function buildMenu() {
 
 // ---- keeping the app current ---------------------------------------------
 //
-// Silent on purpose, and decided by the person who owns the machine, not the
-// child using it: at launch the app asks the GitHub Releases page (where the
-// installer already comes from) whether a newer version exists. If so it
-// downloads in the background and installs itself when the app next closes —
-// no pop-ups, no questions, the app is simply always the newest. A child
-// should never be handed an update decision they have no way to judge.
+// At launch (and every few hours after) the app asks the GitHub Releases page
+// — where the installer already comes from — whether a newer version exists.
+// If so it downloads in the background and swaps itself in when the app next
+// closes. A child is never handed an update decision they have no way to
+// judge, so there are no pop-ups and no questions.
+//
+// It is not, however, *silent* any more. It used to swallow every error with
+// no trace, which meant an update that never arrived was indistinguishable
+// from one that arrived instantly — there was nothing to look at and nothing
+// to ask. Now it says where it has got to, in the toolbar and in a log file
+// next to the app's settings, so "it didn't update" is a question with an
+// answer.
 //
 // Windows only: that is the machine the app actually ships to, and the Mac
 // copy is a development build (macOS also refuses to swap an unsigned app).
-// Every failure here is swallowed silently — being offline is a normal state
-// for this app, not an error, and an update can always happen next time.
-function checkForUpdatesQuietly() {
-  if (!app.isPackaged || process.platform !== 'win32') return;
+
+const UPDATE_RECHECK_MS = 6 * 60 * 60 * 1000; // a long session should still catch one
+
+/** What the updater is doing, mirrored to any window that opens later. */
+let updateState = { stage: 'idle', message: '', version: null, percent: 0 };
+
+function updateLogPath() {
+  return path.join(app.getPath('userData'), 'update-log.txt');
+}
+
+function logUpdate(line) {
+  const stamp = new Date().toISOString();
   try {
-    const { autoUpdater } = require('electron-updater');
-    autoUpdater.autoDownload = true;
-    autoUpdater.autoInstallOnAppQuit = true;
-    autoUpdater.on('error', () => {});
-    autoUpdater.checkForUpdates().catch(() => {});
+    fsSync.appendFileSync(updateLogPath(), `${stamp}  ${line}\n`, 'utf-8');
   } catch {
-    // The updater module missing or broken must never stop the app opening.
+    // A log that can't be written must never take the app down with it.
   }
 }
+
+function setUpdateState(stage, message, extra = {}) {
+  updateState = { stage, message, version: null, percent: 0, ...extra };
+  logUpdate(`${stage}: ${message}`);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update:status', updateState);
+  }
+}
+
+let updaterStarted = false;
+/** Set once the updater is live, so the toolbar's "check now" has something to call. */
+let checkNow = null;
+
+function startUpdater() {
+  if (updaterStarted) return;
+  updaterStarted = true;
+
+  if (!app.isPackaged) {
+    setUpdateState('unsupported', 'Updates only run in the installed app.');
+    return;
+  }
+  if (process.platform !== 'win32') {
+    setUpdateState('unsupported', 'Updates only run on Windows.');
+    return;
+  }
+
+  let autoUpdater;
+  try {
+    ({ autoUpdater } = require('electron-updater'));
+  } catch (err) {
+    setUpdateState('error', `Updater missing: ${String((err && err.message) || err)}`);
+    return;
+  }
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  // electron-updater's own chatter goes to the same file, so a failure deep
+  // inside it (a bad app-update.yml, a 404, a blocked connection) leaves a
+  // trace rather than vanishing.
+  autoUpdater.logger = {
+    info: (m) => logUpdate(`info  ${m}`),
+    warn: (m) => logUpdate(`warn  ${m}`),
+    error: (m) => logUpdate(`error ${m}`),
+    debug: () => {},
+  };
+
+  autoUpdater.on('checking-for-update', () =>
+    setUpdateState('checking', 'Looking for a newer version…'),
+  );
+  autoUpdater.on('update-not-available', (info) =>
+    setUpdateState('current', 'This is the newest version.', { version: info && info.version }),
+  );
+  autoUpdater.on('update-available', (info) =>
+    setUpdateState('downloading', 'Getting the newest version…', {
+      version: info && info.version,
+    }),
+  );
+  autoUpdater.on('download-progress', (p) =>
+    setUpdateState('downloading', `Getting the newest version… ${Math.round(p.percent)}%`, {
+      percent: p.percent,
+    }),
+  );
+  autoUpdater.on('update-downloaded', (info) =>
+    setUpdateState('ready', 'Ready — close the app and open it again to finish.', {
+      version: info && info.version,
+    }),
+  );
+  autoUpdater.on('error', (err) =>
+    setUpdateState('error', String((err && err.message) || err)),
+  );
+
+  const check = () => {
+    logUpdate(`check from version ${app.getVersion()}`);
+    autoUpdater.checkForUpdates().catch((err) => {
+      setUpdateState('error', String((err && err.message) || err));
+    });
+  };
+
+  checkNow = check;
+  check();
+  // A download abandoned because the app closed starts again next time, and a
+  // release published mid-session is picked up without a restart.
+  setInterval(check, UPDATE_RECHECK_MS);
+}
+
+ipcMain.handle('update:check', () => {
+  if (!checkNow) return { ok: false, state: updateState };
+  checkNow();
+  return { ok: true, state: updateState };
+});
+ipcMain.handle('update:state', () => updateState);
+ipcMain.handle('update:log', async () => {
+  try {
+    return { ok: true, path: updateLogPath(), text: await fs.readFile(updateLogPath(), 'utf-8') };
+  } catch {
+    return { ok: false, path: updateLogPath(), text: '' };
+  }
+});
 
 app.whenReady().then(() => {
   buildMenu();
   createWindow();
-  checkForUpdatesQuietly();
+  startUpdater();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

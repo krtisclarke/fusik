@@ -5,6 +5,7 @@ import { formatPosition } from '../model/time';
 import { MAX_BARS, MAX_BPM, MIN_BARS, MIN_BPM } from '../model/project';
 import { SCALE_CHOICES } from '../model/scales';
 import { SongName, SongsPanel } from './Songs';
+import { UpdateStatus } from './UpdateStatus';
 
 /**
  * A number box that only reports a value when the child has finished typing one
@@ -108,7 +109,7 @@ export function Transport() {
       <div className="brand">
         <span className="logo">🎛️</span>
         <span>
-          Beatbox Studio <span className="version">v{__APP_VERSION__}</span>
+          Beatbox Studio <UpdateStatus />
           <br />
           <small>music you can poke at</small>
         </span>

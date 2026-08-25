@@ -3,9 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      The page may talk to itself, the dev server, and exactly one outside
+      address: the MIDI archive behind "Find a song online". Naming that host
+      here rather than opening connect-src up means a bug — or something
+      slipped into a dependency — still cannot send this song, or anything
+      else, anywhere. (The packaged desktop app doesn't rely on this: there the
+      fetch is made by the shell, against its own one-host allowlist.)
+    -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob: data:; connect-src 'self' ws://127.0.0.1:5173"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob: data:; connect-src 'self' ws://127.0.0.1:5173 https://bitmidi.com"
     />
     <title>Beatbox Studio</title>
   </head>

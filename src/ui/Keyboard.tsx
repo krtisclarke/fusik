@@ -48,6 +48,12 @@ export function Keyboard() {
   const recordPlayedNote = useStore((s) => s.recordPlayedNote);
   const isRecording = useStore((s) => s.isRecording);
   const notePlayed = useStore((s) => s.notePlayed);
+  const isPlaying = useStore((s) => s.isPlaying);
+  const toggleRecording = useStore((s) => s.toggleRecording);
+  const play = useStore((s) => s.play);
+  const isMicRecording = useStore((s) => s.isMicRecording);
+  const canRecordMic = useStore((s) => s.canRecordMic);
+  const toggleMicRecording = useStore((s) => s.toggleMicRecording);
 
   // The picker is the single source of truth for which instrument the keys
   // play. Selecting a melodic track on the timeline *moves* the picker, rather
@@ -283,7 +289,59 @@ export function Keyboard() {
     <div className={`keyboard ${isRecording ? 'recording' : ''}`}
       data-tour="keyboard">
       <div className="kb-side">
-        <span className="kb-title">{isRecording ? '● Rec' : 'Play'}</span>
+        {/*
+          The one question this row could never answer: what happens to a note
+          once you have played it? Nothing did, unless you had already found a
+          ⏺ at the far end of the toolbar and pressed it — and there was no
+          reason to look. So the way in sits here, on the thing being played,
+          and says in words what state it is in and what to do next.
+        */}
+        <div className="kb-capture">
+          <button
+            className={`kb-arm ${isRecording ? 'armed' : ''}`}
+            onClick={() => {
+              // Arming and then having to go and press play elsewhere is one
+              // step too many for the thing this button is trying to teach.
+              if (!isRecording && !isPlaying) {
+                toggleRecording();
+                play();
+                return;
+              }
+              toggleRecording();
+            }}
+            title={
+              isRecording
+                ? 'Stop writing what you play into the song'
+                : 'Play along and it gets written into the song'
+            }
+          >
+            {isRecording ? '⏹ Stop writing' : '⏺ Write what I play into the song'}
+          </button>
+          <button
+            className={`kb-arm mic ${isMicRecording ? 'armed' : ''}`}
+            onClick={() => void toggleMicRecording()}
+            disabled={!canRecordMic}
+            title={
+              canRecordMic
+                ? isMicRecording
+                  ? 'Stop — what you sang becomes a block in the song'
+                  : 'Sing or beatbox; it becomes a block in the song'
+                : 'Recording your voice needs the desktop app'
+            }
+          >
+            {isMicRecording ? '⏹ Stop singing' : '🎤 Sing into the song'}
+          </button>
+          <span className="kb-capture-note">
+            {isMicRecording
+              ? 'Listening — press stop and it becomes a block.'
+              : isRecording
+                ? isPlaying
+                  ? 'Writing it down — every note you play lands on the timeline.'
+                  : 'Press ▶ and play — what you play lands on the timeline.'
+                : 'Play freely — nothing is kept until you press one of these.'}
+          </span>
+        </div>
+        <span className="kb-divider" />
         <div className="kb-voices">
           {MELODIC_VOICES.map((v) => (
             <button

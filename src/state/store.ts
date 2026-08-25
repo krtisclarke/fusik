@@ -44,6 +44,7 @@ import {
   type SongSummary,
 } from '../platform/library';
 import { newClipId, newSongId } from '../model/ids';
+import { downloadOnlineMidi, searchOnlineMidi, type OnlineMidi } from '../platform/onlineMidi';
 import { MicRecorder, micAvailable } from '../audio/mic';
 import { clipsAvailable, readClip, sweepClips, writeClip } from '../platform/clips';
 import { readSampleFile } from '../platform/samples';
@@ -64,6 +65,30 @@ export interface Selection {
   noteIds: string[];
 }
 
+/**
+ * A sound being dragged out of the library, while it is in the air.
+ *
+ * Lives in the store because the two halves of the gesture are in different
+ * components: the library starts it, the timeline finishes it and draws the
+ * block-shaped preview where it would land. The browser's own drag-and-drop
+ * could carry the id across but not the *picture* — its ghost is a snapshot of
+ * whatever was pressed, which is why dragging a sound used to trail a long
+ * library row behind it instead of the small block it was about to become.
+ */
+export interface VoiceDrag {
+  voiceId: string;
+  pointerId: number;
+  /** Where the pointer is now, in page coordinates, for the floating ghost. */
+  clientX: number;
+  clientY: number;
+  /** Where the press landed, so the wobble threshold is measured from there
+   *  rather than from the last move — a slow drag would never trip it. */
+  startX: number;
+  startY: number;
+  /** Past the wobble threshold — below it the press is still just a click. */
+  moved: boolean;
+}
+
 export interface StoreState {
   history: History<Project>;
   project: Project; // convenience mirror of history.present
@@ -78,6 +103,8 @@ export interface StoreState {
   currentSectionId: string;
   snap: SnapId;
   selection: Selection;
+  /** A library sound in mid-air, or null. See VoiceDrag. */
+  voiceDrag: VoiceDrag | null;
   status: string | null;
   /** Whether the playable keyboard is open along the bottom. */
   showKeyboard: boolean;
@@ -124,6 +151,23 @@ export interface StoreState {
   saveCurrent: () => Promise<void>;
   openFromFile: () => Promise<void>;
   importMidi: () => Promise<void>;
+
+  // finding a song to import, on the internet rather than on the disk
+  /** Whether the search panel is open. */
+  showFindOnline: boolean;
+  toggleFindOnline: () => void;
+  /** What the last search found, newest search wins. */
+  onlineResults: OnlineMidi[];
+  /** A search or a download is in flight. */
+  onlineBusy: boolean;
+  /** Why the last try didn't work, in plain words. */
+  onlineError: string | null;
+  /** Whether a search has been run at all yet (an empty list means something
+   *  different before the first search than after it). */
+  onlineSearched: boolean;
+  searchOnline: (query: string) => Promise<void>;
+  /** Download one of the results and open it as a song. */
+  openOnline: (item: OnlineMidi) => Promise<void>;
   /** Render the song and save it — MP3 (small, plays anywhere) unless asked for WAV. */
   exportSong: (format?: 'mp3' | 'wav') => Promise<void>;
 
@@ -168,17 +212,31 @@ export interface StoreState {
   previewTrackEcho: (trackId: string, echo: number) => void;
   /** Live-drag the volume slider; one undo step per drag via commitEdit. */
   previewTrackGain: (trackId: string, gain: number) => void;
-  dropVoiceAt: (voiceId: string, beat: number) => void;
-  addNoteAt: (trackId: string, beat: number, opts?: { pitch?: number; velocity?: number }) => void;
+  /** Drop a library sound into the song. `sectionId` says which part it landed
+   *  in; `pitch` is only used by melodic sounds, and defaults to mid-range. */
+  dropVoiceAt: (voiceId: string, beat: number, sectionId?: string, pitch?: number) => void;
+  addNoteAt: (
+    trackId: string,
+    beat: number,
+    opts?: { pitch?: number; velocity?: number; sectionId?: string },
+  ) => void;
   removeNote: (trackId: string, noteId: string) => void;
-  /** Move a block in time, and — for a block that has a pitch — up or down the scale. */
+  /** Move a block in time, up or down the scale, and — dragged across a part
+   *  boundary on the whole-song timeline — into a different part. */
   moveNote: (
     fromTrackId: string,
     noteId: string,
     toTrackId: string,
     beat: number,
     pitch?: number,
+    sectionId?: string,
   ) => void;
+  /** Move the playhead to an absolute beat in the song. */
+  seekTo: (beat: number) => void;
+  /** Library drag: pick a sound up, drag it, put it down. */
+  startVoiceDrag: (voiceId: string, pointerId: number, clientX: number, clientY: number) => void;
+  moveVoiceDrag: (clientX: number, clientY: number) => void;
+  endVoiceDrag: () => void;
 
   // per-block sound + chaining (act on the current selection, plus any chained partners)
   /** Live-update a sound parameter on the selected block(s) while dragging a slider. */
@@ -187,6 +245,16 @@ export interface StoreState {
   previewLength: (lengthBeats: number) => void;
   /** Finalize a live drag (sound or length) into a single undo entry. */
   commitEdit: () => void;
+  /**
+   * Getting blocks on the beat, which is arithmetic, not aim. See the three
+   * model helpers in project.ts.
+   */
+  /** Fill the selected block's part with copies, one every `everyBeats`. */
+  repeatSelectedEvery: (everyBeats: number) => void;
+  /** Pull the selected blocks onto the nearest beat (or half-beat). */
+  alignSelected: (stepBeats: number) => void;
+  /** Spread the selected blocks evenly between the first and last. */
+  spreadSelected: () => void;
   resetSelected: () => void;
   chainSelected: () => void;
   unchainSelected: () => void;
@@ -357,6 +425,9 @@ function middlePitch(voiceId: string, project: Project): number | undefined {
   return ladder[Math.floor(ladder.length / 2)];
 }
 
+/** Guards against an older search answering after a newer one. */
+let onlineSearchToken = 0;
+
 /** The given section id if it still exists, else the song's first part. */
 function fixSectionId(project: Project, sectionId: string | null): string {
   if (sectionId && project.sections.some((s) => s.id === sectionId)) return sectionId;
@@ -406,6 +477,31 @@ export const useStore = create<StoreState>((set, get) => {
       selection: pruneSelection(next, currentSectionId, s.selection),
       canUndo: canUndo(history),
       canRedo: canRedo(history),
+    });
+  }
+
+  /**
+   * Turn a MIDI file's note-instructions into the song on screen.
+   *
+   * Shared by the file picker and the online search: both end with the same
+   * thing happening, and an import that behaved differently depending on where
+   * the file came from would be a bug waiting to be written.
+   */
+  function adoptMidi(bytes: Uint8Array, name: string): void {
+    flushAutosave(); // the song being replaced is written out first
+    const { project, dropped } = projectFromMidi(parseMidi(bytes), name);
+    // An import joins the shelf as its own song, exactly like a file open.
+    const songId = newSongId();
+    writeCurrentSongId(songId);
+    set({ currentSongId: songId });
+    get().loadProject(project);
+    set({
+      showSongs: false,
+      // What couldn't come along is said once, plainly, and never hidden.
+      status:
+        dropped.notes > 0 || dropped.tracks > 0
+          ? `Opened "${project.name}" — a few sounds it can't play were left out`
+          : `Opened "${project.name}"`,
     });
   }
 
@@ -479,6 +575,12 @@ export const useStore = create<StoreState>((set, get) => {
     playMode: engine.getPlayMode(),
     currentSectionId: initialSectionId,
     snap: DEFAULT_SNAP,
+    voiceDrag: null,
+    showFindOnline: false,
+    onlineResults: [],
+    onlineBusy: false,
+    onlineError: null,
+    onlineSearched: false,
     selection: { trackId: null, noteIds: [] },
     status: restored ? 'Picked up where you left off' : null,
     showKeyboard: true,
@@ -639,25 +741,56 @@ export const useStore = create<StoreState>((set, get) => {
 
     importMidi: async () => {
       try {
-        flushAutosave(); // the song being replaced is written out first
         const picked = await pickMidiFile();
         if (!picked) return;
-        const { project, dropped } = projectFromMidi(parseMidi(picked.bytes), picked.name);
-        // An import joins the shelf as its own song, exactly like a file open.
-        const songId = newSongId();
-        writeCurrentSongId(songId);
-        set({ currentSongId: songId });
-        get().loadProject(project);
-        set({
-          showSongs: false,
-          // What couldn't come along is said once, plainly, and never hidden.
-          status:
-            dropped.notes > 0 || dropped.tracks > 0
-              ? `Imported "${project.name}" — a few sounds it can't play were left out`
-              : `Imported "${project.name}"`,
-        });
+        adoptMidi(picked.bytes, picked.name);
       } catch (err) {
         set({ status: `Couldn't import: ${(err as Error).message}` });
+      }
+    },
+
+    // ---- finding a song to import, on the internet ------------------------
+    //
+    // The app could already turn a .mid into a song; what it couldn't do was
+    // get hold of one. A .mid is not a thing a child has lying around, and
+    // "ask a grown-up to go and find one" is not a feature.
+
+    toggleFindOnline: () =>
+      set((s) => ({
+        showFindOnline: !s.showFindOnline,
+        showSongs: false,
+        onlineError: null,
+      })),
+
+    searchOnline: async (query) => {
+      const q = query.trim();
+      if (!q) return;
+      // A newer search always wins: type on while the last one is still coming
+      // back and the list must not flicker to the old answer.
+      const token = ++onlineSearchToken;
+      set({ onlineBusy: true, onlineError: null, onlineSearched: true });
+      try {
+        const results = await searchOnlineMidi(q);
+        if (token !== onlineSearchToken) return;
+        set({ onlineResults: results, onlineBusy: false });
+      } catch (err) {
+        if (token !== onlineSearchToken) return;
+        set({
+          onlineBusy: false,
+          onlineResults: [],
+          onlineError: `Couldn't reach the song list — ${(err as Error).message}`,
+        });
+      }
+    },
+
+    openOnline: async (item) => {
+      set({ onlineBusy: true, onlineError: null });
+      try {
+        const bytes = await downloadOnlineMidi(item);
+        adoptMidi(bytes, item.name);
+        set({ onlineBusy: false, showFindOnline: false });
+      } catch (err) {
+        set({ onlineBusy: false, onlineError: `Couldn't open that one — ${(err as Error).message}` });
       }
     },
 
@@ -871,6 +1004,23 @@ export const useStore = create<StoreState>((set, get) => {
       closeBaseline();
     },
 
+    repeatSelectedEvery: (everyBeats) => {
+      const s = get();
+      const noteId = s.selection.noteIds[0];
+      if (!s.selection.trackId || !noteId) return;
+      apply(P.repeatNoteEvenly(s.history.present, s.selection.trackId, noteId, everyBeats));
+    },
+    alignSelected: (stepBeats) => {
+      const s = get();
+      const ids = P.expandChain(s.history.present, s.selection.noteIds);
+      apply(P.alignNotes(s.history.present, ids, stepBeats));
+    },
+    spreadSelected: () => {
+      const s = get();
+      const ids = P.expandChain(s.history.present, s.selection.noteIds);
+      apply(P.spreadNotes(s.history.present, ids));
+    },
+
     resetSelected: () => {
       editBaseline = null;
       const s = get();
@@ -912,12 +1062,18 @@ export const useStore = create<StoreState>((set, get) => {
     },
 
     /** Drop a library voice onto the song: reuse its track if present, else make one. */
-    dropVoiceAt: (voiceId, beat) => {
+    dropVoiceAt: (voiceId, beat, sectionId, pitch) => {
       const project = get().history.present;
       const snapped = snapBeat(beat, get().snap, project.timeSignature);
       const existing = P.findTrackByVoice(project, voiceId);
-      const pitch = middlePitch(voiceId, project);
-      const note = P.createNote(get().currentSectionId, snapped, 1, P.DEFAULT_NOTE_VELOCITY, pitch);
+      const dropPitch = pitch ?? middlePitch(voiceId, project);
+      const note = P.createNote(
+        sectionId ?? get().currentSectionId,
+        snapped,
+        1,
+        P.DEFAULT_NOTE_VELOCITY,
+        dropPitch,
+      );
       if (existing) {
         apply(P.addNote(project, existing.id, note));
       } else {
@@ -925,7 +1081,7 @@ export const useStore = create<StoreState>((set, get) => {
         const withTrack = P.addTrack(project, track);
         apply(P.addNote(withTrack, track.id, note));
       }
-      void engine.audition(voiceId, {}, 0.9, pitch);
+      void engine.audition(voiceId, {}, 0.9, dropPitch);
     },
 
     addNoteAt: (trackId, beat, opts) => {
@@ -933,7 +1089,7 @@ export const useStore = create<StoreState>((set, get) => {
       const track = project.tracks.find((t) => t.id === trackId);
       const snapped = snapBeat(beat, get().snap, project.timeSignature);
       const note = P.createNote(
-        get().currentSectionId,
+        opts?.sectionId ?? get().currentSectionId,
         snapped,
         1,
         opts?.velocity ?? P.DEFAULT_NOTE_VELOCITY,
@@ -947,11 +1103,58 @@ export const useStore = create<StoreState>((set, get) => {
 
     removeNote: (trackId, noteId) => apply(P.removeNote(get().history.present, trackId, noteId)),
 
-    moveNote: (fromTrackId, noteId, toTrackId, beat, pitch) => {
+    moveNote: (fromTrackId, noteId, toTrackId, beat, pitch, sectionId) => {
       const project = get().history.present;
       const snapped = snapBeat(beat, get().snap, project.timeSignature);
-      apply(P.moveNote(project, fromTrackId, noteId, toTrackId, snapped, pitch));
+      apply(P.moveNote(project, fromTrackId, noteId, toTrackId, snapped, pitch, sectionId));
     },
+
+    // ---- moving the playhead ---------------------------------------------
+    //
+    // The timeline shows the whole song, so a beat on it is a beat in the
+    // song, full stop. In Part mode the transport is counting inside one part
+    // instead, so a click somewhere else in the song means "work on that part,
+    // from there" — which is what a child dragging the line across a boundary
+    // plainly intends.
+    seekTo: (beat) => {
+      const s = get();
+      const project = s.history.present;
+      if (s.playMode === 'song') {
+        engine.seek(Math.max(0, beat));
+      } else {
+        const at = songPositionAt(project, Math.max(0, beat));
+        if (!at) return;
+        if (at.entry.sectionId !== s.currentSectionId) focusSection(at.entry.sectionId);
+        engine.seek(at.beatInSection);
+      }
+      // Paused, nothing redraws itself off the audio clock until the next
+      // frame; the playhead reads the clock every frame anyway, so it follows.
+      set({});
+    },
+
+    // ---- carrying a sound out of the library ------------------------------
+    startVoiceDrag: (voiceId, pointerId, clientX, clientY) =>
+      set({
+        voiceDrag: {
+          voiceId,
+          pointerId,
+          clientX,
+          clientY,
+          startX: clientX,
+          startY: clientY,
+          moved: false,
+        },
+      }),
+    moveVoiceDrag: (clientX, clientY) => {
+      const drag = get().voiceDrag;
+      if (!drag) return;
+      const moved =
+        drag.moved ||
+        Math.abs(clientX - drag.startX) > 4 ||
+        Math.abs(clientY - drag.startY) > 4;
+      set({ voiceDrag: { ...drag, clientX, clientY, moved } });
+    },
+    endVoiceDrag: () => set({ voiceDrag: null }),
 
     // ---- recording a performance -----------------------------------------
     //
