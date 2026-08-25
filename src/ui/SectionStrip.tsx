@@ -168,6 +168,19 @@ export function SectionStrip() {
                   <span className="chip-bars">{section.lengthBars} bars</span>
                 </>
               )}
+              {isCurrent && renamingEntryId !== entry.id && (
+                <button
+                  className="chip-edit"
+                  title="Rename this part"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRenamingEntryId(entry.id);
+                  }}
+                >
+                  ✏️
+                </button>
+              )}
               {canRemove && (
                 <button
                   className="chip-x"

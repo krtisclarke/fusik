@@ -218,6 +218,8 @@ export interface StoreState {
   setTidyTiming: (on: boolean) => void;
   select: (trackId: string | null, noteId?: string | null) => void;
   toggleNoteSelection: (trackId: string, noteId: string) => void;
+  /** Replace the selection with exactly these blocks (the drag-a-box select). */
+  selectNotes: (trackId: string, noteIds: string[]) => void;
   selectTrackNotes: (trackId: string) => void;
   audition: (voiceId: string) => void;
   setStatus: (status: string | null) => void;
@@ -1076,6 +1078,7 @@ export const useStore = create<StoreState>((set, get) => {
         : [...current, noteId];
       set({ selection: { trackId, noteIds } });
     },
+    selectNotes: (trackId, noteIds) => set({ selection: { trackId, noteIds } }),
     selectTrackNotes: (trackId) => {
       const track = get().history.present.tracks.find((t) => t.id === trackId);
       // Only the blocks visible right now — the ones in the part being edited.

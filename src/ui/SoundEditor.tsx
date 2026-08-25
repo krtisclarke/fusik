@@ -4,9 +4,10 @@ import { getVoice, resolveParams } from '../model/voices';
 import { PARAM_SPECS, formatParamValue } from './soundParams';
 
 // The Sound Editor shapes the selected block(s). Each block has its own sound;
-// select several (Shift-click, or click a row's name for all of them) and edits
-// apply to all of them. "Link" chains the selected blocks so they permanently
-// keep the same sound and length; "Unlink" breaks the chain.
+// select several (drag a box over them, Shift-click, or click a row's name for
+// all of them) and edits apply to all of them. "Link" chains the selected
+// blocks so they permanently keep the same sound and length; "Unlink" breaks
+// the chain.
 
 export function SoundEditor() {
   const selection = useStore((s) => s.selection);
@@ -71,6 +72,12 @@ export function SoundEditor() {
   function renderControl(key: string) {
     const spec = PARAM_SPECS[key];
     const value = resolved[key] ?? 0;
+    // The numbers under the sliders are engineer units — "12000", "1.05" —
+    // and the ear is the real readout: drag it and hear it. So the everyday
+    // view hides them, and "More" shows them along with the advanced sliders.
+    // Wave is the exception because its value is a word ("Saw"), and the word
+    // is the information.
+    const showValue = showAdvanced || key === 'wave';
     return (
       <div className="ctrl" key={key} title={spec.hint}>
         <label>{spec.label}</label>
@@ -85,7 +92,7 @@ export function SoundEditor() {
           onKeyUp={onRelease}
           onBlur={onRelease}
         />
-        <span className="val">{formatParamValue(key, value)}</span>
+        {showValue && <span className="val">{formatParamValue(key, value)}</span>}
       </div>
     );
   }

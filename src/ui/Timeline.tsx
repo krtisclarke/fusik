@@ -25,6 +25,24 @@ interface DragState {
   previewPitch: number | null;
 }
 
+/**
+ * A press on empty grid, until it declares itself: stay put and it's a click
+ * that places a block; move and it's a box being dragged over blocks to select
+ * them — the rubber band every grown-up music program uses, and a gesture a
+ * child finds by accident. Shift-click still works; it just stopped being the
+ * only way.
+ */
+interface LassoState {
+  trackId: string;
+  pointerId: number;
+  /** Where the press landed, in grid-local pixels — a click places here. */
+  startX: number;
+  startY: number;
+  x: number;
+  y: number;
+  moved: boolean;
+}
+
 export function Timeline() {
   const project = useStore((s) => s.project);
   const currentSectionId = useStore((s) => s.currentSectionId);
@@ -36,6 +54,7 @@ export function Timeline() {
   const dropVoiceAt = useStore((s) => s.dropVoiceAt);
   const select = useStore((s) => s.select);
   const toggleNoteSelection = useStore((s) => s.toggleNoteSelection);
+  const selectNotes = useStore((s) => s.selectNotes);
   const selectTrackNotes = useStore((s) => s.selectTrackNotes);
   const previewLength = useStore((s) => s.previewLength);
   const commitEdit = useStore((s) => s.commitEdit);
@@ -49,6 +68,7 @@ export function Timeline() {
   const lanesRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [resize, setResize] = useState<{ startX: number; origLength: number } | null>(null);
+  const [lasso, setLasso] = useState<LassoState | null>(null);
 
   // The timeline shows one part of the song at a time (pick parts in the strip
   // above). Only the current part's blocks are drawn and edited here.
@@ -81,14 +101,72 @@ export function Timeline() {
 
   const totalHeight = project.tracks.reduce((h, t) => h + laneHeight(t), 0);
 
-  // ---- placing notes ----------------------------------------------------
+  // Show silence where silence is: a muted row — or any row talked over by
+  // someone else's Solo — goes visibly grey, so M and S teach themselves the
+  // first time they're pressed. Mirrors exactly what the engine plays.
+  const anySolo = project.tracks.some((t) => t.solo);
+
+  // ---- placing notes, and the drag-a-box select --------------------------
+  //
+  // A press on empty grid used to place a block the instant it landed. It now
+  // waits to see what the press *is*: let go without moving and a block lands
+  // exactly where the press did, or drag and a box sweeps up every block it
+  // touches. Selected blocks light up live as the box grows, so the gesture
+  // teaches itself. (On touch, a scroll cancels the press — which also means
+  // scrolling no longer plants a stray block where the finger first landed.)
 
   function onLanePointerDown(e: React.PointerEvent, track: Track) {
     if (e.target !== e.currentTarget) return; // ignore presses that land on a note
-    const beat = xToBeat(e.nativeEvent.offsetX);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    setLasso({
+      trackId: track.id,
+      pointerId: e.pointerId,
+      startX: e.nativeEvent.offsetX,
+      startY: e.nativeEvent.offsetY,
+      x: e.nativeEvent.offsetX,
+      y: e.nativeEvent.offsetY,
+      moved: false,
+    });
+  }
+
+  /** The blocks the box currently covers — overlapping in time and, on a
+   *  note-grid, in rows. */
+  function notesInBox(track: Track, box: LassoState): string[] {
+    const pitches = pitchesFor(track);
+    const loBeat = xToBeat(Math.min(box.startX, box.x));
+    const hiBeat = xToBeat(Math.max(box.startX, box.x));
+    const loRow = Math.floor(Math.min(box.startY, box.y) / PITCH_ROW_H);
+    const hiRow = Math.floor(Math.max(box.startY, box.y) / PITCH_ROW_H);
+    return sectionNotes(track)
+      .filter((n) => {
+        if (n.startBeat + n.lengthBeats <= loBeat || n.startBeat >= hiBeat) return false;
+        if (!pitches || n.pitch == null) return true;
+        const row = pitches.length - 1 - nearestLadderIndex(pitches, n.pitch);
+        return row >= loRow && row <= hiRow;
+      })
+      .map((n) => n.id);
+  }
+
+  function onLanePointerMove(e: React.PointerEvent, track: Track) {
+    if (!lasso || lasso.pointerId !== e.pointerId || lasso.trackId !== track.id) return;
+    const x = e.nativeEvent.offsetX;
+    const y = e.nativeEvent.offsetY;
+    const moved =
+      lasso.moved || Math.abs(x - lasso.startX) > 5 || Math.abs(y - lasso.startY) > 5;
+    const next = { ...lasso, x, y, moved };
+    setLasso(next);
+    if (moved) selectNotes(track.id, notesInBox(track, next));
+  }
+
+  function onLanePointerUp(e: React.PointerEvent, track: Track) {
+    if (!lasso || lasso.pointerId !== e.pointerId) return;
+    setLasso(null);
+    if (lasso.moved) return; // the box already did the selecting
+    // A plain click: place a block where the press landed.
+    const beat = xToBeat(lasso.startX);
     const pitches = pitchesFor(track);
     if (pitches) {
-      const rowFromTop = clamp(Math.floor(e.nativeEvent.offsetY / PITCH_ROW_H), 0, pitches.length - 1);
+      const rowFromTop = clamp(Math.floor(lasso.startY / PITCH_ROW_H), 0, pitches.length - 1);
       const pitch = pitches[pitches.length - 1 - rowFromTop];
       addNoteAt(track.id, beat, { pitch });
     } else {
@@ -248,7 +326,7 @@ export function Timeline() {
         title={
           pitched
             ? 'Click to select · drag sideways to move it in time, up and down to change the note'
-            : 'Click to select · Shift-click to add · drag to move'
+            : 'Click to select · drag to move · drag a box on empty grid to select several'
         }
       >
         <span className="vel" style={{ height: `${note.velocity * 100}%` }} />
@@ -314,8 +392,9 @@ export function Timeline() {
             const pitches = pitchesFor(track);
             const laneH = laneHeight(track);
             const isSelectedTrack = selection.trackId === track.id;
+            const silenced = track.muted || (anySolo && !track.solo);
             return (
-              <div className="lane" key={track.id} style={{ height: laneH }}>
+              <div className={`lane ${silenced ? 'silent' : ''}`} key={track.id} style={{ height: laneH }}>
                 <div
                   className={`lane-header ${isSelectedTrack ? 'selected' : ''}`}
                   onClick={() => selectTrackNotes(track.id)}
@@ -355,7 +434,7 @@ export function Timeline() {
                   <div className="controls">
                     <button
                       className={`mini ${track.muted ? 'on-m' : ''}`}
-                      title="Mute"
+                      title="Mute — turn this row off"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleMute(track.id);
@@ -365,7 +444,7 @@ export function Timeline() {
                     </button>
                     <button
                       className={`mini ${track.solo ? 'on-s' : ''}`}
-                      title="Solo"
+                      title="Solo — hear only this row"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleSolo(track.id);
@@ -410,6 +489,9 @@ export function Timeline() {
                     width: gridWidth,
                   }}
                   onPointerDown={(e) => onLanePointerDown(e, track)}
+                  onPointerMove={(e) => onLanePointerMove(e, track)}
+                  onPointerUp={(e) => onLanePointerUp(e, track)}
+                  onPointerCancel={() => setLasso(null)}
                 >
                   {/* instrument pitch guides: highlight root rows, label every row */}
                   {pitches?.map((p, i) => {
@@ -430,6 +512,18 @@ export function Timeline() {
                   })}
 
                   {sectionNotes(track).map((note) => renderNote(track, note, pitches))}
+
+                  {lasso?.moved && lasso.trackId === track.id && (
+                    <div
+                      className="lasso"
+                      style={{
+                        left: Math.min(lasso.startX, lasso.x),
+                        top: Math.min(lasso.startY, lasso.y),
+                        width: Math.abs(lasso.x - lasso.startX),
+                        height: Math.abs(lasso.y - lasso.startY),
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             );

@@ -79,6 +79,10 @@ npm run package:mac   # build a macOS app bundle
 - **Wrong note?** Drag the block up or down to change it — it slides through the
   scale, so wherever you drop it still sounds right. Drag sideways to move it in
   time.
+- **Grab a bunch at once.** Drag a box over blocks on empty grid and they all
+  select — shape them together, or **Link** them so they keep the same sound
+  and length. Each row's **M** turns it off (it goes grey so you can see it's
+  off) and **S** plays it alone.
 - **Parts:** the strip above the timeline is your song's running order. Add a
   new part, play a part again (A A B A!), copy one to tweak, drag chips to
   rearrange, double-click to rename. Play the whole **Song** or loop just the

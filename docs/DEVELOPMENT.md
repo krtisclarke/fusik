@@ -958,6 +958,37 @@ things you do to a song *as a whole* (New, Open, Save, Export) now live in the
 🎵 Songs panel next to the list of songs, which is what they were always about,
 and the bar wraps rather than putting a control out of reach.
 
+**A control has to look like what it does, and show what it did.** A pass over
+the app against that bar (the "shape-sorter test": could a child discover this
+by poking, with no instruction?) found the failures were never structure —
+the app's shapes already mirror grown-up music software — but discovery:
+good features hidden behind hover tooltips and keyboard chords. What changed,
+and why:
+
+- The row's name is a menu (pick a different instrument), and it was styled as
+  bare text — the app's best-hidden feature. It now looks like a soft button
+  with a ▾ arrow, which is the entire difference between hidden and found.
+- Mute and Solo keep their M/S letters — they are what every real mixer says,
+  and worth learning — but pressing them now *shows* the result: a silenced
+  row (muted, or talked over by another row's Solo, mirroring exactly what the
+  engine plays) goes grey, and the pressed button fills with colour. The
+  control teaches itself on first press.
+- Selecting several blocks needed Shift-click, a chord no child uses — and
+  Link only appears once several are selected, so it was hidden behind hidden.
+  Dragging a box on empty grid now selects what it touches, live, with the
+  band drawn as it grows. A press that doesn't move still places a block
+  exactly where it landed (placement moved from press to release to make room
+  for the gesture — and as a bonus, a touch scroll that starts on empty grid
+  no longer plants a stray block).
+- The resize grip on a selected block was a 9px invisible strip; it now draws
+  a bright handle.
+- The sound editor's numbers ("12000", "1.05") are engineer units and the ear
+  is the real readout, so the everyday view hides them; "More" shows them with
+  the advanced sliders. Wave keeps its word ("Saw") — there the value *is* the
+  information.
+- The part being edited shows a ✏️; double-click-to-rename still works but is
+  no longer the only way in.
+
 The Sounds panel hit the same wall vertically at 29 sounds: one long list put
 more than half the library below the fold at an ordinary window height, with no
 scrollbar to say so — and a sound a child can't see is a sound the app doesn't
@@ -1067,7 +1098,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | Microphone recording | ✅ | 🎤 records your voice into the song as a block on an audio track. Saved as an `.m4a` beside the song — small, and it plays on a double-click. Reloaded when the song opens, included in Export. Desktop only — see above. |
 | Step sequencer, humanize, per-note velocity | ⬜ | Phase 2. |
 | Per-block sound editor | ✅ | Every block has its own sound. Select one or several and shape live (volume, pitch, decay, brightness, ADSR, drive…): simple/advanced split, hover hints, one-undo-per-drag, reset. |
-| Chaining (link blocks) | ✅ | Multi-select (Shift-click, or a row's name for all) and **Link** blocks into a group that shares sound **and** length; edit or resize any member and the whole chain follows. Unlink to break. |
+| Chaining (link blocks) | ✅ | Multi-select (drag a box over blocks, Shift-click, or a row's name for all) and **Link** blocks into a group that shares sound **and** length; edit or resize any member and the whole chain follows. Unlink to break. |
 | Block length / resize | ✅ | Drag a selected block's right edge to change its length (snaps to grid). |
 | Per-track echo | ✅ | One slider per track, on the lane header. Tempo-synced (repeats land an eighth note apart at any tempo) and one control drives level, repeats and feedback together, so there's no way to set it to something unmusical. Same chain live and in Export. |
 | Other per-track effects (reverb send, filter) | ⬜ | The per-track chain (`audio/trackChain.ts`) is the place to add them. |
@@ -1107,6 +1138,22 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       instruments.
 - [ ] Change tempo while playing — song speeds up/slows smoothly.
 - [ ] Mute / solo / volume per track behave correctly.
+- [ ] Press **M** on a row — the row's grid goes grey and the button fills.
+      Press **S** on another — every row but that one goes grey. The grey
+      always matches what you can hear.
+- [ ] Drag a box on empty grid across several blocks — they light up as the
+      box grows, and the editor offers **Link**. A plain click still places a
+      block exactly where you clicked.
+- [ ] Start a drag on empty grid and release without moving more than a few
+      pixels: one block, where you pressed. No stray block after a lasso.
+- [ ] The row's name looks like a menu (border and ▾), and picking from it
+      swaps the instrument.
+- [ ] A selected block shows a bright grip on its right edge; dragging it
+      resizes.
+- [ ] The current part's chip shows ✏️ — clicking it opens the rename box, and
+      double-click still works.
+- [ ] The sound editor shows no numbers under the everyday sliders; **More ›**
+      reveals them (and Wave always shows its name).
 - [ ] Undo/redo across add, remove, move, tempo.
 - [ ] Save a song, start a new one, reopen the saved file — it returns identical.
 - [ ] Switch **Timing** to Free and place a block between two grid lines — it
@@ -1241,8 +1288,9 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
   still missing is moving *one* block across, along with the decisions that come
   with it — a drum block has no pitch to land on, and a chained block would have
   to take its chain with it.
-- Multi-select uses Shift/Cmd/Ctrl-click (or a row's name for all of a row).
-  A more touch/kid-friendly select (lasso, link-mode) is a candidate follow-up.
+- Multi-select: drag a box over blocks on empty grid (the rubber band every
+  grown-up music program uses), Shift/Cmd/Ctrl-click one at a time, or click a
+  row's name for all of it.
 - Packaging a signed Windows installer requires a Windows machine or CI; the app
   runs from source on macOS today.
 - The dev-only `window.beatbox` debug handle exists in development builds only
