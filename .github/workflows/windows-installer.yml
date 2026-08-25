@@ -17,6 +17,10 @@ on:
   push:
     tags: ['v*']
 
+# The default workflow token is read-only; creating a Release is a write.
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
