@@ -97,7 +97,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'instrument',
     title: 'Add a tune',
-    body: 'Find *Piano* in the list on the left and drag it onto the timeline.',
+    body: 'In the list on the left, click *Keys*, then drag the *Piano* onto the timeline.',
     target: 'library',
     goal: (now, start) => moreThan(now.instrumentTracks, start.instrumentTracks, 1),
   },
