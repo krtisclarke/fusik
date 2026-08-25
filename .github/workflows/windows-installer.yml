@@ -47,6 +47,7 @@ jobs:
       - name: Publish a Release on tags
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
-        run: gh release create $env:GITHUB_REF_NAME (Get-Item release/*.exe).FullName --title "Beatbox Studio $env:GITHUB_REF_NAME" --notes "Windows installer. Unsigned: SmartScreen will ask once — More info, then Run anyway."
+        run: |
+          gh release create $env:GITHUB_REF_NAME (Get-Item release/*.exe).FullName --title "Beatbox Studio $env:GITHUB_REF_NAME" --notes "Windows installer. Unsigned, so SmartScreen asks once - More info, then Run anyway."
         env:
           GH_TOKEN: ${{ github.token }}
