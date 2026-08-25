@@ -928,7 +928,7 @@ npm run dev         # web UI only, http://localhost:5173
 npm test            # unit tests (Vitest)
 npm run typecheck   # tsc --noEmit
 npm run build       # typecheck + build web bundle to dist/
-npm run package:win # NSIS installer (run on Windows or CI)
+npm run package:win # NSIS installer for x64 (cross-builds fine from this Mac; CI builds it on real Windows)
 npm run package:mac # macOS app bundle
 ```
 
@@ -1384,8 +1384,15 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - Multi-select: drag a box over blocks on empty grid (the rubber band every
   grown-up music program uses), Shift/Cmd/Ctrl-click one at a time, or click a
   row's name for all of it.
-- Packaging a signed Windows installer requires a Windows machine or CI; the app
-  runs from source on macOS today.
+- The Windows installer is **unsigned**: SmartScreen shows its "protected your
+  PC" notice on first run (More info → Run anyway, once). Signing needs a paid,
+  identity-verified certificate — a decision for later, not a build step.
+- `npm run package:win` is pinned to `--x64` on purpose: electron-builder
+  silently matches the build machine's chip, and this Mac's is ARM — the
+  unpinned build produced a Windows-on-ARM installer most PCs can't run.
+- The installer has been built and its contents verified (all 302 recordings,
+  byte-identical), but running it needs a real Windows machine — the last
+  manual QA step whenever it changes.
 - The dev-only `window.beatbox` debug handle exists in development builds only
   (compiled out of production).
 

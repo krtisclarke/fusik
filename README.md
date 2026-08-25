@@ -9,10 +9,21 @@ app (Windows and macOS) using web technology wrapped in Electron.
 > mallets (marimba, vibraphone, xylophone, bells), piano, synth, and two
 > basses including a real plucked upright — **26 of them real recordings** of
 > real instruments, with scale-snapped melodies, **song parts you can arrange**
-> (verse/chorus-style, A A B A), per-block sound editing, WAV export, plus
+> (verse/chorus-style, A A B A), per-block sound editing, MP3/WAV export, plus
 > save/load, **autosave**, an **interactive walkthrough** for first-timers, and
 > undo/redo. See
 > [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the full picture and roadmap.
+
+## Install it on Windows
+
+Grab the newest **Beatbox Studio Setup** from the
+[Releases page](https://github.com/krtisclarke/fusik/releases) (or, for a
+build of any commit, the Actions tab → "Windows installer" → the run's
+artifact). Run the installer; because it isn't code-signed, Windows will show
+a **"Windows protected your PC"** notice the first time — click **More info**,
+then **Run anyway**. That happens once. New installers can be built any time
+from the repo's Actions tab ("Run workflow"), or by pushing a `v*` tag, which
+also publishes a Release.
 
 ## Run it (development)
 
@@ -47,7 +58,7 @@ npm test          # run the automated tests
 npm run typecheck # TypeScript check, no build
 npm run build     # build the web bundle
 npm run samples   # rebuild the instrument recordings from the sample library
-npm run package:win   # build a Windows installer (needs Windows or CI)
+npm run package:win   # build the Windows installer (works from the Mac; CI also builds it)
 npm run package:mac   # build a macOS app bundle
 ```
 
