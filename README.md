@@ -143,7 +143,7 @@ npm run package:mac   # build a macOS app bundle
   with the song — great on a hi-hat or a bass note. All the way left is off.
 - **Your songs keep themselves.** Close the tab or shut the laptop and your song
   is there when you come back — no saving needed. Give it a name in the box at
-  the top, and **🎵 Songs** lists everything you've made: click one to open it.
+  the top, and **📁 My Songs** lists everything you've made: click one to open it.
   Starting a new song doesn't lose the old one. **Save to a file** still puts a
   copy somewhere you choose, to keep or to share.
 - **Where your songs live.** In the desktop app they're ordinary files in

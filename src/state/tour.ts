@@ -142,7 +142,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'done',
     title: "That's a song!",
-    body: "It saves itself, so it'll be waiting for you next time. *🎵 Songs* keeps everything you make — and turns a song into an audio file you can share.",
+    body: "It saves itself, so it'll be waiting for you next time. *📁 My Songs* keeps everything you make — and turns a song into an audio file you can share.",
     button: 'Finish',
   },
 ];

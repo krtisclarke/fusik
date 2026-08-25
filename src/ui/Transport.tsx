@@ -285,9 +285,9 @@ export function Transport() {
           <button
             className={`tbtn ${showSongs ? 'on' : ''}`}
             onClick={toggleSongs}
-            title="The songs you've made"
+            title="Every song you've made, kept on this computer"
           >
-            🎵 Songs
+            📁 My Songs
           </button>
           <SongsPanel />
         </div>

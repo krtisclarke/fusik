@@ -999,8 +999,12 @@ The same pressure shows up as sheer count. Every feature so far has added a
 control to the toolbar, and at 1150px wide — an ordinary laptop — the last six
 had scrolled off the right edge of a bar with no scrollbar, unreachable. So the
 things you do to a song *as a whole* (New, Open, Save, Export) now live in the
-🎵 Songs panel next to the list of songs, which is what they were always about,
-and the bar wraps rather than putting a control out of reach.
+📁 My Songs panel next to the list of songs, which is what they were always
+about, and the bar wraps rather than putting a control out of reach. (The
+button spent its first weeks as "🎵 Songs" — and the person who built half the
+app went looking for "a way back to old projects" without recognising it. In a
+music app a note-icon plus "Songs" reads as *music stuff in general*; the
+closed folder and the word "My" are what say *your saved work lives here*.)
 
 **A control has to look like what it does, and show what it did.** A pass over
 the app against that bar (the "shape-sorter test": could a child discover this
@@ -1190,7 +1194,7 @@ Phase 1 is the foundation slice. Legend: ✅ implemented · 🟡 partial · ⬜ 
 | First-song walkthrough | ✅ | Interactive: highlights the real control, advances when the child actually does it. Offers itself once; the **?** button replays it. |
 | Idea helper (💡) | ✅ | For creative block: asks what kind of song (feeling / style / surprise), then coaches the build order — mood, speed, beat, bass, tune, second part — with the walkthrough's cards and highlights. Words and pointers only; it never places a note or touches a setting. |
 | Autosave & restore | ✅ | Songs are kept in local storage as they're worked on and the last one comes back at the next start. Local only. |
-| Several songs, named | ✅ | The song has a name you can type over, and 🎵 Songs lists everything kept on this computer — click one to open it. **New** keeps the one you were on rather than replacing it. On the desktop each song is a real file in `~/Documents/Beatbox Studio/`. |
+| Several songs, named | ✅ | The song has a name you can type over, and 📁 My Songs lists everything kept on this computer — click one to open it. **New** keeps the one you were on rather than replacing it. On the desktop each song is a real file in `~/Documents/Beatbox Studio/`. |
 | Undo / redo | ✅ | Snapshot-based; keyboard + buttons + menu. |
 | Master limiter (ear safety) | ✅ | |
 | Microphone recording | ✅ | 🎤 records your voice into the song as a block on an audio track. Saved as an `.m4a` beside the song — small, and it plays on a double-click. Reloaded when the song opens, included in Export. Desktop only — see above. |
@@ -1295,7 +1299,7 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
 - [ ] Export a song with echo: the repeats are in the file and aren't cut off.
 - [ ] Put a few beats in, close the tab, open it again — the song is back and
       the status line says so.
-- [ ] Name a song, press **New**, name that one too — 🎵 Songs lists both, and
+- [ ] Name a song, press **New**, name that one too — 📁 My Songs lists both, and
       clicking the first brings it back exactly.
 - [ ] Delete a song you are *not* in: it goes, yours is untouched. Delete the one
       you *are* in: the screen clears to a fresh song and the deleted one stays
