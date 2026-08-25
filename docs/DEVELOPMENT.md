@@ -989,6 +989,21 @@ and why:
 - The part being edited shows a ✏️; double-click-to-rename still works but is
   no longer the only way in.
 
+**The overview strip.** Above the timeline sits the whole part in miniature —
+every block as a coloured mark, the playhead, and a bright window showing the
+slice the timeline can currently see. Click or drag anywhere on it and the
+timeline pans there. It exists because the timeline scrolls sideways on longer
+parts and nothing said so: the scrollbar hides itself on a Mac, so past the
+right edge the song simply didn't exist. (Grown-up music programs carry this
+exact strip, so the shape transfers.) The map never owns the truth: dragging
+it only sets the timeline's own scroll position and the window follows the
+scroll event, so the two cannot disagree however the scrolling happened.
+Making sideways scrolling an everyday thing surfaced two dormant bugs, both
+fixed: the lane boxes were only as wide as the window (their grids overflowed
+on, so a scroll ran out of background and the sticky row headers vanished with
+their parent — `.lanes` now spans `max-content`), and the playhead drew on top
+of the pinned headers instead of sliding under them.
+
 The Sounds panel hit the same wall vertically at 29 sounds: one long list put
 more than half the library below the fold at an ordinary window height, with no
 scrollbar to say so — and a sound a child can't see is a sound the app doesn't
@@ -1154,6 +1169,15 @@ Nothing above is faked: the disabled Record button is visibly disabled, and
       double-click still works.
 - [ ] The sound editor shows no numbers under the everyday sliders; **More ›**
       reveals them (and Wave always shows its name).
+- [ ] Make a part 12 bars long: the strip above the timeline shows its blocks
+      in miniature with a bright window over the visible slice. Drag the strip
+      — the timeline pans live and the window follows. Scroll the timeline
+      with the trackpad — the window follows that too.
+- [ ] Scrolled deep into a long part, every row still shows its name, M/S and
+      sliders, pinned at the left — and the playhead slides *under* them, not
+      across them.
+- [ ] While a long part plays, the strip's own playhead crosses it, so the
+      line is visible even when the big one is past the edge of the window.
 - [ ] Undo/redo across add, remove, move, tempo.
 - [ ] Save a song, start a new one, reopen the saved file — it returns identical.
 - [ ] Switch **Timing** to Free and place a block between two grid lines — it

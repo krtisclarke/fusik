@@ -87,6 +87,10 @@ npm run package:mac   # build a macOS app bundle
   new part, play a part again (A A B A!), copy one to tweak, drag chips to
   rearrange, double-click to rename. Play the whole **Song** or loop just the
   **Part** you're working on.
+- **The little map.** Above the timeline is the whole part in miniature, with
+  a bright window showing the bit you're looking at. On a long part, drag the
+  map and the timeline follows — so nothing is ever lost past the edge of the
+  screen.
 - **Play it yourself:** the keyboard along the bottom plays the notes of the
   scale, so nothing you hit sounds wrong. Use the mouse (hold and slide along the
   keys) or the computer keys — `z x c v b…` for the lower octave, `a s d f g…`

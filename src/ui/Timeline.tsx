@@ -7,6 +7,7 @@ import { pitchLadder, midiToLetter, nearestLadderIndex } from '../model/scales';
 import { clamp } from '../model/project';
 import { PX_PER_BEAT, ROW_H, PITCH_ROW_H, HEADER_W, beatToX, xToBeat } from './layout';
 import { Playhead } from './Playhead';
+import { Overview } from './Overview';
 import { VOICE_DRAG_TYPE } from './Library';
 
 interface DragState {
@@ -66,6 +67,7 @@ export function Timeline() {
   const setTrackVoice = useStore((s) => s.setTrackVoice);
 
   const lanesRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [resize, setResize] = useState<{ startX: number; origLength: number } | null>(null);
   const [lasso, setLasso] = useState<LassoState | null>(null);
@@ -364,7 +366,8 @@ export function Timeline() {
 
   return (
     <div className="timeline">
-      <div className="timeline-scroll">
+      <Overview scrollRef={scrollRef} totalBeats={total} />
+      <div className="timeline-scroll" ref={scrollRef}>
         {/* ruler */}
         <div className="ruler">
           <div className="corner">Part {section.name}</div>

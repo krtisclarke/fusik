@@ -377,6 +377,48 @@ select.snap {
   background: var(--bg);
 }
 
+/* The little map of the part above the timeline: every block in miniature, a
+   bright window for the visible slice, the playhead. Click or drag to pan the
+   real timeline below. */
+.overview {
+  position: relative;
+  height: 26px;
+  flex: none;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+.overview:active {
+  cursor: grabbing;
+}
+.ov-note {
+  position: absolute;
+  border-radius: 1px;
+  opacity: 0.8;
+  pointer-events: none;
+}
+.ov-window {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: rgba(108, 123, 255, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(108, 123, 255, 0.25);
+  pointer-events: none;
+}
+.ov-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .timeline-scroll {
   flex: 1;
   overflow: auto;
@@ -399,7 +441,7 @@ select.snap {
   position: sticky;
   left: 0;
   background: var(--bg-panel);
-  z-index: 2;
+  z-index: 5;
   display: flex;
   align-items: center;
   padding: 0 12px;
@@ -427,6 +469,13 @@ select.snap {
 
 .lanes {
   position: relative;
+  /* As wide as the content, not the window. Without this the lane boxes end at
+     the viewport's width while their grids overflow on — so a horizontal
+     scroll ran out of lane (no background, no borders) and the sticky row
+     headers vanished with their parent. Invisible until the overview strip
+     made scrolling sideways an everyday thing. */
+  width: max-content;
+  min-width: 100%;
 }
 
 .lane {
@@ -440,7 +489,9 @@ select.snap {
   flex: none;
   position: sticky;
   left: 0;
-  z-index: 2;
+  /* Above the playhead (z 4): the line must slide under the pinned header
+     when the view is scrolled past it, not draw across the buttons. */
+  z-index: 5;
   background: var(--bg-panel);
   border-right: 1px solid var(--line);
   padding: 8px 10px;
