@@ -646,3 +646,115 @@ describe('spreadNotes', () => {
     expect(P.spreadNotes(p, new Set([a.id, b.id]))).toBe(p);
   });
 });
+
+// ---- cutting up a recording ---------------------------------------------
+//
+// Cutting copies no audio: the second half points further into the same take.
+// That offset is the whole feature, so these check the arithmetic on it.
+
+describe('splitNote', () => {
+  function voiceProject() {
+    let p = P.createDefaultProject(); // 120bpm, so one beat is half a second
+    const track = P.createAudioTrack();
+    p = P.addTrack(p, track);
+    const sectionId = p.arrangement[0].sectionId;
+    // Eight beats of grid holding a four-second take.
+    const note = P.createClipNote(sectionId, 0, 8, 'clip_1', 4);
+    p = P.addNote(p, track.id, note);
+    return { p, trackId: track.id, noteId: note.id, sectionId };
+  }
+
+  it('cuts into two blocks, the second starting further into the take', () => {
+    const { p, trackId, noteId } = voiceProject();
+    const cut = P.splitNote(p, trackId, noteId, 2); // two beats in = one second
+    const notes = cut.tracks.find((t) => t.id === trackId)!.notes;
+    expect(notes).toHaveLength(2);
+    const head = notes.find((n) => n.id === noteId)!;
+    const tail = notes.find((n) => n.id !== noteId)!;
+    expect(head.startBeat).toBe(0);
+    expect(head.lengthBeats).toBe(2);
+    expect(head.clipStartSeconds).toBeUndefined(); // still from the beginning
+    expect(tail.startBeat).toBe(2);
+    expect(tail.lengthBeats).toBe(6);
+    expect(tail.clipStartSeconds).toBeCloseTo(1, 6);
+    expect(tail.clipId).toBe('clip_1'); // the same recording, not a copy
+  });
+
+  it('cutting a second time adds the offsets up', () => {
+    const { p, trackId, noteId } = voiceProject();
+    const once = P.splitNote(p, trackId, noteId, 2);
+    const tailId = once.tracks
+      .find((t) => t.id === trackId)!
+      .notes.find((n) => n.id !== noteId)!.id;
+    const twice = P.splitNote(once, trackId, tailId, 4); // two more beats in
+    const last = twice.tracks
+      .find((t) => t.id === trackId)!
+      .notes.find((n) => n.startBeat === 4)!;
+    expect(last.clipStartSeconds).toBeCloseTo(2, 6); // one second, then another
+  });
+
+  it('does nothing when the cut lands outside the block', () => {
+    const { p, trackId, noteId } = voiceProject();
+    expect(P.splitNote(p, trackId, noteId, 0)).toBe(p);
+    expect(P.splitNote(p, trackId, noteId, 8)).toBe(p);
+    expect(P.splitNote(p, trackId, noteId, 99)).toBe(p);
+  });
+
+  it('breaks the chain, so the halves do not keep each other’s length', () => {
+    let { p, trackId, noteId } = voiceProject();
+    const second = P.createClipNote(p.arrangement[0].sectionId, 8, 4, 'clip_1', 4);
+    p = P.addNote(p, trackId, second);
+    p = P.chainNotes(p, [noteId, second.id]);
+    expect(p.tracks.find((t) => t.id === trackId)!.notes[0].groupId).toBeTruthy();
+    const cut = P.splitNote(p, trackId, noteId, 2);
+    const halves = cut.tracks
+      .find((t) => t.id === trackId)!
+      .notes.filter((n) => n.startBeat < 8);
+    expect(halves).toHaveLength(2);
+    expect(halves.every((n) => !n.groupId)).toBe(true);
+  });
+});
+
+describe('duplicateNotes', () => {
+  it('puts the copy straight after the original, carrying its clip offset', () => {
+    let p = P.createDefaultProject();
+    const track = P.createAudioTrack();
+    p = P.addTrack(p, track);
+    const sectionId = p.arrangement[0].sectionId;
+    const note = P.createClipNote(sectionId, 2, 2, 'clip_1', 4, 1.5);
+    p = P.addNote(p, track.id, note);
+    const copied = P.duplicateNotes(p, new Set([note.id]));
+    const notes = copied.tracks.find((t) => t.id === track.id)!.notes;
+    expect(notes).toHaveLength(2);
+    const copy = notes.find((n) => n.id !== note.id)!;
+    expect(copy.startBeat).toBe(4);
+    expect(copy.lengthBeats).toBe(2);
+    expect(copy.clipId).toBe('clip_1');
+    expect(copy.clipStartSeconds).toBe(1.5);
+    expect(copy.id).not.toBe(note.id);
+  });
+
+  it('leaves out a copy with no room after it, rather than piling it at the end', () => {
+    let p = P.createDefaultProject();
+    const track = P.createTrackForVoice('kick');
+    p = P.addTrack(p, track);
+    // A 4-bar part is 16 beats; a block on the last beat has nowhere to go.
+    const note = P.createNote(p.arrangement[0].sectionId, 15, 1);
+    p = P.addNote(p, track.id, note);
+    expect(P.duplicateNotes(p, new Set([note.id]))).toBe(p);
+  });
+
+  it('the copy is its own block, not a link in the original’s chain', () => {
+    let p = P.createDefaultProject();
+    const track = P.createTrackForVoice('kick');
+    p = P.addTrack(p, track);
+    const sectionId = p.arrangement[0].sectionId;
+    const a = P.createNote(sectionId, 0, 1);
+    const b = P.createNote(sectionId, 4, 1);
+    p = P.addNote(P.addNote(p, track.id, a), track.id, b);
+    p = P.chainNotes(p, [a.id, b.id]);
+    const copied = P.duplicateNotes(p, new Set([a.id]));
+    const copy = copied.tracks.find((t) => t.id === track.id)!.notes.find((n) => n.startBeat === 1)!;
+    expect(copy.groupId).toBeUndefined();
+  });
+});

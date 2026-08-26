@@ -106,6 +106,11 @@ function parseNote(value: unknown): Note {
   if (typeof v.clipId === 'string' && v.clipId) {
     note.clipId = v.clipId;
     note.clipSeconds = Math.max(0, asNumber(v.clipSeconds, 0));
+    // Where in the take this block starts. Absent in every song written before
+    // recordings could be cut up, and absent from the first block of any take,
+    // so a missing value means "from the beginning" rather than anything lost.
+    const clipStart = Math.max(0, asNumber(v.clipStartSeconds, 0));
+    if (clipStart > 0) note.clipStartSeconds = clipStart;
   }
   return note;
 }

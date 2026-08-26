@@ -448,6 +448,12 @@ export class AudioEngine {
         if (note.clipId) {
           const buffer = this.clips.get(note.clipId);
           if (!buffer) continue; // not loaded yet; it will sound on a later pass
+          // Where in the recording this block starts, and how much of it is
+          // left from there. A block cut out of the middle of a take plays its
+          // own slice — the recording itself is never copied or altered.
+          const offset = Math.max(0, note.clipStartSeconds ?? 0);
+          const remaining = Math.max(0, buffer.duration - offset);
+          if (remaining <= 0) continue; // cut past the end of the take
           for (const absBeat of beatOccurrencesInWindow(lo, hi, baseBeat, period)) {
             const when = this.timeAtBeat(absBeat, bpm);
             const source = ctx.createBufferSource();
@@ -456,14 +462,14 @@ export class AudioEngine {
             gain.gain.value = note.velocity;
             source.connect(gain).connect(chain.input);
             const at = Math.max(when, now);
-            source.start(at);
+            source.start(at, offset);
             // Every synthesised voice ends itself: its envelope runs out. A
             // recording has no envelope — it plays until told otherwise — so it
             // has to be given an end and a handle. Without the end, shortening
             // a block would change nothing about the sound; without the handle,
             // Stop couldn't silence it and every press of Play would layer
             // another copy over the one still running.
-            source.stop(at + beatsToSeconds(note.lengthBeats, bpm));
+            source.stop(at + Math.min(beatsToSeconds(note.lengthBeats, bpm), remaining));
             this.liveClips.add(source);
             source.onended = () => this.liveClips.delete(source);
           }

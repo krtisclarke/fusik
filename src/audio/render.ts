@@ -53,11 +53,19 @@ export function clipOverhangSeconds(
   for (const track of project.tracks) {
     for (const note of track.notes) {
       if (!note.clipId || !note.clipSeconds) continue;
+      // How much of the take this block actually sounds for: what is left of
+      // the recording from where the block points into it, capped by the room
+      // the block occupies on the grid. Same rule the render itself uses.
+      const audible = Math.min(
+        beatsToSeconds(note.lengthBeats, project.bpm),
+        Math.max(0, note.clipSeconds - (note.clipStartSeconds ?? 0)),
+      );
+      if (audible <= 0) continue;
       for (const entry of entries) {
         if (entry.sectionId !== note.sectionId || note.startBeat >= entry.lengthBeats) continue;
         // The last pass is the one that runs latest.
         const startBeat = entry.startBeat + note.startBeat + (loops - 1) * beatsPerLoop;
-        const endsAt = beatsToSeconds(startBeat, project.bpm) + note.clipSeconds;
+        const endsAt = beatsToSeconds(startBeat, project.bpm) + audible;
         if (endsAt - musicSeconds > overhang) overhang = endsAt - musicSeconds;
       }
     }
@@ -164,12 +172,22 @@ export async function renderProject(project: Project, opts: RenderOptions = {}):
             // track chain as everything else, so it gets the same volume, echo
             // and — via the master — the same limiter.
             if (!clip) continue;
+            // Exactly what the live engine does: start where this block points
+            // into the take, and run for whichever ends first — the block on
+            // the grid, or the audio that is left. Before recordings could be
+            // cut up, the render let every clip ring out to its full length
+            // while playback stopped it at the block's edge, so an exported
+            // song could differ from the one the child had been listening to.
+            const offset = Math.max(0, note.clipStartSeconds ?? 0);
+            const remaining = Math.max(0, clip.duration - offset);
+            if (remaining <= 0) continue;
             const source = ctx.createBufferSource();
             source.buffer = clip;
             const level = ctx.createGain();
             level.gain.value = note.velocity;
             source.connect(level).connect(chain.input);
-            source.start(when);
+            source.start(when, offset);
+            source.stop(when + Math.min(durationSec, remaining));
             continue;
           }
           trigger(ctx, chain.input, when, params, note.velocity, { midi: note.pitch, durationSec });

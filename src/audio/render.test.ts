@@ -106,3 +106,38 @@ describe('voiceOverhangSeconds', () => {
     expect(overhang(songWith('crash', { params: { decay: 500 } }))).toBe(8);
   });
 });
+
+// A block cut out of a take sounds only its own slice, and the export has to
+// agree with playback about where that slice ends — otherwise the two halves
+// of a cut line overlap each other in the exported file and nowhere else.
+describe('room for a recording that has been cut up', () => {
+  it('measures from where the block points into the take, not from its start', () => {
+    let project = P.createDefaultProject();
+    const track = P.createAudioTrack();
+    project = P.addTrack(project, track);
+    // The tail of a 20-second take, entered 18 seconds in, so only 2 seconds
+    // of audio are left — placed at the very end of the 8-second song.
+    project = P.addNote(
+      project,
+      track.id,
+      P.createClipNote(project.sections[0].id, 14, 4, 'clip_1', 20, 18),
+    );
+    // 14 beats in is 7s; 2 seconds of audio left; song is 8s. So 1s over.
+    expect(overhang(project)).toBeCloseTo(1, 3);
+  });
+
+  it('never claims more room than the block occupies on the grid', () => {
+    let project = P.createDefaultProject();
+    const track = P.createAudioTrack();
+    project = P.addTrack(project, track);
+    // A 20-second take squeezed into one beat at the end of the song. Playback
+    // stops it at the block's edge, so the export must not ring on for 20s.
+    project = P.addNote(
+      project,
+      track.id,
+      P.createClipNote(project.sections[0].id, 15, 1, 'clip_1', 20),
+    );
+    // 15 beats is 7.5s, plus half a second of block = 8s, exactly the song.
+    expect(overhang(project)).toBeCloseTo(0, 3);
+  });
+});

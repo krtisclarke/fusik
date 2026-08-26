@@ -16,7 +16,7 @@ import { secondsToBeats, snapBeat, snapStepInBeats } from '../model/time';
 /** How fine the grid is when lining-up is on. Fine enough to feel free, coarse
  *  enough that everything lands in time. */
 const DEFAULT_SNAP: SnapId = 'sixteenth';
-import { songPositionAt } from '../model/arrange';
+import { resolveArrangement, songPositionAt } from '../model/arrange';
 import { getVoice, isPitched } from '../model/voices';
 import { pitchLadder } from '../model/scales';
 import {
@@ -89,6 +89,27 @@ export interface VoiceDrag {
   moved: boolean;
 }
 
+/**
+ * Where the next sung take begins.
+ *
+ * Recording used to start wherever the playhead happened to be, which meant
+ * deciding where your voice goes was a matter of stopping the song, nudging
+ * the playhead, and pressing a button somewhere else — three steps, in three
+ * places, before you had sung a note. Putting a marker on the voice row turns
+ * that into "here", and pressing it starts the music from there so there is
+ * something to sing along to.
+ *
+ * `beat` is inside the part, because that is where the recording is written and
+ * a part played three times sings three times. `absBeat` is where the marker is
+ * drawn and where the music starts from, so a marker dropped on the second
+ * playing of a part stays on the second playing.
+ */
+export interface RecordPoint {
+  sectionId: string;
+  beat: number;
+  absBeat: number;
+}
+
 export interface StoreState {
   history: History<Project>;
   project: Project; // convenience mirror of history.present
@@ -105,6 +126,8 @@ export interface StoreState {
   selection: Selection;
   /** A library sound in mid-air, or null. See VoiceDrag. */
   voiceDrag: VoiceDrag | null;
+  /** Where the next sung take will start. See RecordPoint. */
+  recordAt: RecordPoint | null;
   status: string | null;
   /** Whether the playable keyboard is open along the bottom. */
   showKeyboard: boolean;
@@ -268,7 +291,15 @@ export interface StoreState {
    * Start or stop recording from the microphone. What comes back is written
    * into the song as a block on an audio track.
    */
-  toggleMicRecording: () => Promise<void>;
+  toggleMicRecording: (at?: RecordPoint) => Promise<void>;
+  /** Move the marker that says where the next sung take starts. */
+  setRecordAt: (at: RecordPoint | null) => void;
+  /** Start the music at the marker and record from there. */
+  startTakeAtMarker: () => Promise<void>;
+  /** Cut the selected block in two where the playhead is. */
+  splitSelectedAtPlayhead: () => void;
+  /** Copy the selected block(s), each landing straight after itself. */
+  duplicateSelected: () => void;
   /**
    * Write a note played on the keyboard into the song. `startBeats`/`endBeats`
    * are transport positions taken when the key went down and came back up.
@@ -576,6 +607,7 @@ export const useStore = create<StoreState>((set, get) => {
     currentSectionId: initialSectionId,
     snap: DEFAULT_SNAP,
     voiceDrag: null,
+    recordAt: null,
     showFindOnline: false,
     onlineResults: [],
     onlineBusy: false,
@@ -1163,7 +1195,7 @@ export const useStore = create<StoreState>((set, get) => {
     // history, and disarming (or stopping) commits the lot. So a child who
     // records four bars and hates it presses undo once, not forty times.
 
-    toggleMicRecording: async () => {
+    toggleMicRecording: async (at) => {
       const s = get();
       if (s.isMicRecording) {
         set({ isMicRecording: false, status: 'Tidying up your recording…' });
@@ -1205,8 +1237,23 @@ export const useStore = create<StoreState>((set, get) => {
         const lengthBeats = Math.max(0.25, secondsToBeats(recording.seconds, project.bpm));
         const note = P.createClipNote(sectionId, start, lengthBeats, clipId, recording.seconds);
 
-        const existing = project.tracks.find((t) => t.type === 'audio');
-        const track = existing ?? P.createAudioTrack();
+        // Which voice row this take goes on. The first one with nothing already
+        // sounding across the same stretch — so singing a second line over the
+        // first stacks it on its own row rather than piling two blocks on top
+        // of each other, which is the whole of "add a harmony".
+        const audioTracks = project.tracks.filter((t) => t.type === 'audio');
+        const existing = audioTracks.find(
+          (t) =>
+            !t.notes.some(
+              (n) =>
+                n.sectionId === sectionId &&
+                n.startBeat < start + lengthBeats &&
+                n.startBeat + n.lengthBeats > start,
+            ),
+        );
+        const track =
+          existing ??
+          P.createAudioTrack(audioTracks.length === 0 ? 'My Voice' : `My Voice ${audioTracks.length + 1}`);
         const withTrack = existing ? project : P.addTrack(project, track);
         engine.setClip(clipId, recording.buffer); // already decoded when it was measured
         apply(P.addNote(withTrack, track.id, note));
@@ -1225,10 +1272,15 @@ export const useStore = create<StoreState>((set, get) => {
         set({ status: "Can't hear a microphone — is one plugged in?" });
         return;
       }
-      // Where the song is *now* is where this take belongs.
+      // Where this take belongs. A marker on the voice row says so outright;
+      // otherwise it is wherever the song has got to, which is what pressing
+      // 🎤 with nothing placed has always meant.
       micStartBeat = 0;
       micStartSectionId = null;
-      if (get().isPlaying) {
+      if (at) {
+        micStartBeat = at.beat;
+        micStartSectionId = at.sectionId;
+      } else if (get().isPlaying) {
         const at = get();
         if (at.playMode === 'section') {
           micStartBeat = engine.getPositionBeats();
@@ -1243,7 +1295,73 @@ export const useStore = create<StoreState>((set, get) => {
           }
         }
       }
-      set({ isMicRecording: true, status: 'Recording — sing!' });
+      set({ isMicRecording: true, status: 'Recording — sing! Press space to stop.' });
+    },
+
+    setRecordAt: (at) => set({ recordAt: at }),
+
+    /**
+     * The whole gesture in one press: go to the marker, start the song, start
+     * listening. Singing along needs something to sing along *to*, and having
+     * to arrange that yourself — seek, play, then find the record button
+     * before the bar you wanted goes past — is the reason nobody did.
+     */
+    startTakeAtMarker: async () => {
+      const s = get();
+      const at = s.recordAt;
+      if (!at || s.isMicRecording) return;
+      s.seekTo(at.absBeat);
+      if (!s.isPlaying) s.play();
+      await get().toggleMicRecording(at);
+    },
+
+    splitSelectedAtPlayhead: () => {
+      const s = get();
+      const project = s.history.present;
+      const trackId = s.selection.trackId;
+      const noteId = s.selection.noteIds[0];
+      if (!trackId || !noteId || s.selection.noteIds.length !== 1) return;
+      const note = project.tracks.find((t) => t.id === trackId)?.notes.find((n) => n.id === noteId);
+      if (!note) return;
+      // The playhead is an absolute beat in the song; the cut is a beat inside
+      // the part the block lives in, so it has to come back through whichever
+      // playing of that part the line is currently in.
+      const abs = engine.getSongPlayheadBeat();
+      if (abs == null) return;
+      const entry = resolveArrangement(project).find(
+        (e) =>
+          e.sectionId === note.sectionId &&
+          abs >= e.startBeat &&
+          abs < e.startBeat + e.lengthBeats,
+      );
+      if (!entry) {
+        set({ status: 'Put the line over the block first, then cut.' });
+        return;
+      }
+      // Snapped like every other edit, so Tidy means the same thing here as it
+      // does everywhere else. On the sixteenth-note grid that is a nudge of a
+      // few hundredths of a beat, and Free leaves a cut exactly between two
+      // words where it was put.
+      const cutAt = snapBeat(abs - entry.startBeat, s.snap, project.timeSignature);
+      const before = project;
+      const next = P.splitNote(project, trackId, noteId, cutAt);
+      if (next === before) {
+        set({ status: 'The line has to be inside the block to cut it.' });
+        return;
+      }
+      apply(next);
+    },
+
+    duplicateSelected: () => {
+      const s = get();
+      const ids = P.expandChain(s.history.present, s.selection.noteIds);
+      const before = s.history.present;
+      const next = P.duplicateNotes(before, ids);
+      if (next === before) {
+        set({ status: 'No room for a copy after it — move it left a bit.' });
+        return;
+      }
+      apply(next);
     },
 
     toggleRecording: () => {

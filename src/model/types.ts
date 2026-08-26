@@ -99,6 +99,17 @@ export interface Note {
    * recording plays at the speed it was made.
    */
   clipSeconds?: number;
+  /**
+   * How far into the recording this block starts, in seconds. Absent or 0 means
+   * "from the beginning", which is every block a take produces.
+   *
+   * This is what lets a recording be cut up. Splitting a sung line in two
+   * doesn't copy any audio — it makes a second block pointing at the same
+   * recording, starting further in. So the two halves can be moved apart,
+   * repeated, or thrown away one at a time, and the file on disk is still the
+   * single take it always was.
+   */
+  clipStartSeconds?: number;
 }
 
 /**

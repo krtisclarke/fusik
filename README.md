@@ -133,9 +133,23 @@ npm run package:mac   # build a macOS app bundle
 - **Hit it hard or gently.** Where you land on a key decides how strong the note
   is — near the bottom is a hard hit, near the top a soft one. Record a melody
   and it keeps every light and heavy note exactly as you played it.
-- **Record your own voice.** Press 🎤, sing or beatbox, press it again. What you
-  sang becomes a block in your song that plays along with everything else — and
-  it's saved as an ordinary sound file next to the song. (Desktop app only.)
+- **Record your own voice, where you want it.** Press **🎤 Sing into the song**
+  on the keyboard and your first take lands on a **My Voice** row. From then on
+  that row carries a red **Sing from here** marker: drag it to the spot the
+  singing starts (or click anywhere on the row to send it there), press its ⏺,
+  and the song plays from that moment while it listens — so there's something
+  to sing along to. **Press space to stop**, because reaching for a small
+  button is the one thing you can't do mid-note. You can watch the take being
+  written as you sing.
+  - **Sing it again for a harmony.** Leave the marker where it is and go again;
+    the second take goes on its own row rather than on top of the first.
+  - **Out of time?** Drag the block like any other, or just record it again.
+  - **Cut it up.** Select a recorded block and you get **✂ Cut here** (at the
+    playing line) and **⧉ Copy**. Cutting copies no sound — the second half
+    simply starts further into the same take — so you can drop the false start,
+    move a line somewhere else, or repeat a word as often as you like, and the
+    file next to your song stays the one take it always was.
+  - It's saved as an ordinary sound file next to the song. (Desktop app only.)
 - **Record what you play:** the buttons at the left of the keyboard say what
   happens to a note once you've played it. **⏺ Write what I play into the song**
   starts the song and writes down everything you play, tidied up to the grid;

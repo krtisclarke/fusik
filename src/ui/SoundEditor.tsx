@@ -23,6 +23,8 @@ export function SoundEditor() {
   const repeatSelectedEvery = useStore((s) => s.repeatSelectedEvery);
   const alignSelected = useStore((s) => s.alignSelected);
   const spreadSelected = useStore((s) => s.spreadSelected);
+  const splitSelectedAtPlayhead = useStore((s) => s.splitSelectedAtPlayhead);
+  const duplicateSelected = useStore((s) => s.duplicateSelected);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lastAudition = useRef(0);
@@ -53,6 +55,7 @@ export function SoundEditor() {
 
   const count = selection.noteIds.length;
   const perBar = beatsPerBar(project.timeSignature);
+  const isClip = !!note.clipId;
   const selectedNotes = track.notes.filter((n) => selection.noteIds.includes(n.id));
   const anyGrouped = selectedNotes.some((n) => !!n.groupId);
   const groupIds = new Set(selectedNotes.map((n) => n.groupId).filter(Boolean));
@@ -134,6 +137,33 @@ export function SoundEditor() {
           always spacing, and spacing is arithmetic rather than a steady hand.
           One press turns a single block into a whole part's worth of them,
           exactly a beat (or a bar) apart. */}
+      {/* A recording is the one block whose insides matter: it is a thing that
+          was sung, with a beginning and an end you may have got wrong. Cutting
+          it copies no audio — the second half just points further into the
+          same take — so cut, copy and drag are enough to move a line, repeat
+          it, or throw away the bit before the singing started. */}
+      {isClip && (
+        <div className="se-timing">
+          <span className="se-timing-label">Recording</span>
+          <span className="se-timing-lead">Put the line where you want to cut, then:</span>
+          <button
+            className="se-btn"
+            onClick={splitSelectedAtPlayhead}
+            disabled={count !== 1}
+            title="Cut this recording in two where the playing line is"
+          >
+            ✂ Cut here
+          </button>
+          <button
+            className="se-btn"
+            onClick={duplicateSelected}
+            title="Another copy, straight after this one — drag it wherever you want it"
+          >
+            ⧉ Copy
+          </button>
+        </div>
+      )}
+
       <div className="se-timing">
         <span className="se-timing-label">Timing</span>
         {count === 1 ? (

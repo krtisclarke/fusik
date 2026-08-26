@@ -7,7 +7,7 @@
 // clearer than deep-cloning everything.
 
 import { newEntryId, newGroupId, newNoteId, newSectionId, newTrackId } from './ids';
-import { barsToBeats } from './time';
+import { barsToBeats, beatsToSeconds } from './time';
 import type { Instrument, Note, Project, Section, TimeSignature, Track } from './types';
 import { PROJECT_FORMAT_VERSION } from './types';
 import { getVoice, isPitched } from './voices';
@@ -133,8 +133,9 @@ export function createClipNote(
   lengthBeats: number,
   clipId: string,
   seconds: number,
+  clipStartSeconds = 0,
 ): Note {
-  return {
+  const note: Note = {
     id: newNoteId(),
     sectionId,
     startBeat: Math.max(0, startBeat),
@@ -144,6 +145,92 @@ export function createClipNote(
     clipId,
     clipSeconds: Math.max(0, seconds),
   };
+  if (clipStartSeconds > 0) note.clipStartSeconds = clipStartSeconds;
+  return note;
+}
+
+/**
+ * Cut a block in two at `atBeat`, measured from the start of its part.
+ *
+ * For a recording this is the whole of "cut a bit out and use it somewhere
+ * else": no audio is copied, the second half simply points further into the
+ * same take. Cutting is then split-then-delete, and copying is split-then-
+ * duplicate, both out of one gesture a child already has — and the file next
+ * to the song stays the single recording it always was.
+ *
+ * A cut outside the block does nothing, so a mis-aimed playhead is a no-op
+ * rather than a block quietly turning into a sliver.
+ */
+export function splitNote(
+  project: Project,
+  trackId: string,
+  noteId: string,
+  atBeat: number,
+): Project {
+  const track = project.tracks.find((t) => t.id === trackId);
+  const note = track?.notes.find((n) => n.id === noteId);
+  if (!track || !note) return project;
+  const from = note.startBeat;
+  const to = note.startBeat + note.lengthBeats;
+  // A cut has to leave something on both sides of it.
+  if (atBeat <= from + 1e-6 || atBeat >= to - 1e-6) return project;
+
+  const firstLength = atBeat - from;
+  const head: Note = { ...note, lengthBeats: firstLength };
+  const tail: Note = {
+    ...note,
+    id: newNoteId(),
+    startBeat: atBeat,
+    lengthBeats: to - atBeat,
+    params: { ...note.params },
+  };
+  // A chained block cut in two would leave the halves promising to keep each
+  // other's length, which is the one thing cutting them apart is undoing.
+  delete head.groupId;
+  delete tail.groupId;
+  if (note.clipId) {
+    tail.clipStartSeconds =
+      (note.clipStartSeconds ?? 0) + beatsToSeconds(firstLength, project.bpm);
+  }
+  return mapTrack(project, trackId, (t) => ({
+    ...t,
+    notes: t.notes.map((n) => (n.id === noteId ? head : n)).concat(tail),
+  }));
+}
+
+/**
+ * Copy these blocks, each landing straight after itself.
+ *
+ * Right after, rather than on top: a copy you cannot see is indistinguishable
+ * from a button that did nothing. From there it is dragged wherever it is
+ * wanted, which is a gesture already known. A copy with nowhere to go inside
+ * the part is left out rather than piled at the end.
+ */
+export function duplicateNotes(project: Project, ids: Set<string>): Project {
+  if (ids.size === 0) return project;
+  let added = false;
+  const tracks = project.tracks.map((track) => {
+    const copies: Note[] = [];
+    for (const note of track.notes) {
+      if (!ids.has(note.id)) continue;
+      const length = sectionLengthBeats(project, note.sectionId);
+      const at = note.startBeat + note.lengthBeats;
+      if (length > 0 && at >= length) continue; // no room left in this part
+      copies.push({
+        ...note,
+        id: newNoteId(),
+        startBeat: at,
+        lengthBeats: length > 0 ? Math.min(note.lengthBeats, length - at) : note.lengthBeats,
+        params: { ...note.params },
+        // The copy is its own block, not a link in the original's chain.
+        groupId: undefined,
+      });
+    }
+    if (copies.length === 0) return track;
+    added = true;
+    return { ...track, notes: [...track.notes, ...copies] };
+  });
+  return added ? { ...project, tracks } : project;
 }
 
 /** Every recording the song refers to. Used to know what to keep on disk. */

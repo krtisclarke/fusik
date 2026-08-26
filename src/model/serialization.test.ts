@@ -294,6 +294,35 @@ describe('recordings in the file', () => {
     expect(back.tracks[3].notes[0].clipSeconds).toBe(2.5);
   });
 
+  it('round-trips a block cut out of the middle of a take', () => {
+    let project = createDefaultProject('With Voice');
+    const track = createAudioTrack();
+    project = addTrack(project, track);
+    project = addNote(
+      project,
+      track.id,
+      createClipNote(project.sections[0].id, 2, 4, 'clip_1', 2.5, 0.75),
+    );
+
+    const back = parseProject(serializeProject(project));
+    expect(back).toEqual(project);
+    expect(back.tracks[3].notes[0].clipStartSeconds).toBe(0.75);
+  });
+
+  it('reads a song written before recordings could be cut up', () => {
+    // No clipStartSeconds in the file at all: the block starts at the
+    // beginning of its take, which is what every such block did.
+    let project = createDefaultProject('Old Song');
+    const track = createAudioTrack();
+    project = addTrack(project, track);
+    project = addNote(project, track.id, createClipNote(project.sections[0].id, 0, 4, 'clip_1', 2));
+    const raw = serializeProject(project);
+    expect(raw).not.toContain('clipStartSeconds');
+
+    const back = parseProject(raw);
+    expect(back.tracks[3].notes[0].clipStartSeconds).toBeUndefined();
+  });
+
   it('drops a half-written recording rather than making a silent block', () => {
     // A block claiming a recording that isn't named is one a child could never
     // explain: it draws, it's selectable, and it makes no sound whatever.

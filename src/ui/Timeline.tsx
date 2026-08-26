@@ -10,6 +10,7 @@ import { PX_PER_BEAT, ROW_H, PITCH_ROW_H, HEADER_W, beatToX, xToBeat } from './l
 import { Playhead, ScrubHandle } from './Playhead';
 import { Overview } from './Overview';
 import { PartBands } from './PartBands';
+import { RecordPointMarker, RecordingBlock } from './RecordPoint';
 
 /**
  * The timeline shows the WHOLE SONG, left to right — every part laid end to
@@ -93,6 +94,9 @@ export function Timeline() {
   const removeTrack = useStore((s) => s.removeTrack);
   const setTrackVoice = useStore((s) => s.setTrackVoice);
   const seekTo = useStore((s) => s.seekTo);
+  const recordAt = useStore((s) => s.recordAt);
+  const setRecordAt = useStore((s) => s.setRecordAt);
+  const isMicRecording = useStore((s) => s.isMicRecording);
   const moveVoiceDrag = useStore((s) => s.moveVoiceDrag);
   const endVoiceDrag = useStore((s) => s.endVoiceDrag);
 
@@ -250,6 +254,20 @@ export function Timeline() {
     const entry = entryAt(absBeat);
     if (!entry) return;
     const beat = absBeat - entry.startBeat;
+    // The voice row is the one row where a click cannot place a block: there
+    // is no recording yet to place. It moves the marker that says where the
+    // next one starts instead — the same gesture, meaning the same thing.
+    if (track.type === 'audio') {
+      if (isMicRecording) return;
+      const snapped = snapBeat(beat, snap, ts);
+      setRecordAt({
+        sectionId: entry.sectionId,
+        beat: snapped,
+        absBeat: entry.startBeat + snapped,
+      });
+      return;
+    }
+
     const pitches = pitchesFor(track);
     if (pitches) {
       const rowFromTop = clamp(Math.floor(lasso.startY / PITCH_ROW_H), 0, pitches.length - 1);
@@ -440,6 +458,37 @@ export function Timeline() {
     return { track, pitches, pitch, entry, beat, newRow: false };
   }
 
+  // A song with a voice row and no marker — one loaded from disk, or one whose
+  // first take has just landed — gets the marker put at the start, so the row
+  // never sits there with no way to add to it.
+  useEffect(() => {
+    if (recordAt) return;
+    if (!project.tracks.some((t) => t.type === 'audio')) return;
+    const first = entries[0];
+    if (!first) return;
+    setRecordAt({ sectionId: first.sectionId, beat: 0, absBeat: first.startBeat });
+  }, [recordAt, project.tracks, entries, setRecordAt]);
+
+  // A marker pointing at a part that has been taken out of the song would sit
+  // at a place that no longer exists.
+  useEffect(() => {
+    if (!recordAt) return;
+    if (entries.some((e) => e.sectionId === recordAt.sectionId)) return;
+    setRecordAt(null);
+  }, [recordAt, entries, setRecordAt]);
+
+  /** Put the "sing from here" marker under this page x. */
+  function moveRecordPoint(clientX: number) {
+    const el = lanesRef.current;
+    if (!el) return;
+    const absRaw = xToBeat(clientX - el.getBoundingClientRect().left - HEADER_W);
+    const absBeat = clamp(absRaw, 0, Math.max(0, total - 0.0001));
+    const entry = entryAt(absBeat);
+    if (!entry) return;
+    const beat = snapBeat(absBeat - entry.startBeat, snap, ts);
+    setRecordAt({ sectionId: entry.sectionId, beat, absBeat: entry.startBeat + beat });
+  }
+
   const dropTarget = voiceDrag?.moved
     ? dropTargetAt(voiceDrag.clientX, voiceDrag.clientY, voiceDrag.voiceId)
     : null;
@@ -601,24 +650,34 @@ export function Timeline() {
                 >
                   <div className="top">
                     <span className="swatch" style={{ background: track.color }} />
-                    <select
-                      className="tname"
-                      value={track.instrument.voiceId}
-                      title="Play this whole row on a different instrument — your tune comes with it"
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        setTrackVoice(track.id, e.target.value);
-                      }}
-                    >
-                      {VOICE_CATALOG.filter(
-                        (v) => isPitched(v) === (track.type === 'instrument'),
-                      ).map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.emoji} {v.label}
-                        </option>
-                      ))}
-                    </select>
+                    {/* A recording is not a voice the app can make, so it has
+                        no place in the instrument picker — and the picker had
+                        been showing this row as "Kick" and offering to turn a
+                        child's singing into a drum, which it cannot do. */}
+                    {track.type === 'audio' ? (
+                      <span className="tname static" title="What you sang">
+                        🎤 {track.name}
+                      </span>
+                    ) : (
+                      <select
+                        className="tname"
+                        value={track.instrument.voiceId}
+                        title="Play this whole row on a different instrument — your tune comes with it"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setTrackVoice(track.id, e.target.value);
+                        }}
+                      >
+                        {VOICE_CATALOG.filter(
+                          (v) => isPitched(v) === (track.type === 'instrument'),
+                        ).map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.emoji} {v.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                     <button
                       className="mini del"
                       title="Delete track"
@@ -735,6 +794,15 @@ export function Timeline() {
 
                   {occurrences(track).map(({ entry, note }) =>
                     renderNote(track, note, entry, pitches),
+                  )}
+
+                  {/* The voice row's "sing from here" marker, and the take as
+                      it is actually being sung. */}
+                  {track.type === 'audio' && recordAt && (
+                    <>
+                      <RecordPointMarker absBeat={recordAt.absBeat} onMoveTo={moveRecordPoint} />
+                      {isMicRecording && <RecordingBlock fromAbsBeat={recordAt.absBeat} />}
+                    </>
                   )}
 
                   {/* the sound being carried in, exactly where and how big it

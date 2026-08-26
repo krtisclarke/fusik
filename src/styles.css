@@ -725,6 +725,15 @@ select.snap {
   background-position: right 5px center;
   cursor: pointer;
 }
+/* The voice row's name: a fact, not a choice. */
+.lane-header .tname.static {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
 .lane-header .tname:hover {
   border-color: var(--accent);
   background-color: var(--bg-elev);
@@ -943,6 +952,85 @@ select.snap {
      stretch of song is not being played, and half-dimming it says the opposite
      of what it means. It stays click-through, so those blocks are still as
      editable as any other. */
+  z-index: 3;
+}
+
+/* ---- the voice row's "sing from here" marker ---------------------------- */
+/* Recording used to start wherever the playhead was, from a button in the
+   toolbar, with the song not necessarily playing — three acts in three places,
+   none of which said what they were for. This is one thing, in the row it
+   affects, at the spot it means. */
+
+.rec-point {
+  position: absolute;
+  top: 6px;
+  height: calc(var(--row-h) - 14px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 2px;
+  border-left: 2px dashed var(--danger);
+  z-index: 4;
+  white-space: nowrap;
+  cursor: grab;
+  touch-action: none;
+}
+.rec-point:active {
+  cursor: grabbing;
+}
+.rec-point.live {
+  cursor: default;
+}
+.rec-go {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--danger);
+  background: var(--bg-panel);
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+}
+.rec-go:hover:not(:disabled) {
+  background: var(--danger);
+  color: #fff;
+}
+.rec-go:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.rec-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--danger);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.rec-point.live .rec-go {
+  background: var(--danger);
+  color: #fff;
+  animation: rec-pulse 1s ease-in-out infinite;
+}
+@keyframes rec-pulse {
+  50% {
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.28);
+  }
+}
+
+/* The take as it is being sung. Without it the row shows nothing at all until
+   the singing stops. */
+.rec-live {
+  position: absolute;
+  top: 8px;
+  height: calc(var(--row-h) - 17px);
+  border-radius: 7px;
+  background: rgba(239, 68, 68, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  pointer-events: none;
   z-index: 3;
 }
 

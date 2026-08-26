@@ -63,6 +63,13 @@ export function App() {
 
       if (e.code === 'Space') {
         e.preventDefault();
+        // Mid-take, space ends the take. Finding a small button is the one
+        // thing you can't do while singing into the microphone, and stopping
+        // the song without closing the recording would leave it running.
+        if (s.isMicRecording) {
+          void s.toggleMicRecording();
+          return;
+        }
         s.togglePlay();
         return;
       }
