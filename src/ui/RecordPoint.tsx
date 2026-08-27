@@ -44,18 +44,26 @@ export function RecordingBlock({ fromAbsBeat }: { fromAbsBeat: number }) {
 export function Countdown() {
   const countdown = useStore((s) => s.countdown);
   const cancelCountdown = useStore((s) => s.cancelCountdown);
+  const recordTarget = useStore((s) => s.recordTarget);
   if (countdown == null) return null;
+  // Both kinds of take count in. A block waiting to be sung into means this is
+  // the microphone; otherwise it is the keyboard. So the screen never tells a
+  // child to sing when they are about to play.
+  const singing = recordTarget != null;
   return (
-    <div
-      className="countdown"
-      onClick={cancelCountdown}
-      role="status"
-      aria-label={`Recording in ${countdown}`}
-    >
+    <div className="countdown" role="status" aria-label={`Recording in ${countdown}`}>
       <div className="countdown-num" key={countdown}>
         {countdown}
       </div>
-      <div className="countdown-hint">get ready to sing…</div>
+      <div className="countdown-hint">
+        {singing ? 'get ready to sing…' : 'get ready to play…'}
+      </div>
+      {/* Its own button rather than the whole screen. The overlay used to
+          cancel on any click at all, so a child clicking to look at something
+          lost the take they were about to make. */}
+      <button className="countdown-cancel" onClick={cancelCountdown}>
+        ✕ Never mind (or press space)
+      </button>
     </div>
   );
 }

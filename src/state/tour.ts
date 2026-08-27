@@ -127,7 +127,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'voice',
     title: 'Put yourself in it',
-    body: 'Press *🎤* and sing, or beatbox, or say hello. Press it again to stop, and what you sang joins the song.',
+    body: 'Press *🎤* to put a place to sing on the timeline. Click it, press *Record*, and after three counts sing along — press *space* when you\'re done.',
     target: 'mic',
     applies: (ctx) => ctx.canRecordMic,
     goal: (now, start) => moreThan(now.recordings, start.recordings, 1),

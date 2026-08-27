@@ -1020,7 +1020,21 @@ select.snap {
   justify-items: center;
   gap: 8px;
   background: rgba(6, 7, 11, 0.55);
+}
+.countdown-cancel {
+  margin-top: 14px;
+  padding: 7px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-panel);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 13px;
   cursor: pointer;
+}
+.countdown-cancel:hover {
+  color: var(--text);
+  border-color: var(--accent);
 }
 .countdown-num {
   font-size: 168px;

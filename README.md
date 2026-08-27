@@ -156,10 +156,11 @@ npm run package:mac   # build a macOS app bundle
   - It's saved as an ordinary sound file next to the song. (Desktop app only.)
 - **Record what you play:** the buttons at the left of the keyboard say what
   happens to a note once you've played it. **⏺ Write what I play into the song**
-  starts the song and writes down everything you play, tidied up to the grid;
-  press it again to stop, and one undo takes the whole take back. **🎤 Sing into
-  the song** does the microphone. Until you press one of them, playing keeps
-  nothing — and the line under them says so.
+  counts you in — three, across the whole screen — then starts the song and
+  writes down everything you play, tidied up to the grid; press it again to
+  stop, and one undo takes the whole take back. **🎤 Add a place to sing** does
+  the microphone, the same way as the 🎤 in the toolbar. Until you press one of
+  them, playing keeps nothing — and the line under them says so.
 - **Try it on something else.** Click a row's name and pick a different
   instrument — your tune moves over as it is, so the melody you wrote on the
   piano comes out on the bells, or way down low on the bass.

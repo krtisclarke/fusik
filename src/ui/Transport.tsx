@@ -95,6 +95,7 @@ export function Transport() {
   const isMicRecording = useStore((s) => s.isMicRecording);
   const canRecordMic = useStore((s) => s.canRecordMic);
   const toggleMicRecording = useStore((s) => s.toggleMicRecording);
+  const addVoiceBlockAtPlayhead = useStore((s) => s.addVoiceBlockAtPlayhead);
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
   const setBpm = useStore((s) => s.setBpm);
@@ -139,16 +140,24 @@ export function Transport() {
         >
           🔁
         </button>
+        {/* The one way in. This used to start listening on the instant, with
+            no count and no say in where the take landed — the very thing the
+            place-to-sing block exists to replace — so the app had two ways to
+            record that behaved differently, and the walkthrough pointed at
+            this one. */}
         <button
           className={`tbtn mic ${isMicRecording ? 'armed' : ''}`}
           data-tour="mic"
-          onClick={() => void toggleMicRecording()}
+          onClick={() => {
+            if (isMicRecording) void toggleMicRecording();
+            else addVoiceBlockAtPlayhead();
+          }}
           disabled={!canRecordMic}
           title={
             canRecordMic
               ? isMicRecording
                 ? 'Stop recording'
-                : 'Record your voice with the microphone'
+                : 'Put a place to sing on the timeline, then press Record on it'
               : 'Recording your voice needs the desktop app'
           }
         >

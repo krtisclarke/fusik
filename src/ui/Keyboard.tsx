@@ -50,7 +50,6 @@ export function Keyboard() {
   const notePlayed = useStore((s) => s.notePlayed);
   const isPlaying = useStore((s) => s.isPlaying);
   const toggleRecording = useStore((s) => s.toggleRecording);
-  const play = useStore((s) => s.play);
   const isMicRecording = useStore((s) => s.isMicRecording);
   const canRecordMic = useStore((s) => s.canRecordMic);
   const toggleMicRecording = useStore((s) => s.toggleMicRecording);
@@ -300,16 +299,12 @@ export function Keyboard() {
         <div className="kb-capture">
           <button
             className={`kb-arm ${isRecording ? 'armed' : ''}`}
-            onClick={() => {
-              // Arming and then having to go and press play elsewhere is one
-              // step too many for the thing this button is trying to teach.
-              if (!isRecording && !isPlaying) {
-                toggleRecording();
-                play();
-                return;
-              }
-              toggleRecording();
-            }}
+            // Arming and then having to go and press play elsewhere is one
+            // step too many for the thing this button is trying to teach — so
+            // the store starts the song too, at the end of the count. Starting
+            // it here instead ran three seconds of music past the child before
+            // anything was being written down.
+            onClick={toggleRecording}
             title={
               isRecording
                 ? 'Stop writing what you play into the song'

@@ -465,13 +465,21 @@ function middlePitch(voiceId: string, project: Project): number | undefined {
   return ladder[Math.floor(ladder.length / 2)];
 }
 
-/** The 3-2-1 before a take. Module-level so cancelling can always reach it. */
+/**
+ * The 3-2-1 before a take. Module-level so cancelling can always reach it.
+ *
+ * It leads into whatever asked for it — singing into a block, or arming the
+ * keyboard — because both have the same problem: pressing a button and being
+ * mid-performance at the same instant is not something anyone can do.
+ */
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
+let countdownAction: (() => void) | null = null;
 function stopCountdown(): void {
   if (countdownTimer != null) {
     clearInterval(countdownTimer);
     countdownTimer = null;
   }
+  countdownAction = null;
 }
 
 /** Guards against an older search answering after a newer one. */
@@ -527,6 +535,37 @@ export const useStore = create<StoreState>((set, get) => {
       canUndo: canUndo(history),
       canRedo: canRedo(history),
     });
+  }
+
+  /**
+   * Count three out loud, then do the thing that asked for the count.
+   *
+   * Ticking a second at a time rather than in beats: the point is to let a
+   * child get a breath and find the screen, and at any tempo the app allows a
+   * beat is far too short for that.
+   */
+  function startCountdown(then: () => void): void {
+    stopCountdown();
+    countdownAction = then;
+    set({ countdown: 3 });
+    countdownTimer = setInterval(() => {
+      const now = get();
+      // Called off underneath us — by space, by the ✕, by the block being
+      // deleted mid-count.
+      if (now.countdown == null) {
+        stopCountdown();
+        return;
+      }
+      const left = now.countdown - 1;
+      if (left > 0) {
+        set({ countdown: left });
+        return;
+      }
+      const action = countdownAction;
+      stopCountdown();
+      set({ countdown: null });
+      action?.();
+    }, 1000);
   }
 
   /**
@@ -770,7 +809,9 @@ export const useStore = create<StoreState>((set, get) => {
       set({ currentSongId: id });
     },
 
-    toggleSongs: () => set({ showSongs: !get().showSongs }),
+    // The two toolbar panels sit in the same corner, so opening either has to
+    // put the other away or they overlap.
+    toggleSongs: () => set({ showSongs: !get().showSongs, showSound: false }),
 
     saveCurrent: async () => {
       try {
@@ -1413,22 +1454,8 @@ export const useStore = create<StoreState>((set, get) => {
       const track = s.history.present.tracks.find((t) => t.id === trackId);
       if (!track || track.type !== 'audio') return;
 
-      set({ countdown: 3, recordTarget: { trackId, noteId } });
-      countdownTimer = setInterval(() => {
-        const now = get();
-        // Cancelled underneath us — by space, by clicking elsewhere, by the
-        // block being deleted mid-count.
-        if (now.countdown == null) {
-          stopCountdown();
-          return;
-        }
-        const left = now.countdown - 1;
-        if (left > 0) {
-          set({ countdown: left });
-          return;
-        }
-        stopCountdown();
-        set({ countdown: null });
+      set({ recordTarget: { trackId, noteId } });
+      startCountdown(() => {
         const target = get().recordTarget;
         if (!target) return;
         const project = get().history.present;
@@ -1456,7 +1483,7 @@ export const useStore = create<StoreState>((set, get) => {
             if (entry) get().seekTo(entry.startBeat + note.startBeat);
             if (!get().isPlaying) get().play();
           });
-      }, 1000);
+      });
     },
 
     cancelCountdown: () => {
@@ -1464,6 +1491,7 @@ export const useStore = create<StoreState>((set, get) => {
       stopCountdown();
       set({ countdown: null, recordTarget: null, status: 'Not recording after all' });
     },
+
 
     splitSelectedAtPlayhead: () => {
       const s = get();
@@ -1515,14 +1543,21 @@ export const useStore = create<StoreState>((set, get) => {
     },
 
     toggleRecording: () => {
-      const wasRecording = get().isRecording;
-      if (wasRecording) {
+      const s = get();
+      if (s.isRecording) {
         closeBaseline(); // close the take into a single undo step
         set({ isRecording: false, status: 'Recording stopped' });
         return;
       }
-      editBaseline = get().history.present;
-      set({ isRecording: true, status: 'Recording — play the keyboard' });
+      if (s.countdown != null) return; // already counting into one
+      // The same count of three the microphone gets. Playing a part in is the
+      // same problem as singing one: the take begins the moment the button is
+      // pressed, and nobody can press a button and be mid-phrase at once.
+      startCountdown(() => {
+        editBaseline = get().history.present;
+        set({ isRecording: true, status: 'Recording — play the keyboard' });
+        if (!get().isPlaying) get().play();
+      });
     },
 
     recordPlayedNote: ({ voiceId, midi, startBeats, endBeats, velocity }) => {
