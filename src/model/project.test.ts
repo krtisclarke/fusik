@@ -758,3 +758,59 @@ describe('duplicateNotes', () => {
     expect(copy.groupId).toBeUndefined();
   });
 });
+
+// ---- a place to sing, and filling it -------------------------------------
+
+describe('createVoiceBlock', () => {
+  it('is an ordinary block with no recording in it', () => {
+    const p = P.createDefaultProject();
+    const block = P.createVoiceBlock(p.arrangement[0].sectionId, 4);
+    expect(block.clipId).toBeUndefined();
+    expect(block.clipSeconds).toBeUndefined();
+    expect(block.startBeat).toBe(4);
+    expect(block.lengthBeats).toBeGreaterThan(0);
+  });
+});
+
+describe('fillVoiceBlock', () => {
+  function withPlace() {
+    let p = P.createDefaultProject(); // 120bpm: one beat is half a second
+    const track = P.createAudioTrack();
+    p = P.addTrack(p, track);
+    const block = P.createVoiceBlock(p.arrangement[0].sectionId, 4, 4);
+    p = P.addNote(p, track.id, block);
+    return { p, trackId: track.id, noteId: block.id };
+  }
+
+  it('puts the take into the block that was chosen, keeping its id and place', () => {
+    const { p, trackId, noteId } = withPlace();
+    const filled = P.fillVoiceBlock(p, trackId, noteId, 'clip_a', 3, 6);
+    const notes = filled.tracks.find((t) => t.id === trackId)!.notes;
+    expect(notes).toHaveLength(1); // filled, not joined by a second block
+    expect(notes[0].id).toBe(noteId);
+    expect(notes[0].startBeat).toBe(4); // still where it was put
+    expect(notes[0].clipId).toBe('clip_a');
+    expect(notes[0].clipSeconds).toBe(3);
+    expect(notes[0].lengthBeats).toBe(6); // now as long as what was sung
+  });
+
+  it('recording again over a trimmed block starts the new take at its beginning', () => {
+    // The block had been cut out of the middle of an older take, so it carried
+    // an offset. Keeping that offset would play the new take from part-way in.
+    let { p, trackId, noteId } = withPlace();
+    p = P.fillVoiceBlock(p, trackId, noteId, 'clip_a', 8, 16);
+    p = P.splitNote(p, trackId, noteId, 6);
+    const tail = p.tracks.find((t) => t.id === trackId)!.notes.find((n) => n.id !== noteId)!;
+    expect(tail.clipStartSeconds).toBeGreaterThan(0);
+
+    const again = P.fillVoiceBlock(p, trackId, tail.id, 'clip_b', 2, 4);
+    const after = again.tracks.find((t) => t.id === trackId)!.notes.find((n) => n.id === tail.id)!;
+    expect(after.clipId).toBe('clip_b');
+    expect(after.clipStartSeconds).toBeUndefined();
+  });
+
+  it('leaves the song alone when the block has gone', () => {
+    const { p, trackId } = withPlace();
+    expect(P.fillVoiceBlock(p, trackId, 'note_gone', 'clip_a', 1, 2)).toBe(p);
+  });
+});

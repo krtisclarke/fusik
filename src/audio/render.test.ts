@@ -141,3 +141,17 @@ describe('room for a recording that has been cut up', () => {
     expect(overhang(project)).toBeCloseTo(0, 3);
   });
 });
+
+// A place to sing that hasn't been sung in yet must be silent — in the export
+// as much as in playback. The stand-in voice for an unrecognised id is a
+// percussion hit, so an empty voice block left in the song would otherwise
+// clap once a bar in the exported file.
+describe('a place to sing that is still empty', () => {
+  it('asks for no room past the end of the song', () => {
+    let project = P.createDefaultProject();
+    const track = P.createAudioTrack();
+    project = P.addTrack(project, track);
+    project = P.addNote(project, track.id, P.createVoiceBlock(project.sections[0].id, 14, 8));
+    expect(overhang(project)).toBe(0);
+  });
+});

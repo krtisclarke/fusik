@@ -126,6 +126,62 @@ export function createAudioTrack(name = 'My Voice'): Track {
   };
 }
 
+/**
+ * A place to sing: a block on the voice row with nothing recorded into it yet.
+ *
+ * Choosing where your voice goes used to mean aiming a marker that existed
+ * nowhere in the song. This is an ordinary block — placed, dragged, selected
+ * and deleted like every other one — that simply has no sound in it so far.
+ * Selecting it is what opens the recording controls, so "where does my voice
+ * go?" and "how do I record it?" are the same object.
+ */
+export function createVoiceBlock(sectionId: string, startBeat: number, lengthBeats = 4): Note {
+  return {
+    id: newNoteId(),
+    sectionId,
+    startBeat: Math.max(0, startBeat),
+    lengthBeats: Math.max(0.0625, lengthBeats),
+    velocity: DEFAULT_NOTE_VELOCITY,
+    params: {},
+  };
+}
+
+/**
+ * Put a finished take into the block it was sung into.
+ *
+ * The block keeps its identity, so the whole take — choosing the spot and
+ * filling it — collapses to what a child would call one thing, and one undo
+ * takes it back. Its length becomes the recording's, because that is now what
+ * it is: the placeholder's length was only ever a guess at it.
+ */
+export function fillVoiceBlock(
+  project: Project,
+  trackId: string,
+  noteId: string,
+  clipId: string,
+  seconds: number,
+  lengthBeats: number,
+): Project {
+  const track = project.tracks.find((t) => t.id === trackId);
+  if (!track || !track.notes.some((n) => n.id === noteId)) return project;
+  return mapTrack(project, trackId, (t) => ({
+    ...t,
+    notes: t.notes.map((n) =>
+      n.id === noteId
+        ? {
+            ...n,
+            clipId,
+            clipSeconds: Math.max(0, seconds),
+            lengthBeats: Math.max(0.0625, lengthBeats),
+            // Re-recording over a block that had been cut out of an older take
+            // must not keep pointing part-way into the new one.
+            clipStartSeconds: undefined,
+          }
+        : n,
+    ),
+  }));
+}
+
 /** A block that plays a recording. `seconds` is the recording's real length. */
 export function createClipNote(
   sectionId: string,

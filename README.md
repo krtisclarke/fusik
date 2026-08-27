@@ -133,16 +133,20 @@ npm run package:mac   # build a macOS app bundle
 - **Hit it hard or gently.** Where you land on a key decides how strong the note
   is — near the bottom is a hard hit, near the top a soft one. Record a melody
   and it keeps every light and heavy note exactly as you played it.
-- **Record your own voice, where you want it.** Press **🎤 Sing into the song**
-  on the keyboard and your first take lands on a **My Voice** row. From then on
-  that row carries a red **Sing from here** marker: drag it to the spot the
-  singing starts (or click anywhere on the row to send it there), press its ⏺,
-  and the song plays from that moment while it listens — so there's something
-  to sing along to. **Press space to stop**, because reaching for a small
-  button is the one thing you can't do mid-note. You can watch the take being
-  written as you sing.
-  - **Sing it again for a harmony.** Leave the marker where it is and go again;
-    the second take goes on its own row rather than on top of the first.
+- **Record your own voice, where you want it.** Put a **place to sing** on the
+  timeline first: press **🎤 Add a place to sing** on the keyboard, or click
+  anywhere on the **My Voice** row once you have one. It's an ordinary block —
+  drag it, resize it, delete it — it just has nothing in it yet.
+  Click it and the panel underneath opens with **⏺ Record**. Press that and you
+  get **a count of three across the whole screen** before anything happens, so
+  you're not clicking and singing in the same instant. Then the song plays from
+  that block while it listens, so there's something to sing along to, and the
+  take draws itself across the block as you go. **Press space to stop** —
+  reaching for a small button is the one thing you can't do mid-note. Space
+  also calls the whole thing off during the count.
+  - **Don't like it?** **⏺ Record again** on the same block sings over it.
+  - **Sing it again for a harmony.** Put a second place to sing at the same
+    spot; each take fills its own block.
   - **Out of time?** Drag the block like any other, or just record it again.
   - **Cut it up.** Select a recorded block and you get **✂ Cut here** (at the
     playing line) and **⧉ Copy**. Cutting copies no sound — the second half

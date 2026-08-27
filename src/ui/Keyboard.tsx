@@ -54,6 +54,7 @@ export function Keyboard() {
   const isMicRecording = useStore((s) => s.isMicRecording);
   const canRecordMic = useStore((s) => s.canRecordMic);
   const toggleMicRecording = useStore((s) => s.toggleMicRecording);
+  const addVoiceBlockAtPlayhead = useStore((s) => s.addVoiceBlockAtPlayhead);
 
   // The picker is the single source of truth for which instrument the keys
   // play. Selecting a melodic track on the timeline *moves* the picker, rather
@@ -317,19 +318,26 @@ export function Keyboard() {
           >
             {isRecording ? '⏹ Stop writing' : '⏺ Write what I play into the song'}
           </button>
+          {/* One way in, whether or not there is a voice row yet: put a place
+              to sing on the timeline and open its controls. Pressing this used
+              to start recording on the spot, which is the thing the count of
+              three exists to stop happening. */}
           <button
             className={`kb-arm mic ${isMicRecording ? 'armed' : ''}`}
-            onClick={() => void toggleMicRecording()}
+            onClick={() => {
+              if (isMicRecording) void toggleMicRecording();
+              else addVoiceBlockAtPlayhead();
+            }}
             disabled={!canRecordMic}
             title={
               canRecordMic
                 ? isMicRecording
                   ? 'Stop — what you sang becomes a block in the song'
-                  : 'Sing or beatbox; it becomes a block in the song'
+                  : 'Put a place to sing on the timeline, then press Record on it'
                 : 'Recording your voice needs the desktop app'
             }
           >
-            {isMicRecording ? '⏹ Stop singing' : '🎤 Sing into the song'}
+            {isMicRecording ? '⏹ Stop singing' : '🎤 Add a place to sing'}
           </button>
           <span className="kb-capture-note">
             {isMicRecording

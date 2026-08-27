@@ -159,6 +159,10 @@ export async function renderProject(project: Project, opts: RenderOptions = {}):
 
     const trigger = getTrigger(track.instrument.voiceId);
     for (const note of track.notes) {
+      // A place to sing that hasn't been sung in yet is silent here too, for
+      // the same reason it is silent live: the stand-in voice for an unknown
+      // id makes a percussion hit, and an export must sound like the song.
+      if (track.type === 'audio' && !note.clipId) continue;
       const clip = note.clipId ? opts.clips?.get(note.clipId) : undefined;
       const params = clip ? {} : resolveParams(track.instrument.voiceId, note.params);
       const durationSec = beatsToSeconds(note.lengthBeats, project.bpm);

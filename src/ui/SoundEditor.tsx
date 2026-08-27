@@ -25,6 +25,12 @@ export function SoundEditor() {
   const spreadSelected = useStore((s) => s.spreadSelected);
   const splitSelectedAtPlayhead = useStore((s) => s.splitSelectedAtPlayhead);
   const duplicateSelected = useStore((s) => s.duplicateSelected);
+  const recordIntoSelected = useStore((s) => s.recordIntoSelected);
+  const cancelCountdown = useStore((s) => s.cancelCountdown);
+  const toggleMicRecording = useStore((s) => s.toggleMicRecording);
+  const isMicRecording = useStore((s) => s.isMicRecording);
+  const countdown = useStore((s) => s.countdown);
+  const canRecordMic = useStore((s) => s.canRecordMic);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const lastAudition = useRef(0);
@@ -56,6 +62,7 @@ export function SoundEditor() {
   const count = selection.noteIds.length;
   const perBar = beatsPerBar(project.timeSignature);
   const isClip = !!note.clipId;
+  const isVoice = track.type === 'audio';
   const selectedNotes = track.notes.filter((n) => selection.noteIds.includes(n.id));
   const anyGrouped = selectedNotes.some((n) => !!n.groupId);
   const groupIds = new Set(selectedNotes.map((n) => n.groupId).filter(Boolean));
@@ -137,14 +144,63 @@ export function SoundEditor() {
           always spacing, and spacing is arithmetic rather than a steady hand.
           One press turns a single block into a whole part's worth of them,
           exactly a beat (or a bar) apart. */}
+      {/* Everything you can do to your own voice, in the panel that opens when
+          you click the block. Recording used to be a button somewhere else
+          entirely, aimed at a marker; here the block you picked is the thing
+          being recorded into, and it is the thing you are looking at. */}
+      {isVoice && (
+        <div className="se-timing se-voice">
+          <span className="se-timing-label">Your voice</span>
+          {isMicRecording ? (
+            <>
+              <button
+                className="se-btn rec on"
+                onClick={() => void toggleMicRecording()}
+                title="Stop recording (or press space)"
+              >
+                ⏹ Stop singing
+              </button>
+              <span className="se-timing-lead">Listening — press space when you're done.</span>
+            </>
+          ) : countdown != null ? (
+            <>
+              <button className="se-btn" onClick={cancelCountdown}>
+                ✕ Never mind
+              </button>
+              <span className="se-timing-lead">Starting in {countdown}…</span>
+            </>
+          ) : (
+            <>
+              <button
+                className="se-btn rec"
+                onClick={recordIntoSelected}
+                disabled={!canRecordMic || count !== 1}
+                title={
+                  canRecordMic
+                    ? 'Count down, then play from here and record what you sing'
+                    : 'Recording your voice needs the desktop app'
+                }
+              >
+                ⏺ {isClip ? 'Record again' : 'Record'}
+              </button>
+              <span className="se-timing-lead">
+                {isClip
+                  ? 'Records over this one. The song plays from here so you can sing along.'
+                  : 'You get a count of three, then the song plays from here — sing along.'}
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
       {/* A recording is the one block whose insides matter: it is a thing that
           was sung, with a beginning and an end you may have got wrong. Cutting
           it copies no audio — the second half just points further into the
           same take — so cut, copy and drag are enough to move a line, repeat
           it, or throw away the bit before the singing started. */}
-      {isClip && (
+      {isClip && !isMicRecording && countdown == null && (
         <div className="se-timing">
-          <span className="se-timing-label">Recording</span>
+          <span className="se-timing-label">Trim it</span>
           <span className="se-timing-lead">Put the line where you want to cut, then:</span>
           <button
             className="se-btn"
@@ -164,6 +220,10 @@ export function SoundEditor() {
         </div>
       )}
 
+      {/* Nothing has been sung into an empty place yet, so there is nothing to
+          repeat across the part — offering it would fill the row with empty
+          places. It comes back the moment the block has a voice in it. */}
+      {!(isVoice && !isClip) && (
       <div className="se-timing">
         <span className="se-timing-label">Timing</span>
         {count === 1 ? (
@@ -198,6 +258,7 @@ export function SoundEditor() {
           </>
         )}
       </div>
+      )}
 
       <div className="se-hint">
         {count === 1 ? (

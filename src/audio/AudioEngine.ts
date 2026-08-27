@@ -441,6 +441,13 @@ export class AudioEngine {
       for (const { note, baseBeat } of this.occurrences(project, track)) {
         if (period !== Infinity && baseBeat >= period) continue;
 
+        // A block on the voice row with nothing recorded into it yet: the spot
+        // a child has chosen to sing in, before they have sung. It is silent,
+        // and pointedly not handed to a synth — the fallback voice for an
+        // unknown id is a percussion hit, so without this the empty block would
+        // sit there clapping once a bar.
+        if (track.type === 'audio' && !note.clipId) continue;
+
         // A recorded block plays back a sound rather than building one. It is
         // scheduled exactly like a note — same window, same clamp — so it lands
         // in time with everything else, and goes through the same track chain,

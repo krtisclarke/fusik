@@ -8,6 +8,7 @@ import { SoundEditor } from './ui/SoundEditor';
 import { Keyboard } from './ui/Keyboard';
 import { Tutorial } from './ui/Tutorial';
 import { FindOnline } from './ui/FindOnline';
+import { Countdown } from './ui/RecordPoint';
 import { getDesktop } from './platform/files';
 import { startAutosave } from './state/autosave';
 
@@ -70,6 +71,12 @@ export function App() {
           void s.toggleMicRecording();
           return;
         }
+        // Mid-countdown, space is the change of mind — the same key that would
+        // have stopped the take, before there is one to stop.
+        if (s.countdown != null) {
+          s.cancelCountdown();
+          return;
+        }
         s.togglePlay();
         return;
       }
@@ -123,6 +130,7 @@ export function App() {
       {showKeyboard && <Keyboard />}
       {status && <div className="toast">{status}</div>}
       <FindOnline />
+      <Countdown />
       <Tutorial />
     </div>
   );

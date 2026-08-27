@@ -89,27 +89,6 @@ export interface VoiceDrag {
   moved: boolean;
 }
 
-/**
- * Where the next sung take begins.
- *
- * Recording used to start wherever the playhead happened to be, which meant
- * deciding where your voice goes was a matter of stopping the song, nudging
- * the playhead, and pressing a button somewhere else — three steps, in three
- * places, before you had sung a note. Putting a marker on the voice row turns
- * that into "here", and pressing it starts the music from there so there is
- * something to sing along to.
- *
- * `beat` is inside the part, because that is where the recording is written and
- * a part played three times sings three times. `absBeat` is where the marker is
- * drawn and where the music starts from, so a marker dropped on the second
- * playing of a part stays on the second playing.
- */
-export interface RecordPoint {
-  sectionId: string;
-  beat: number;
-  absBeat: number;
-}
-
 export interface StoreState {
   history: History<Project>;
   project: Project; // convenience mirror of history.present
@@ -126,8 +105,19 @@ export interface StoreState {
   selection: Selection;
   /** A library sound in mid-air, or null. See VoiceDrag. */
   voiceDrag: VoiceDrag | null;
-  /** Where the next sung take will start. See RecordPoint. */
-  recordAt: RecordPoint | null;
+  /**
+   * The block being sung into: the take goes into this one rather than making
+   * a new one, so choosing the spot and filling it are one thing to undo.
+   */
+  recordTarget: { trackId: string; noteId: string } | null;
+  /**
+   * Seconds left before a take starts, or null when nothing is counting.
+   *
+   * Recording used to begin the instant the button was pressed, which meant
+   * being ready to sing was something you had to arrange before clicking. A
+   * count of three is the difference between a take and a scramble.
+   */
+  countdown: number | null;
   status: string | null;
   /** Whether the playable keyboard is open along the bottom. */
   showKeyboard: boolean;
@@ -291,11 +281,15 @@ export interface StoreState {
    * Start or stop recording from the microphone. What comes back is written
    * into the song as a block on an audio track.
    */
-  toggleMicRecording: (at?: RecordPoint) => Promise<void>;
-  /** Move the marker that says where the next sung take starts. */
-  setRecordAt: (at: RecordPoint | null) => void;
-  /** Start the music at the marker and record from there. */
-  startTakeAtMarker: () => Promise<void>;
+  toggleMicRecording: (into?: { trackId: string; noteId: string }) => Promise<void>;
+  /** Put an empty place-to-sing block on the voice row and select it. */
+  addVoiceBlock: (sectionId: string, beat: number) => void;
+  /** The same, at wherever the song has got to — the way in with no voice row yet. */
+  addVoiceBlockAtPlayhead: () => void;
+  /** Count down, then play from the selected block and record into it. */
+  recordIntoSelected: () => void;
+  /** Abandon a countdown that hasn't finished. */
+  cancelCountdown: () => void;
   /** Cut the selected block in two where the playhead is. */
   splitSelectedAtPlayhead: () => void;
   /** Copy the selected block(s), each landing straight after itself. */
@@ -456,6 +450,15 @@ function middlePitch(voiceId: string, project: Project): number | undefined {
   return ladder[Math.floor(ladder.length / 2)];
 }
 
+/** The 3-2-1 before a take. Module-level so cancelling can always reach it. */
+let countdownTimer: ReturnType<typeof setInterval> | null = null;
+function stopCountdown(): void {
+  if (countdownTimer != null) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+}
+
 /** Guards against an older search answering after a newer one. */
 let onlineSearchToken = 0;
 
@@ -607,7 +610,8 @@ export const useStore = create<StoreState>((set, get) => {
     currentSectionId: initialSectionId,
     snap: DEFAULT_SNAP,
     voiceDrag: null,
-    recordAt: null,
+    recordTarget: null,
+    countdown: null,
     showFindOnline: false,
     onlineResults: [],
     onlineBusy: false,
@@ -1195,7 +1199,7 @@ export const useStore = create<StoreState>((set, get) => {
     // history, and disarming (or stopping) commits the lot. So a child who
     // records four bars and hates it presses undo once, not forty times.
 
-    toggleMicRecording: async (at) => {
+    toggleMicRecording: async (into) => {
       const s = get();
       if (s.isMicRecording) {
         set({ isMicRecording: false, status: 'Tidying up your recording…' });
@@ -1226,7 +1230,42 @@ export const useStore = create<StoreState>((set, get) => {
           return;
         }
 
-        // Where it goes: the part on screen, at the beat the take started from.
+        const lengthBeats = Math.max(0.25, secondsToBeats(recording.seconds, project.bpm));
+        engine.setClip(clipId, recording.buffer); // already decoded when it was measured
+
+        // The take goes into the block it was sung into. That block is where a
+        // child pointed at the song and said "here"; filling it, rather than
+        // dropping a new one nearby, is what makes choosing the spot and
+        // singing feel like one act instead of two.
+        const target = after.recordTarget;
+        const targetNote = target
+          ? project.tracks
+              .find((t) => t.id === target.trackId)
+              ?.notes.find((n) => n.id === target.noteId)
+          : undefined;
+        if (target && targetNote) {
+          apply(
+            P.fillVoiceBlock(
+              project,
+              target.trackId,
+              target.noteId,
+              clipId,
+              recording.seconds,
+              lengthBeats,
+            ),
+          );
+          set({
+            recordTarget: null,
+            selection: { trackId: target.trackId, noteIds: [target.noteId] },
+            status: `Recorded ${recording.seconds.toFixed(1)} seconds`,
+          });
+          return;
+        }
+
+        // No block was chosen — the take was started from the keyboard while
+        // the song ran. It lands where the song had got to, on the first voice
+        // row with nothing already sounding across that stretch, so a second
+        // line stacks on its own row rather than on top of the first.
         const sectionId =
           micStartSectionId && project.sections.some((x) => x.id === micStartSectionId)
             ? micStartSectionId
@@ -1234,13 +1273,7 @@ export const useStore = create<StoreState>((set, get) => {
         const section = project.sections.find((x) => x.id === sectionId);
         const sectionBeats = (section?.lengthBars ?? 1) * project.timeSignature.numerator;
         const start = Math.min(Math.max(0, micStartBeat), Math.max(0, sectionBeats - 0.25));
-        const lengthBeats = Math.max(0.25, secondsToBeats(recording.seconds, project.bpm));
         const note = P.createClipNote(sectionId, start, lengthBeats, clipId, recording.seconds);
-
-        // Which voice row this take goes on. The first one with nothing already
-        // sounding across the same stretch — so singing a second line over the
-        // first stacks it on its own row rather than piling two blocks on top
-        // of each other, which is the whole of "add a harmony".
         const audioTracks = project.tracks.filter((t) => t.type === 'audio');
         const existing = audioTracks.find(
           (t) =>
@@ -1255,7 +1288,6 @@ export const useStore = create<StoreState>((set, get) => {
           existing ??
           P.createAudioTrack(audioTracks.length === 0 ? 'My Voice' : `My Voice ${audioTracks.length + 1}`);
         const withTrack = existing ? project : P.addTrack(project, track);
-        engine.setClip(clipId, recording.buffer); // already decoded when it was measured
         apply(P.addNote(withTrack, track.id, note));
         set({ status: `Recorded ${recording.seconds.toFixed(1)} seconds` });
         return;
@@ -1265,21 +1297,32 @@ export const useStore = create<StoreState>((set, get) => {
         set({ status: 'Recording needs the desktop app' });
         return;
       }
+      // Asking the machine for the microphone is not instant, and the count of
+      // three has just finished — so without this there is a gap where the
+      // countdown has gone, nothing is recording, and the screen says nothing
+      // at all.
+      set({ status: 'Getting the microphone ready…' });
       try {
         await mic.start();
       } catch {
         // Refused, or there is no microphone. Both look the same to a child.
-        set({ status: "Can't hear a microphone — is one plugged in?" });
+        set({ status: "Can't hear a microphone — is one plugged in?", recordTarget: null });
         return;
       }
-      // Where this take belongs. A marker on the voice row says so outright;
+      // Where this take belongs. A block chosen to sing into says so outright;
       // otherwise it is wherever the song has got to, which is what pressing
-      // 🎤 with nothing placed has always meant.
+      // 🎤 on the keyboard has always meant.
       micStartBeat = 0;
       micStartSectionId = null;
-      if (at) {
-        micStartBeat = at.beat;
-        micStartSectionId = at.sectionId;
+      const intoNote = into
+        ? get()
+            .history.present.tracks.find((t) => t.id === into.trackId)
+            ?.notes.find((n) => n.id === into.noteId)
+        : undefined;
+      if (into && intoNote) {
+        micStartBeat = intoNote.startBeat;
+        micStartSectionId = intoNote.sectionId;
+        set({ recordTarget: into });
       } else if (get().isPlaying) {
         const at = get();
         if (at.playMode === 'section') {
@@ -1298,21 +1341,104 @@ export const useStore = create<StoreState>((set, get) => {
       set({ isMicRecording: true, status: 'Recording — sing! Press space to stop.' });
     },
 
-    setRecordAt: (at) => set({ recordAt: at }),
+    /**
+     * Put a place to sing on the voice row, making the row first if there isn't
+     * one, and select it — because selecting it is what opens the recording
+     * controls underneath.
+     */
+    addVoiceBlock: (sectionId, beat) => {
+      const project = get().history.present;
+      const note = P.createVoiceBlock(sectionId, beat);
+      const existing = project.tracks.find((t) => t.type === 'audio');
+      const track = existing ?? P.createAudioTrack();
+      const withTrack = existing ? project : P.addTrack(project, track);
+      apply(P.addNote(withTrack, track.id, note));
+      set({ selection: { trackId: track.id, noteIds: [note.id] } });
+    },
+
+    addVoiceBlockAtPlayhead: () => {
+      const s = get();
+      const project = s.history.present;
+      const abs = engine.getSongPlayheadBeat() ?? 0;
+      const at = songPositionAt(project, abs);
+      // Stopped at the very end of the song, or an empty arrangement: the
+      // start of the part being worked on is the sensible place.
+      const sectionId = at ? at.entry.sectionId : s.currentSectionId;
+      const beat = at ? at.beatInSection : 0;
+      s.addVoiceBlock(sectionId, snapBeat(beat, s.snap, project.timeSignature));
+    },
 
     /**
-     * The whole gesture in one press: go to the marker, start the song, start
-     * listening. Singing along needs something to sing along *to*, and having
-     * to arrange that yourself — seek, play, then find the record button
-     * before the bar you wanted goes past — is the reason nobody did.
+     * Sing into the selected block: count down out loud, then start the song
+     * at the block and listen.
+     *
+     * The count is the point. Recording used to begin on the click, so being
+     * ready to sing was something you had to have arranged beforehand — and a
+     * child cannot press a button and be mid-note at the same instant. Three
+     * seconds is long enough to get a breath and find the screen.
      */
-    startTakeAtMarker: async () => {
+    recordIntoSelected: () => {
       const s = get();
-      const at = s.recordAt;
-      if (!at || s.isMicRecording) return;
-      s.seekTo(at.absBeat);
-      if (!s.isPlaying) s.play();
-      await get().toggleMicRecording(at);
+      const trackId = s.selection.trackId;
+      const noteId = s.selection.noteIds[0];
+      if (!trackId || !noteId || s.isMicRecording || s.countdown != null) return;
+      if (!s.canRecordMic) {
+        set({ status: 'Recording needs the desktop app' });
+        return;
+      }
+      const track = s.history.present.tracks.find((t) => t.id === trackId);
+      if (!track || track.type !== 'audio') return;
+
+      set({ countdown: 3, recordTarget: { trackId, noteId } });
+      countdownTimer = setInterval(() => {
+        const now = get();
+        // Cancelled underneath us — by space, by clicking elsewhere, by the
+        // block being deleted mid-count.
+        if (now.countdown == null) {
+          stopCountdown();
+          return;
+        }
+        const left = now.countdown - 1;
+        if (left > 0) {
+          set({ countdown: left });
+          return;
+        }
+        stopCountdown();
+        set({ countdown: null });
+        const target = get().recordTarget;
+        if (!target) return;
+        const project = get().history.present;
+        const note = project.tracks
+          .find((t) => t.id === target.trackId)
+          ?.notes.find((n) => n.id === target.noteId);
+        if (!note) {
+          set({ recordTarget: null });
+          return;
+        }
+        // Microphone first, music second. Asking for the microphone can fail —
+        // unplugged, refused, busy — and starting the song before finding out
+        // leaves a child watching their song play for no reason with an error
+        // they didn't cause. This way a refusal costs nothing but the count.
+        //
+        // It also puts the take a hair *ahead* of the music rather than behind
+        // it: the block is placed where it was chosen, so audio arriving early
+        // is silence at the front, while audio arriving late is a missing first
+        // syllable.
+        void get()
+          .toggleMicRecording(target)
+          .then(() => {
+            if (!get().isMicRecording) return; // no microphone; leave the song be
+            const entry = resolveArrangement(project).find((e) => e.sectionId === note.sectionId);
+            if (entry) get().seekTo(entry.startBeat + note.startBeat);
+            if (!get().isPlaying) get().play();
+          });
+      }, 1000);
+    },
+
+    cancelCountdown: () => {
+      if (get().countdown == null) return;
+      stopCountdown();
+      set({ countdown: null, recordTarget: null, status: 'Not recording after all' });
     },
 
     splitSelectedAtPlayhead: () => {

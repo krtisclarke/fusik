@@ -955,83 +955,95 @@ select.snap {
   z-index: 3;
 }
 
-/* ---- the voice row's "sing from here" marker ---------------------------- */
-/* Recording used to start wherever the playhead was, from a button in the
-   toolbar, with the song not necessarily playing — three acts in three places,
-   none of which said what they were for. This is one thing, in the row it
-   affects, at the spot it means. */
+/* ---- singing into the song ---------------------------------------------- */
 
-.rec-point {
-  position: absolute;
-  top: 6px;
-  height: calc(var(--row-h) - 14px);
-  display: flex;
-  align-items: center;
+/* A block on the voice row with nothing in it yet: a place to sing. Hollow, so
+   it never reads as a sound that has gone missing, and labelled, so it never
+   has to be guessed at. */
+.note.empty-voice {
+  background: transparent !important;
+  border: 2px dashed var(--danger);
+  box-shadow: none;
   gap: 6px;
-  padding-left: 2px;
-  border-left: 2px dashed var(--danger);
-  z-index: 4;
-  white-space: nowrap;
-  cursor: grab;
-  touch-action: none;
-}
-.rec-point:active {
-  cursor: grabbing;
-}
-.rec-point.live {
-  cursor: default;
-}
-.rec-go {
-  width: 26px;
-  height: 26px;
-  flex: none;
-  border-radius: 50%;
-  border: 2px solid var(--danger);
-  background: var(--bg-panel);
   color: var(--danger);
-  font-size: 12px;
-  line-height: 1;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  padding: 0;
 }
-.rec-go:hover:not(:disabled) {
-  background: var(--danger);
-  color: #fff;
+.note.empty-voice.sel {
+  box-shadow: inset 0 0 0 2px #fff;
 }
-.rec-go:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-.rec-label {
-  font-size: 10.5px;
+.note.empty-voice .empty-voice-label {
+  position: relative;
+  z-index: 1;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--danger);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-.rec-point.live .rec-go {
-  background: var(--danger);
-  color: #fff;
-  animation: rec-pulse 1s ease-in-out infinite;
-}
-@keyframes rec-pulse {
-  50% {
-    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.28);
-  }
+  pointer-events: none;
+  white-space: nowrap;
 }
 
-/* The take as it is being sung. Without it the row shows nothing at all until
-   the singing stops. */
+/* The take as it is being sung, growing across the block it fills. Without it
+   the row shows nothing at all until the singing stops. */
 .rec-live {
   position: absolute;
   top: 8px;
   height: calc(var(--row-h) - 17px);
   border-radius: 7px;
-  background: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.4);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
   pointer-events: none;
   z-index: 3;
+}
+
+/* The Record button, told apart from the rest of the panel by being the one
+   that starts something. */
+.se-btn.rec {
+  border-color: var(--danger);
+  color: var(--danger);
+  font-weight: 700;
+}
+.se-btn.rec:hover:not(:disabled) {
+  background: var(--danger);
+  color: #fff;
+}
+.se-btn.rec.on {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* Three, two, one. Enormous and in the middle of the screen, because it has to
+   be readable from wherever a child is actually looking — which is not at the
+   button they just pressed. */
+.countdown {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  background: rgba(6, 7, 11, 0.55);
+  cursor: pointer;
+}
+.countdown-num {
+  font-size: 168px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 8px 40px rgba(239, 68, 68, 0.8);
+  animation: countdown-pop 0.85s ease-out;
+}
+@keyframes countdown-pop {
+  from {
+    transform: scale(1.5);
+    opacity: 0.2;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.countdown-hint {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-dim);
 }
 
 /* The sound being carried in from the library, drawn at the size and place it
