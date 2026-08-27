@@ -51,6 +51,12 @@ import { readSampleFile } from '../platform/samples';
 import { decodeSample, sampleSetFiles, sampleSetReady, setSample } from '../audio/sampler';
 import { SAMPLE_SETS } from '../model/sampleSets';
 import { hasSeenTutorial, markTutorialSeen } from '../platform/prefs';
+import {
+  readInputDevice,
+  readOutputDevice,
+  writeInputDevice,
+  writeOutputDevice,
+} from '../platform/audioDevices';
 import { flushAutosave } from './autosave';
 import { TOUR_STEPS, type TourStep } from './tour';
 import { HELPER_START, nextHelperSteps } from './helper';
@@ -127,6 +133,15 @@ export interface StoreState {
   isMicRecording: boolean;
   /** Whether recording from a microphone is possible at all here. */
   canRecordMic: boolean;
+  /** The chosen microphone, or '' for whatever the machine is set to. */
+  audioInputId: string;
+  /** The chosen speakers, or '' for whatever the machine is set to. */
+  audioOutputId: string;
+  /** Whether the sound settings panel is open. */
+  showSound: boolean;
+  toggleSound: () => void;
+  setAudioInput: (deviceId: string) => void;
+  setAudioOutput: (deviceId: string) => void;
   /** Which shelf slot the song on screen belongs to. On the desktop this is the
    *  song's file name, so it changes when the song is renamed. */
   currentSongId: string;
@@ -598,6 +613,12 @@ export const useStore = create<StoreState>((set, get) => {
   loadClipsFor(initialProject, initialSongId);
   void loadSamples();
 
+  // The engine is told the remembered speakers now, though no audio context
+  // exists yet — sound waits for a user gesture. It holds the choice and
+  // applies it to whatever context it eventually builds.
+  const rememberedOutput = readOutputDevice();
+  if (rememberedOutput) void engine.setOutputDevice(rememberedOutput);
+
   return {
     history: startHistory,
     project: initialProject,
@@ -609,6 +630,9 @@ export const useStore = create<StoreState>((set, get) => {
     playMode: engine.getPlayMode(),
     currentSectionId: initialSectionId,
     snap: DEFAULT_SNAP,
+    audioInputId: readInputDevice(),
+    audioOutputId: rememberedOutput,
+    showSound: false,
     voiceDrag: null,
     recordTarget: null,
     countdown: null,
@@ -1303,7 +1327,7 @@ export const useStore = create<StoreState>((set, get) => {
       // at all.
       set({ status: 'Getting the microphone ready…' });
       try {
-        await mic.start();
+        await mic.start(get().audioInputId);
       } catch {
         // Refused, or there is no microphone. Both look the same to a child.
         set({ status: "Can't hear a microphone — is one plugged in?", recordTarget: null });
@@ -1555,6 +1579,22 @@ export const useStore = create<StoreState>((set, get) => {
     },
 
     // ---- ui / selection --------------------------------------------------
+    toggleSound: () => set((s) => ({ showSound: !s.showSound, showSongs: false })),
+
+    // Which microphone and which speakers. Remembered on this computer, because
+    // the headset a child records with is a fact about the room rather than
+    // about the song, and being asked again every time it opens is the same
+    // annoyance as not being asked at all.
+    setAudioInput: (deviceId) => {
+      writeInputDevice(deviceId);
+      set({ audioInputId: deviceId });
+    },
+    setAudioOutput: (deviceId) => {
+      writeOutputDevice(deviceId);
+      set({ audioOutputId: deviceId });
+      void engine.setOutputDevice(deviceId);
+    },
+
     setTidyTiming: (on) => set({ snap: on ? DEFAULT_SNAP : 'off' }),
     select: (trackId, noteId = null) =>
       set({ selection: { trackId, noteIds: noteId ? [noteId] : [] } }),

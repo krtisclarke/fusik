@@ -71,6 +71,32 @@ export class AudioEngine {
 
   // ---- context / master chain -------------------------------------------
 
+  /**
+   * Which speakers to play out of. Empty means whatever the machine is set to.
+   *
+   * Kept here rather than applied once, because the context may not exist yet
+   * when the choice is made — sound only starts on a user gesture — and because
+   * a context that gets rebuilt has to come back on the same device.
+   */
+  private sinkId = '';
+
+  /** Send sound to this device from now on. Unknown devices fall back silently. */
+  async setOutputDevice(deviceId: string): Promise<void> {
+    this.sinkId = deviceId;
+    await this.applySink();
+  }
+
+  private async applySink(): Promise<void> {
+    const ctx = this.ctx as (AudioContext & { setSinkId?: (id: string) => Promise<void> }) | null;
+    if (!ctx || typeof ctx.setSinkId !== 'function') return;
+    try {
+      await ctx.setSinkId(this.sinkId);
+    } catch {
+      // Unplugged since it was chosen, or refused. The machine's own default
+      // keeps playing, which is the state the app was in before any of this.
+    }
+  }
+
   /** Create the AudioContext and master bus on first use (needs a user gesture). */
   private ensureContext(): AudioContext {
     if (this.ctx) return this.ctx;
@@ -84,6 +110,7 @@ export class AudioEngine {
     this.ctx = ctx;
     this.masterGain = master.input;
     if (this.project) this.syncTrackNodes(this.project);
+    if (this.sinkId) void this.applySink(); // a choice made before any sound existed
     return ctx;
   }
 

@@ -6,6 +6,7 @@ import { MAX_BARS, MAX_BPM, MIN_BARS, MIN_BPM } from '../model/project';
 import { SCALE_CHOICES } from '../model/scales';
 import { SongName, SongsPanel } from './Songs';
 import { UpdateStatus } from './UpdateStatus';
+import { SoundSettings } from './SoundSettings';
 
 /**
  * A number box that only reports a value when the child has finished typing one
@@ -103,6 +104,8 @@ export function Transport() {
   const startHelper = useStore((s) => s.startHelper);
   const showSongs = useStore((s) => s.showSongs);
   const toggleSongs = useStore((s) => s.toggleSongs);
+  const showSound = useStore((s) => s.showSound);
+  const toggleSound = useStore((s) => s.toggleSound);
 
   return (
     <div className="transport">
@@ -291,6 +294,17 @@ export function Transport() {
             📁 My Songs
           </button>
           <SongsPanel />
+        </div>
+        <div className="songs-anchor">
+          <button
+            className={`tbtn ${showSound ? 'on' : ''}`}
+            onClick={toggleSound}
+            title="Choose the microphone and the speakers"
+            aria-label="Sound settings"
+          >
+            🔊
+          </button>
+          <SoundSettings />
         </div>
         <button
           className="tbtn"

@@ -72,11 +72,25 @@ export class MicRecorder {
    * microphone in a room with the song playing, not a studio, and the browser's
    * own clean-up is far better than nothing.
    */
-  async start(): Promise<void> {
+  async start(deviceId = ''): Promise<void> {
     if (this.isRecording()) return;
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    });
+    const shaping = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+    // A chosen microphone is asked for by name; if it has been unplugged since
+    // it was chosen, that request fails outright, so fall back to whatever the
+    // machine is set to rather than leaving the child unable to record at all.
+    let stream: MediaStream | null = null;
+    if (deviceId) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { ...shaping, deviceId: { exact: deviceId } },
+        });
+      } catch {
+        stream = null;
+      }
+    }
+    if (!stream) {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: shaping });
+    }
     this.stream = stream;
     this.chunks = [];
     const format = bestFormat();

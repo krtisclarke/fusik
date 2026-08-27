@@ -192,6 +192,14 @@ npm run package:mac   # build a macOS app bundle
   songs, not recordings, so what arrives is a starting point rather than a
   finished thing. **🎼 Import from a file…** does the same with a `.mid` you
   already have.
+- **Choose the microphone and the speakers.** The **🔊** button in the toolbar
+  picks which microphone your singing is recorded from and which speakers or
+  headphones the song comes out of, without going near Windows Settings. Both
+  offer "whatever the computer uses" at the top, and both are remembered on
+  this computer. **Test the sound** plays a note through whatever is chosen, so
+  "is this the right one?" is answered by listening. If something is unplugged
+  later, the app quietly goes back to the computer's own choice rather than
+  failing.
 - **Where your songs live.** In the desktop app they're ordinary files in
   `Documents/Beatbox Studio` — one per song, named after it. You can copy them,
   back them up, or move them to another computer.
